@@ -1,0 +1,44 @@
+# ═══════════════════════════════════════════
+# JANGU BI — Configuration Render.com
+# Déploiement automatique sur push GitHub
+# ═══════════════════════════════════════════
+
+services:
+  # Backend API
+  - type: web
+    name: jangu-bi-api
+    env: node
+    region: frankfurt
+    plan: starter
+    rootDir: server
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: CLIENT_URL
+        value: https://jangu-bi.onrender.com
+      # Ajouter depuis le dashboard Render:
+      # MONGODB_URI, JWT_SECRET, JWT_REFRESH_SECRET,
+      # REDIS_URL, EMAIL_HOST, EMAIL_USER, EMAIL_PASS
+
+  # Frontend React
+  - type: web
+    name: jangu-bi-client
+    env: static
+    region: frankfurt
+    plan: starter
+    rootDir: client
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://jangu-bi-api.onrender.com/api
+      - key: VITE_SOCKET_URL
+        value: https://jangu-bi-api.onrender.com
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

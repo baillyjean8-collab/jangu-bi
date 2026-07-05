@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Paroisses – JANGU BI</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f4f4f0; }
+
+    :root {
+      --gold: #B8941F;
+      --gold-light: #F5ECC7;
+      --gold-dark: #7A600F;
+      --green-dark: #1A2E1A;
+      --green-mid: #2D4A2D;
+      --red: #C0392B;
+      --green-open: #27AE60;
+      --bg: #ffffff;
+      --bg-secondary: #f8f8f5;
+      --border: rgba(0,0,0,0.10);
+      --border-mid: rgba(0,0,0,0.18);
+      --text-primary: #111;
+      --text-secondary: #555;
+      --text-tertiary: #999;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --radius-xl: 16px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #1a1a1a;
+        --bg-secondary: #242424;
+        --border: rgba(255,255,255,0.10);
+        --border-mid: rgba(255,255,255,0.18);
+        --text-primary: #f0f0f0;
+        --text-secondary: #aaa;
+        --text-tertiary: #666;
+      }
+      body { background: #111; }
+    }
+
+    .app {
+      max-width: 430px;
+      margin: 0 auto;
+      background: var(--bg);
+      min-height: 100vh;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── PAGES ── */
+    .page { display: none; flex-direction: column; flex: 1; }
+    .page.active { display: flex; }
+
+    /* ── SCROLLABLE CONTENT ── */
+    .scroll-area { flex: 1; overflow-y: auto; padding-bottom: 70px; }
+
+    /* ── LIST HEADER ── */
+    .list-header {
+      background: var(--green-dark);
+      color: #fff;
+      padding: 18px 16px 14px;
+      flex-shrink: 0;
+    }
+    .list-header h1 {
+      font-size: 22px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .list-header h1 i { color: var(--gold); font-size: 24px; }
+    .list-header p { font-size: 13px; color: #a0b8a0; margin-top: 3px; }
+
+    /* ── SEARCH ── */
+    .search-bar { margin: 12px 16px 4px; position: relative; }
+    .search-bar input {
+      width: 100%;
+      padding: 10px 12px 10px 38px;
+      border: 0.5px solid var(--border-mid);
+      border-radius: var(--radius-lg);
+      font-size: 14px;
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      outline: none;
+    }
+    .search-bar input:focus { border-color: var(--gold); }
+    .search-bar .si {
+      position: absolute;
+      left: 11px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-tertiary);
+      font-size: 18px;
+      pointer-events: none;
+    }
+
+    /* ── FILTER TABS ── */
+    .filter-tabs {
+      display: flex;
+      gap: 8px;
+      padding: 10px 16px 8px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      flex-shrink: 0;
+    }
+    .filter-tabs::-webkit-scrollbar { display: none; }
+    .tab {
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 500;
+      border: 0.5px solid var(--border-mid);
+      cursor: pointer;
+      white-space: nowrap;
+      background: var(--bg);
+      color: var(--text-secondary);
+      transition: all 0.15s;
+    }
+    .tab.active { background: var(--green-dark); color: #fff; border-color: var(--green-dark); }
+
+    /* ── COUNT ── */
+    .count-info {
+      font-size: 12px;
+      color: var(--text-tertiary);
+      padding: 0 16px 6px;
+    }
+
+    /* ── PARISH CARDS ── */
+    .parish-list { padding: 0 16px; }
+    .parish-card {
+      background: var(--bg);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 14px;
+      margin-bottom: 12px;
+      cursor: pointer;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .parish-card:hover { border-color: var(--border-mid); box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+    .card-top { display: flex; align-items: flex-start; gap: 12px; }
+    .parish-icon {
+      width: 44px;
+      height: 44px;
+      background: var(--green-dark);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .parish-icon i { color: var(--gold); font-size: 22px; }
+    .card-info { flex: 1; min-width: 0; }
+    .card-info h3 { font-size: 14px; font-weight: 600; color: var(--text-primary); line-height: 1.3; }
+    .card-info .loc { font-size: 12px; color: var(--text-secondary); margin-top: 3px; }
+    .dist { font-size: 13px; font-weight: 600; color: var(--gold); flex-shrink: 0; }
+    .status-row { margin: 8px 0 10px; display: flex; align-items: center; gap: 8px; }
+    .status { font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 4px; }
+    .status.open { color: var(--green-open); }
+    .status.closed { color: var(--red); }
+    .dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+    .dot.open { background: var(--green-open); }
+    .dot.closed { background: var(--red); }
+    .hours { font-size: 12px; color: var(--text-secondary); }
+    .card-btns { display: flex; gap: 8px; }
+    .btn-sm {
+      flex: 1;
+      padding: 8px 4px;
+      border: 0.5px solid var(--border-mid);
+      border-radius: var(--radius-md);
+      background: transparent;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-primary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      transition: background 0.15s;
+    }
+    .btn-sm:hover { background: var(--bg-secondary); }
+    .btn-sm.follow { background: var(--green-dark); color: #fff; border-color: var(--green-dark); }
+    .btn-sm.following { background: transparent; color: var(--green-open); border-color: var(--green-open); }
+
+    /* ── TYPE BADGES ── */
+    .type-badge {
+      display: inline-block;
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      margin-left: 6px;
+      vertical-align: middle;
+      font-weight: 500;
+    }
+    .type-cathedral { background: var(--gold-light); color: var(--gold-dark); }
+    .type-parish { background: #e8f5e9; color: #1b5e20; }
+    .type-chapel { background: #e3f2fd; color: #0d47a1; }
+    .type-basilica { background: #fce4ec; color: #880e4f; }
+
+    /* ── DETAIL HEADER ── */
+    .detail-header {
+      background: var(--green-dark);
+      padding: 16px;
+      color: #fff;
+      flex-shrink: 0;
+    }
+    .back-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+      color: #a0b8a0;
+      cursor: pointer;
+      margin-bottom: 12px;
+      border: none;
+      background: none;
+      padding: 0;
+    }
+    .back-btn:hover { color: #fff; }
+    .detail-header h2 { font-size: 18px; font-weight: 600; line-height: 1.3; }
+    .detail-header .d-loc { font-size: 13px; color: #a0b8a0; margin-top: 4px; }
+    .detail-header .d-type-badge {
+      font-size: 11px;
+      padding: 3px 10px;
+      border-radius: 10px;
+      display: inline-block;
+      margin-top: 8px;
+      font-weight: 500;
+    }
+
+    /* ── DETAIL BODY ── */
+    .detail-body { padding: 16px; }
+    .detail-icon-block {
+      width: 68px;
+      height: 68px;
+      background: var(--green-dark);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+    }
+    .detail-icon-block i { color: var(--gold); font-size: 34px; }
+    .info-section { margin-bottom: 20px; }
+    .info-section h4 {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+    .info-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 9px 0;
+      border-bottom: 0.5px solid var(--border);
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+    .info-row:last-child { border-bottom: none; }
+    .info-row i { color: var(--text-secondary); font-size: 18px; width: 22px; flex-shrink: 0; margin-top: 1px; }
+    .info-row .lbl { color: var(--text-secondary); font-size: 13px; min-width: 82px; flex-shrink: 0; }
+    .info-row .val { flex: 1; font-size: 14px; }
+    .d-status.open { color: var(--green-open); font-weight: 600; }
+    .d-status.closed { color: var(--red); font-weight: 600; }
+    .mass-times { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+    .mass-time {
+      background: var(--bg-secondary);
+      border: 0.5px solid var(--border);
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+    .desc-block {
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg);
+      padding: 14px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.65;
+      margin-bottom: 18px;
+      border: 0.5px solid var(--border);
+    }
+    .action-btns { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+    .action-btn {
+      width: 100%;
+      padding: 13px;
+      border-radius: var(--radius-lg);
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border: 0.5px solid var(--border-mid);
+      transition: opacity 0.15s, transform 0.1s;
+    }
+    .action-btn:active { transform: scale(0.98); }
+    .btn-primary { background: var(--green-dark); color: #fff; border-color: var(--green-dark); }
+    .btn-gold { background: var(--gold); color: #fff; border-color: var(--gold); }
+    .btn-outline { background: transparent; color: var(--text-primary); }
+    .btn-outline.following { color: var(--green-open); border-color: var(--green-open); }
+
+    /* ── BOTTOM NAV ── */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 430px;
+      background: var(--bg);
+      border-top: 0.5px solid var(--border-mid);
+      display: flex;
+      padding: 8px 0 6px;
+      z-index: 100;
+    }
+    .nav-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      cursor: pointer;
+      padding: 4px 0;
+      font-size: 10px;
+      color: var(--text-secondary);
+      border: none;
+      background: none;
+      transition: color 0.15s;
+    }
+    .nav-item.active { color: var(--gold); }
+    .nav-item i { font-size: 22px; }
+
+    /* ── TOAST ── */
+    .toast {
+      position: fixed;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%) translateY(10px);
+      background: var(--green-dark);
+      color: #fff;
+      padding: 9px 20px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 500;
+      opacity: 0;
+      transition: opacity 0.25s, transform 0.25s;
+      pointer-events: none;
+      z-index: 999;
+      white-space: nowrap;
+      max-width: 90vw;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* ── NO RESULTS ── */
+    .no-results {
+      text-align: center;
+      padding: 48px 20px;
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+    .no-results i { font-size: 36px; color: var(--text-tertiary); margin-bottom: 10px; display: block; }
+  </style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ════════════════════════════════════════
+       PAGE : LISTE DES PAROISSES
+  ════════════════════════════════════════ -->
+  <div id="page-list" class="page active">
+
+    <div class="list-header">
+      <h1><i class="ti ti-building-church"></i> Paroisses</h1>
+      <p>Trouvez votre communauté spirituelle</p>
+    </div>
+
+    <div class="search-bar">
+      <i class="ti ti-search si"></i>
+      <input type="text" id="search-input" placeholder="Rechercher une paroisse…" oninput="filterParishes()" aria-label="Rechercher une paroisse" />
+    </div>
+
+    <div class="filter-tabs" role="tablist">
+      <button class="tab active" onclick="setFilter('Toutes',this)" role="tab">Toutes</button>
+      <button class="tab" onclick="setFilter('Dakar',this)" role="tab">Dakar</button>
+      <button class="tab" onclick="setFilter('Cathédrales',this)" role="tab">Cathédrales</button>
+      <button class="tab" onclick="setFilter('Saint-Louis',this)" role="tab">Saint-Louis</button>
+      <button class="tab" onclick="setFilter('Thiès',this)" role="tab">Thiès</button>
+      <button class="tab" onclick="setFilter('Ziguinchor',this)" role="tab">Ziguinchor</button>
+      <button class="tab" onclick="setFilter('Kaolack',this)" role="tab">Kaolack</button>
+    </div>
+
+    <div class="count-info" id="count-info">Chargement…</div>
+
+    <div class="scroll-area">
+      <div class="parish-list" id="parish-list"></div>
+    </div>
+
+    <nav class="bottom-nav" aria-label="Navigation principale">
+      <button class="nav-item" onclick="showToast('Accueil')" aria-label="Accueil">
+        <i class="ti ti-home"></i><span>Accueil</span>
+      </button>
+      <button class="nav-item active" aria-label="Paroisses">
+        <i class="ti ti-building-church"></i><span>Paroisses</span>
+      </button>
+      <button class="nav-item" onclick="showToast('Annonces à venir')" aria-label="Annonces">
+        <i class="ti ti-speakerphone"></i><span>Annonces</span>
+      </button>
+      <button class="nav-item" onclick="showToast('Live indisponible pour l\'instant')" aria-label="Live">
+        <i class="ti ti-broadcast"></i><span>Live</span>
+      </button>
+      <button class="nav-item" onclick="showToast('Section Catéchèse à venir')" aria-label="Catéchèse">
+        <i class="ti ti-cross"></i><span>Catéchèse</span>
+      </button>
+      <button class="nav-item" onclick="showToast('Vos demandes sacramentelles')" aria-label="Demandes">
+        <i class="ti ti-list-check"></i><span>Demandes</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       PAGE : DÉTAIL D'UNE PAROISSE
+  ════════════════════════════════════════ -->
+  <div id="page-detail" class="page">
+
+    <div class="detail-header">
+      <button class="back-btn" onclick="showList()" aria-label="Retour à la liste">
+        <i class="ti ti-arrow-left"></i> Retour
+      </button>
+      <h2 id="d-name"></h2>
+      <div class="d-loc" id="d-loc"></div>
+      <span id="d-type-badge" class="d-type-badge type-badge"></span>
+    </div>
+
+    <div class="scroll-area">
+      <div class="detail-body">
+        <div class="detail-icon-block">
+          <i class="ti ti-building-church" aria-hidden="true"></i>
+        </div>
+
+        <div class="desc-block" id="d-desc"></div>
+
+        <div class="info-section">
+          <h4>Informations pratiques</h4>
+          <div class="info-row">
+            <i class="ti ti-clock"></i>
+            <span class="lbl">Statut</span>
+            <span class="val d-status" id="d-status"></span>
+          </div>
+          <div class="info-row">
+            <i class="ti ti-door-enter"></i>
+            <span class="lbl">Horaires</span>
+            <span class="val" id="d-hours"></span>
+          </div>
+          <div class="info-row">
+            <i class="ti ti-map-pin"></i>
+            <span class="lbl">Adresse</span>
+            <span class="val" id="d-address"></span>
+          </div>
+          <div class="info-row">
+            <i class="ti ti-phone"></i>
+            <span class="lbl">Téléphone</span>
+            <span class="val" id="d-phone"></span>
+          </div>
+          <div class="info-row">
+            <i class="ti ti-map-2"></i>
+            <span class="lbl">Diocèse</span>
+            <span class="val" id="d-diocese"></span>
+          </div>
+        </div>
+
+        <div class="info-section">
+          <h4>Messes dominicales</h4>
+          <div class="mass-times" id="d-masses"></div>
+        </div>
+
+        <div class="action-btns">
+          <button class="action-btn btn-primary" id="btn-itineraire" onclick="openItinerary()">
+            <i class="ti ti-map-pin"></i> Itinéraire
+          </button>
+          <button class="action-btn btn-gold" id="btn-appeler" onclick="callParish()">
+            <i class="ti ti-phone"></i> Appeler
+          </button>
+          <button class="action-btn btn-outline" id="btn-suivre" onclick="toggleFollow()">
+            <i class="ti ti-heart"></i>
+            <span id="btn-suivre-label">Suivre</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <nav class="bottom-nav" aria-label="Navigation principale">
+      <button class="nav-item" onclick="showList()" aria-label="Accueil">
+        <i class="ti ti-home"></i><span>Accueil</span>
+      </button>
+      <button class="nav-item active" aria-label="Paroisses">
+        <i class="ti ti-building-church"></i><span>Paroisses</span>
+      </button>
+      <button class="nav-item" onclick="showToast('Annonces à venir')" aria-label="Annonces">
+        <i class="ti ti-speakerphone"></i><span>Annonces</span>
+      </button>
+      <button class="nav-item" onclick="showToast('Live indisponible pour l\'instant')" aria-label="Live">
+        <i class="ti ti-broadcast"></i><span>Live</span>
+      </button>
+      <button class="nav-item" onclick="showToast('Section Catéchèse à venir')" aria-label="Catéchèse">
+        <i class="ti ti-cross"></i><span>Catéchèse</span>
+      </button>
+      <button class="nav-item" onclick="showToast('Vos demandes sacramentelles')" aria-label="Demandes">
+        <i class="ti ti-list-check"></i><span>Demandes</span>
+      </button>
+    </nav>
+  </div>
+
+</div><!-- /.app -->
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<!-- ════════════════════════════════════════
+     DONNÉES – Paroisses, Cathédrales,
+     Basiliques & Chapelles du Sénégal
+     Sources : laviedeleglise.blogspot.com
+               gcatholic.org
+               archidiocese-dakar.org
+               Wikipedia (cathédrales Sénégal)
+════════════════════════════════════════ -->
+<script>
+const parishes = [
+  {
+    id: 1,
+    name: "Cathédrale Notre-Dame des Victoires",
+    loc: "Plateau, Dakar",
+    region: "Dakar",
+    type: "cathedral",
+    dist: "4,7 km",
+    open: true,
+    hours: "07h – 19h",
+    address: "Rue du Docteur Thèze, Plateau, Dakar",
+    phone: "+221 33 822 00 23",
+    diocese: "Archidiocèse de Dakar",
+    masses: ["07h30","09h","10h","18h30"],
+    desc: "Siège de l'Archidiocèse de Dakar, inaugurée en 1929. Connue aussi comme « Cathédrale du Souvenir Africain ». Monument religieux majeur de Dakar, bâtie à l'emplacement d'un ancien cimetière Lébou. L'Archevêque de Dakar y officie les grandes célébrations liturgiques."
+  },
+  {
+    id: 2,
+    name: "Paroisse Sacré-Cœur",
+    loc: "Place de l'Indépendance, Dakar",
+    region: "Dakar",
+    type: "parish",
+    dist: "3,1 km",
+    open: true,
+    hours: "06h – 20h",
+    address: "Avenue Roume, Dakar",
+    phone: "+221 33 823 11 45",
+    diocese: "Archidiocèse de Dakar",
+    masses: ["07h30","10h30"],
+    desc: "Paroisse emblématique du centre-ville de Dakar, sur la Place de l'Indépendance. Très fréquentée par les fidèles du Plateau et des environs."
+  },
+  {
+    id: 3,
+    name: "Paroisse Saint-Paul",
+    loc: "Grand Yoff, Dakar",
+    region: "Dakar",
+    type: "parish",
+    dist: "6,2 km",
+    open: false,
+    hours: "08h – 18h",
+    address: "Grand Yoff, Dakar",
+    phone: "+221 33 867 22 10",
+    diocese: "Archidiocèse de Dakar",
+    masses: ["07h","09h","11h"],
+    desc: "Paroisse dynamique du quartier de Grand Yoff. Communauté active avec de nombreux groupes de jeunes et associations paroissiales."
+  },
+  {
+    id: 4,
+    name: "Paroisse Saint-Joseph",
+    loc: "Médina, Dakar",
+    region: "Dakar",
+    type: "parish",
+    dist: "5,0 km",
+    open: true,
+    hours: "06h30 – 20h",
+    address: "Médina, Dakar",
+    phone: "+221 33 824 07 91",
+    diocese: "Archidiocèse de Dakar",
+    masses: ["09h30","18h30"],
+    desc: "Paroisse de la Médina, quartier historique de Dakar. Accueille une communauté diverse et multiculturelle avec des messes en français et en wolof."
+  },
+  {
+    id: 5,
+    name: "Paroisse Sainte-Thérèse",
+    loc: "Grand Dakar",
+    region: "Dakar",
+    type: "parish",
+    dist: "7,5 km",
+    open: true,
+    hours: "06h45 – 19h",
+    address: "Grand Dakar, Dakar",
+    phone: "+221 33 855 00 60",
+    diocese: "Archidiocèse de Dakar",
+    masses: ["06h45","09h30"],
+    desc: "Paroisse de Grand Dakar dédiée à Sainte Thérèse de l'Enfant-Jésus. Communauté vivante avec une forte implication des jeunes."
+  },
+  {
+    id: 6,
+    name: "Paroisse Martyrs de l'Ouganda",
+    loc: "Dieupeul, Dakar",
+    region: "Dakar",
+    type: "parish",
+    dist: "6,8 km",
+    open: true,
+    hours: "06h30 – 19h",
+    address: "Dieupeul, Dakar",
+    phone: "+221 33 825 44 50",
+    diocese: "Archidiocèse de Dakar",
+    masses: ["07h15","09h30","11h30"],
+    desc: "Paroisse dédiée aux Martyrs de l'Ouganda, figures de la foi africaine. Communauté engagée dans la solidarité et l'évangélisation."
+  },
+  {
+    id: 7,
+    name: "Paroisse Notre-Dame des Anges",
+    loc: "Ouakam, Dakar",
+    region: "Dakar",
+    type: "parish",
+    dist: "9,2 km",
+    open: true,
+    hours: "07h – 19h",
+    address: "Ouakam, Dakar",
+    phone: "+221 33 820 15 32",
+    diocese: "Archidiocèse de Dakar",
+    masses: ["07h30","09h30","11h"],
+    desc: "Paroisse d'Ouakam en bordure de mer. La communauté est réputée pour ses célébrations animées et son chœur paroissial."
+  },
+  {
+    id: 8,
+    name: "Paroisse Sainte-Anne",
+    loc: "Bel-Air, Dakar",
+    region: "Dakar",
+    type: "parish",
+    dist: "4,2 km",
+    open: false,
+    hours: "07h – 18h30",
+    address: "Bel-Air, Dakar",
+    phone: "+221 33 832 22 88",
+    diocese: "Archidiocèse de Dakar",
+    masses: ["10h"],
+    desc: "Paroisse du quartier Bel-Air. Fondée par les Pères du Saint-Esprit, elle est l'une des plus anciennes paroisses de Dakar."
+  },
+  {
+    id: 9,
+    name: "Paroisse Saint-Dominique",
+    loc: "Fann / UCAD, Dakar",
+    region: "Dakar",
+    type: "parish",
+    dist: "5,5 km",
+    open: true,
+    hours: "07h – 19h",
+    address: "Campus de l'UCAD, Dakar",
+    phone: "+221 33 824 55 20",
+    diocese: "Archidiocèse de Dakar",
+    masses: ["08h30","10h30"],
+    desc: "Paroisse universitaire rattachée au campus de l'UCAD. Accueille une grande communauté d'étudiants et d'intellectuels catholiques."
+  },
+  {
+    id: 10,
+    name: "Paroisse Saint-Pierre",
+    loc: "Sicap Baobab, Dakar",
+    region: "Dakar",
+    type: "parish",
+    dist: "8,0 km",
+    open: true,
+    hours: "06h30 – 19h",
+    address: "Sicap Baobab, Dakar",
+    phone: "+221 33 864 44 30",
+    diocese: "Archidiocèse de Dakar",
+    masses: ["07h30","10h","18h30"],
+    desc: "Paroisse bien établie du quartier résidentiel de Sicap Baobab. Active dans la catéchèse et la préparation aux sacrements."
+  },
+  {
+    id: 11,
+    name: "Paroisse Bienheureux Jean-Paul II",
+    loc: "Guédiawaye, Dakar",
+    region: "Dakar",
+    type: "parish",
+    dist: "14,5 km",
+    open: false,
+    hours: "07h – 18h30",
+    address: "Guédiawaye, Dakar",
+    phone: "+221 33 835 00 90",
+    diocese: "Archidiocèse de Dakar",
+    masses: ["07h30","10h"],
+    desc: "Paroisse dédiée au Bienheureux Jean-Paul II dans la banlieue nord de Dakar. Forte implication des jeunes dans la vie paroissiale."
+  },
+  {
+    id: 12,
+    name: "Paroisse Marie Immaculée",
+    loc: "Parcelles Assainies, Dakar",
+    region: "Dakar",
+    type: "parish",
+    dist: "12,3 km",
+    open: true,
+    hours: "07h – 19h",
+    address: "Parcelles Assainies, Dakar",
+    phone: "+221 33 836 11 75",
+    diocese: "Archidiocèse de Dakar",
+    masses: ["07h30","09h15","10h30","18h30"],
+    desc: "Grande paroisse des Parcelles Assainies avec quatre messes dominicales. Très active dans les mouvements apostoliques."
+  },
+  {
+    id: 13,
+    name: "Paroisse Saint-Charles Borromée",
+    loc: "Île de Gorée, Dakar",
+    region: "Dakar",
+    type: "parish",
+    dist: "5,2 km",
+    open: true,
+    hours: "07h – 18h30",
+    address: "Île de Gorée, Dakar",
+    phone: "+221 33 822 59 60",
+    diocese: "Archidiocèse de Dakar",
+    masses: ["07h","09h30"],
+    desc: "Paroisse historique sur l'Île de Gorée, site classé au patrimoine mondial de l'UNESCO. Lieu de mémoire, de recueillement et de tourisme spirituel."
+  },
+  {
+    id: 14,
+    name: "Basilique Notre-Dame de la Délivrande",
+    loc: "Popenguine, Thiès",
+    region: "Thiès",
+    type: "basilica",
+    dist: "72 km",
+    open: true,
+    hours: "06h – 20h",
+    address: "Popenguine, Sénégal",
+    phone: "+221 33 957 10 00",
+    diocese: "Archidiocèse de Dakar",
+    masses: ["07h","09h30","11h"],
+    desc: "Sanctuaire national du Sénégal et haut lieu marial. Chaque lundi de Pentecôte, des milliers de pèlerins y convergent à pied depuis Dakar. Basilique Mineure reconnue par le Saint-Siège."
+  },
+  {
+    id: 15,
+    name: "Cathédrale Saint-Louis du Sénégal",
+    loc: "Saint-Louis, Sénégal",
+    region: "Saint-Louis",
+    type: "cathedral",
+    dist: "120 km",
+    open: true,
+    hours: "06h – 20h",
+    address: "Île de Saint-Louis, Saint-Louis",
+    phone: "+221 33 961 10 20",
+    diocese: "Diocèse de Saint-Louis",
+    masses: ["07h","09h30"],
+    desc: "Siège du Diocèse de Saint-Louis, dans la ville historique inscrite au patrimoine mondial de l'UNESCO. L'une des plus anciennes cathédrales d'Afrique subsaharienne."
+  },
+  {
+    id: 16,
+    name: "Paroisse Sainte-Agnès",
+    loc: "Rufisque, Dakar",
+    region: "Dakar",
+    type: "parish",
+    dist: "25 km",
+    open: false,
+    hours: "06h30 – 18h30",
+    address: "Rufisque, Sénégal",
+    phone: "+221 33 836 78 00",
+    diocese: "Archidiocèse de Dakar",
+    masses: ["07h30","09h30"],
+    desc: "Paroisse de Rufisque, ancienne ville coloniale. Communauté enracinée avec une longue tradition catholique dans la région."
+  },
+  {
+    id: 17,
+    name: "Cathédrale Sainte-Jeanne d'Arc",
+    loc: "Fatick, Sénégal",
+    region: "Kaolack",
+    type: "cathedral",
+    dist: "145 km",
+    open: false,
+    hours: "07h – 18h",
+    address: "Fatick, Sénégal",
+    phone: "+221 33 949 10 15",
+    diocese: "Diocèse de Kaolack",
+    masses: ["09h30"],
+    desc: "Cathédrale dédiée à Sainte Jeanne d'Arc dans la région du Sine-Saloum. Siège administratif du diocèse de Kaolack au cœur du Sénégal central."
+  },
+  {
+    id: 18,
+    name: "Cathédrale Sainte-Anne",
+    loc: "Thiès, Sénégal",
+    region: "Thiès",
+    type: "cathedral",
+    dist: "70 km",
+    open: true,
+    hours: "07h – 19h",
+    address: "Thiès, Sénégal",
+    phone: "+221 33 951 10 30",
+    diocese: "Diocèse de Thiès",
+    masses: ["07h","09h30","11h"],
+    desc: "Siège du Diocèse de Thiès, dédiée à Sainte Anne. Cathédrale au cœur de la deuxième ville du Sénégal."
+  },
+  {
+    id: 19,
+    name: "Cathédrale Saint-Antoine de Padoue",
+    loc: "Ziguinchor, Casamance",
+    region: "Ziguinchor",
+    type: "cathedral",
+    dist: "460 km",
+    open: true,
+    hours: "07h – 18h",
+    address: "Ziguinchor, Casamance",
+    phone: "+221 33 991 10 80",
+    diocese: "Diocèse de Ziguinchor",
+    masses: ["07h","09h30","11h"],
+    desc: "Siège du Diocèse de Ziguinchor en Casamance. Saint Antoine de Padoue est le saint patron de cette cathédrale au bord du fleuve Casamance."
+  },
+  {
+    id: 20,
+    name: "Cathédrale Saint-Théophile",
+    loc: "Kaolack, Sénégal",
+    region: "Kaolack",
+    type: "cathedral",
+    dist: "195 km",
+    open: true,
+    hours: "07h – 18h",
+    address: "Kaolack, Sénégal",
+    phone: "+221 33 941 12 50",
+    diocese: "Diocèse de Kaolack",
+    masses: ["07h","09h30"],
+    desc: "Siège du Diocèse de Kaolack, dédiée à Saint Théophile. Kaolack est un important carrefour commercial et spirituel du Sénégal."
+  },
+  {
+    id: 21,
+    name: "Cathédrale Marie-Reine-de-l'Univers",
+    loc: "Tambacounda, Sénégal",
+    region: "Kaolack",
+    type: "cathedral",
+    dist: "460 km",
+    open: true,
+    hours: "07h – 18h",
+    address: "Tambacounda, Sénégal",
+    phone: "+221 33 981 10 65",
+    diocese: "Diocèse de Tambacounda",
+    masses: ["07h","09h30"],
+    desc: "Siège du Diocèse de Tambacounda, dédiée à Marie Reine de l'Univers. Porte d'entrée vers l'Est du Sénégal et le Parc National du Niokolo-Koba."
+  },
+  {
+    id: 22,
+    name: "Paroisse Sainte-Bernardette",
+    loc: "Guéniane, Fatick",
+    region: "Kaolack",
+    type: "parish",
+    dist: "170 km",
+    open: true,
+    hours: "06h30 – 18h",
+    address: "Guéniane, Fatick",
+    phone: "+221 77 500 00 00",
+    diocese: "Diocèse de Kaolack",
+    masses: ["07h","09h"],
+    desc: "Paroisse rurale de la région de Fatick dédiée à Sainte Bernardette de Lourdes. Communauté rurale avec une forte dévotion mariale."
+  },
+  {
+    id: 23,
+    name: "Paroisse Notre-Dame de la Purification",
+    loc: "Joal-Fadiouth, Fatick",
+    region: "Kaolack",
+    type: "parish",
+    dist: "100 km",
+    open: true,
+    hours: "07h – 18h30",
+    address: "Joal-Fadiouth, Sénégal",
+    phone: "+221 33 957 15 40",
+    diocese: "Archidiocèse de Dakar",
+    masses: ["09h30"],
+    desc: "Paroisse de Joal-Fadiouth, ville natale du Président Léopold Sédar Senghor. L'île coquillière de Fadiouth est un symbole de coexistence harmonieuse entre catholiques et musulmans."
+  },
+  {
+    id: 24,
+    name: "Paroisse Saint-François-Xavier",
+    loc: "Île de Fadiouth, Fatick",
+    region: "Kaolack",
+    type: "parish",
+    dist: "102 km",
+    open: false,
+    hours: "06h45 – 18h30",
+    address: "Île de Fadiouth, Fatick",
+    phone: "+221 33 957 10 55",
+    diocese: "Archidiocèse de Dakar",
+    masses: ["07h45","09h"],
+    desc: "Paroisse sur l'île de Fadiouth, célèbre pour son cimetière mixte catholique-musulman, symbole unique de fraternité religieuse au Sénégal."
+  },
+  {
+    id: 25,
+    name: "Paroisse Saint-André",
+    loc: "Mbour, Thiès",
+    region: "Thiès",
+    type: "parish",
+    dist: "83 km",
+    open: true,
+    hours: "06h30 – 18h30",
+    address: "Mbour, Sénégal",
+    phone: "+221 33 957 04 20",
+    diocese: "Archidiocèse de Dakar",
+    masses: ["07h","09h30","11h"],
+    desc: "Paroisse de la Petite Côte, à Mbour. Accueille de nombreux touristes et pèlerins. La communauté est active dans l'aide aux populations de pêcheurs."
+  },
+  {
+    id: 26,
+    name: "Paroisse Notre-Dame du Cap-Vert",
+    loc: "Pikine, Dakar",
+    region: "Dakar",
+    type: "parish",
+    dist: "15 km",
+    open: false,
+    hours: "07h – 19h30",
+    address: "Pikine, Dakar",
+    phone: "+221 33 834 20 00",
+    diocese: "Archidiocèse de Dakar",
+    masses: ["09h"],
+    desc: "Paroisse de Pikine, grande banlieue de Dakar. Dessert une vaste population dans l'une des zones les plus densément peuplées d'Afrique de l'Ouest."
+  },
+  {
+    id: 27,
+    name: "Paroisse Sacré-Cœur de Mlomp",
+    loc: "Mlomp, Oussouye",
+    region: "Ziguinchor",
+    type: "parish",
+    dist: "480 km",
+    open: true,
+    hours: "07h – 18h",
+    address: "Mlomp, Oussouye, Casamance",
+    phone: "+221 77 836 51 07",
+    diocese: "Diocèse de Ziguinchor",
+    masses: ["09h","11h"],
+    desc: "Paroisse rurale de Casamance avec 8 chapelles annexes dans les villages environnants. Forte tradition de catéchèse et de pastorale jeunesse. Pilier spirituel de la communauté Diola."
+  },
+  {
+    id: 28,
+    name: "Paroisse Notre-Dame de la Délivrande",
+    loc: "Popenguine, Thiès",
+    region: "Thiès",
+    type: "parish",
+    dist: "72 km",
+    open: true,
+    hours: "06h30 – 20h",
+    address: "Popenguine, Sénégal",
+    phone: "+221 33 957 10 00",
+    diocese: "Archidiocèse de Dakar",
+    masses: ["07h","09h30"],
+    desc: "Paroisse du sanctuaire national de Popenguine, haut lieu marial. Site de pèlerinage national depuis le XIXe siècle."
+  },
+  {
+    id: 29,
+    name: "Paroisse Saint-François d'Assise",
+    loc: "Keur Massar, Dakar",
+    region: "Dakar",
+    type: "parish",
+    dist: "18 km",
+    open: true,
+    hours: "07h – 19h",
+    address: "Keur Massar, Dakar",
+    phone: "+221 33 835 77 20",
+    diocese: "Archidiocèse de Dakar",
+    masses: ["07h30","10h"],
+    desc: "Paroisse de Keur Massar dédiée à saint François d'Assise. Zone en forte expansion démographique avec une communauté paroissiale en croissance."
+  },
+  {
+    id: 30,
+    name: "Cathédrale Notre-Dame des Victoires de Kolda",
+    loc: "Kolda, Sénégal",
+    region: "Ziguinchor",
+    type: "cathedral",
+    dist: "520 km",
+    open: true,
+    hours: "07h – 18h",
+    address: "Kolda, Sénégal",
+    phone: "+221 33 996 10 45",
+    diocese: "Diocèse de Kolda",
+    masses: ["07h","09h30"],
+    desc: "Siège du Diocèse de Kolda en haute Casamance. Repère spirituel dans cette région majoritairement musulmane du sud du Sénégal."
+  }
+];
+
+/* ────────────────────────────────────────
+   STATE
+──────────────────────────────────────── */
+let followed      = new Set();
+let currentParish = null;
+let currentFilter = 'Toutes';
+
+/* ────────────────────────────────────────
+   HELPERS
+──────────────────────────────────────── */
+function getTypeBadge(type) {
+  const labels = { cathedral:'Cathédrale', parish:'Paroisse', chapel:'Chapelle', basilica:'Basilique' };
+  const cls    = { cathedral:'type-cathedral', parish:'type-parish', chapel:'type-chapel', basilica:'type-basilica' };
+  return `<span class="type-badge ${cls[type]||''}">${labels[type]||type}</span>`;
+}
+
+function getTypeClass(type) {
+  return { cathedral:'type-cathedral', parish:'type-parish', chapel:'type-chapel', basilica:'type-basilica' }[type] || '';
+}
+
+/* ────────────────────────────────────────
+   FILTERING
+──────────────────────────────────────── */
+function filterParishes() { renderList(); }
+
+function setFilter(f, el) {
+  currentFilter = f;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderList();
+}
+
+function getFiltered() {
+  const q = (document.getElementById('search-input').value || '').toLowerCase();
+  return parishes.filter(p => {
+    const matchSearch = !q || p.name.toLowerCase().includes(q) || p.loc.toLowerCase().includes(q);
+    let   matchFilter = true;
+    if      (currentFilter === 'Cathédrales') matchFilter = p.type === 'cathedral' || p.type === 'basilica';
+    else if (currentFilter !== 'Toutes')      matchFilter = p.region === currentFilter;
+    return matchSearch && matchFilter;
+  });
+}
+
+/* ────────────────────────────────────────
+   RENDER LIST
+──────────────────────────────────────── */
+function renderList() {
+  const listEl   = document.getElementById('parish-list');
+  const filtered = getFiltered();
+  const n        = filtered.length;
+  document.getElementById('count-info').textContent =
+    `${n} lieu${n > 1 ? 'x' : ''} trouvé${n > 1 ? 's' : ''}`;
+
+  if (!n) {
+    listEl.innerHTML = `
+      <div class="no-results">
+        <i class="ti ti-search"></i>
+        <p>Aucune paroisse trouvée</p>
+      </div>`;
+    return;
+  }
+
+  listEl.innerHTML = filtered.map(p => `
+    <div class="parish-card" onclick="showDetail(${p.id})" tabindex="0"
+         onkeypress="if(event.key==='Enter')showDetail(${p.id})"
+         role="button" aria-label="Voir ${p.name}">
+      <div class="card-top">
+        <div class="parish-icon"><i class="ti ti-building-church" aria-hidden="true"></i></div>
+        <div class="card-info">
+          <h3>${p.name}${getTypeBadge(p.type)}</h3>
+          <div class="loc">${p.loc}</div>
+        </div>
+        <div class="dist">${p.dist}</div>
+      </div>
+      <div class="status-row">
+        <span class="dot ${p.open ? 'open' : 'closed'}" aria-hidden="true"></span>
+        <span class="status ${p.open ? 'open' : 'closed'}">${p.open ? 'Ouvert' : 'Fermé'}</span>
+        <span class="hours">${p.hours}</span>
+      </div>
+      <div class="card-btns" onclick="event.stopPropagation()">
+        <button class="btn-sm" onclick="openMap(${p.id})" aria-label="Itinéraire vers ${p.name}">
+          <i class="ti ti-map-pin" aria-hidden="true"></i> Itinéraire
+        </button>
+        <button class="btn-sm" onclick="callFromList(${p.id})" aria-label="Appeler ${p.name}">
+          <i class="ti ti-phone" aria-hidden="true"></i> Appeler
+        </button>
+        <button class="btn-sm ${followed.has(p.id) ? 'following' : 'follow'}"
+                id="follow-${p.id}"
+                onclick="toggleFollowFromList(${p.id})"
+                aria-label="${followed.has(p.id) ? 'Ne plus suivre' : 'Suivre'} ${p.name}">
+          <i class="ti ti-heart" aria-hidden="true"></i>
+          ${followed.has(p.id) ? 'Suivi' : 'Suivre'}
+        </button>
+      </div>
+    </div>
+  `).join('');
+}
+
+/* ────────────────────────────────────────
+   DETAIL PAGE
+──────────────────────────────────────── */
+function showDetail(id) {
+  currentParish = parishes.find(p => p.id === id);
+  if (!currentParish) return;
+  const p = currentParish;
+
+  document.getElementById('d-name').textContent = p.name;
+  document.getElementById('d-loc').textContent  = p.loc;
+  document.getElementById('d-desc').textContent = p.desc;
+  document.getElementById('d-hours').textContent   = p.hours;
+  document.getElementById('d-address').textContent = p.address;
+  document.getElementById('d-phone').textContent   = p.phone;
+  document.getElementById('d-diocese').textContent = p.diocese;
+
+  const typeLabels = { cathedral:'Cathédrale', parish:'Paroisse', chapel:'Chapelle', basilica:'Basilique Mineure' };
+  const tb = document.getElementById('d-type-badge');
+  tb.textContent = typeLabels[p.type] || p.type;
+  tb.className   = 'd-type-badge type-badge ' + getTypeClass(p.type);
+
+  const st = document.getElementById('d-status');
+  st.textContent = p.open ? 'Ouvert' : 'Fermé';
+  st.className   = 'd-status ' + (p.open ? 'open' : 'closed');
+
+  document.getElementById('d-masses').innerHTML =
+    p.masses.map(m => `<span class="mass-time">${m}</span>`).join('');
+
+  _refreshFollowBtn();
+
+  document.getElementById('page-list').classList.remove('active');
+  document.getElementById('page-detail').classList.add('active');
+  document.querySelector('.app').scrollTop = 0;
+}
+
+function showList() {
+  document.getElementById('page-detail').classList.remove('active');
+  document.getElementById('page-list').classList.add('active');
+}
+
+/* ────────────────────────────────────────
+   ACTIONS
+──────────────────────────────────────── */
+function openItinerary() {
+  if (!currentParish) return;
+  const q = encodeURIComponent(currentParish.address || currentParish.name + ' ' + currentParish.loc);
+  window.open('https://www.google.com/maps/search/?api=1&query=' + q, '_blank');
+  showToast('Ouverture de Google Maps…');
+}
+
+function openMap(id) {
+  const p = parishes.find(x => x.id === id);
+  if (!p) return;
+  const q = encodeURIComponent(p.address || p.name + ' ' + p.loc);
+  window.open('https://www.google.com/maps/search/?api=1&query=' + q, '_blank');
+  showToast('Ouverture de Google Maps…');
+}
+
+function callParish() {
+  if (!currentParish) return;
+  window.location.href = 'tel:' + currentParish.phone.replace(/\s/g, '');
+  showToast('Appel en cours…');
+}
+
+function callFromList(id) {
+  const p = parishes.find(x => x.id === id);
+  if (!p) return;
+  window.location.href = 'tel:' + p.phone.replace(/\s/g, '');
+  showToast('Appel en cours…');
+}
+
+function toggleFollow() {
+  if (!currentParish) return;
+  const id = currentParish.id;
+  followed.has(id) ? followed.delete(id) : followed.add(id);
+  showToast(followed.has(id) ? 'Paroisse ajoutée aux favoris ♥' : 'Retiré des favoris');
+  _refreshFollowBtn();
+}
+
+function toggleFollowFromList(id) {
+  followed.has(id) ? followed.delete(id) : followed.add(id);
+  showToast(followed.has(id) ? 'Paroisse ajoutée aux favoris ♥' : 'Retiré des favoris');
+  const btn = document.getElementById('follow-' + id);
+  if (btn) {
+    btn.className = 'btn-sm ' + (followed.has(id) ? 'following' : 'follow');
+    btn.innerHTML = `<i class="ti ti-heart" aria-hidden="true"></i> ${followed.has(id) ? 'Suivi' : 'Suivre'}`;
+    btn.setAttribute('aria-label', (followed.has(id) ? 'Ne plus suivre ' : 'Suivre ') + (parishes.find(p=>p.id===id)||{}).name);
+  }
+}
+
+function _refreshFollowBtn() {
+  if (!currentParish) return;
+  const isFollowed = followed.has(currentParish.id);
+  const btn   = document.getElementById('btn-suivre');
+  const label = document.getElementById('btn-suivre-label');
+  label.textContent = isFollowed ? 'Suivi ✓' : 'Suivre';
+  if (isFollowed) {
+    btn.classList.add('following');
+  } else {
+    btn.classList.remove('following');
+  }
+}
+
+/* ────────────────────────────────────────
+   TOAST
+──────────────────────────────────────── */
+let _toastTimer;
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => el.classList.remove('show'), 2400);
+}
+
+/* ────────────────────────────────────────
+   INIT
+──────────────────────────────────────── */
+renderList();
+</script>
+</body>
+</html>

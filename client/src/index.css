@@ -1,0 +1,90 @@
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+@layer base {
+  html { scroll-behavior: smooth; }
+
+  body {
+    @apply bg-forest text-ivory font-body;
+    background: #0C0A06;
+    min-height: 100dvh;
+  }
+
+  h1, h2, h3 { @apply font-display; }
+
+  ::-webkit-scrollbar       { width: 6px; }
+  ::-webkit-scrollbar-track { background: #0f1a3d; }
+  ::-webkit-scrollbar-thumb { background: #2a3d7c; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #C9A84C; }
+
+  *:focus-visible {
+    outline: 2px solid #C9A84C;
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* Variables CSS pour les composants inline */
+  :root {
+    --color-background-primary:    #0C0A06;
+    --color-background-secondary:  #2E5C3E;
+    --color-text-primary:          #FAF7F0;
+    --color-text-secondary:        rgba(245,239,228,0.6);
+    --color-border-tertiary:       rgba(255,255,255,0.15);
+    --color-gold:                  #C8A84B;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 font-body font-medium
+           rounded-xl px-6 py-3 text-sm transition-all duration-200
+           focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2
+           focus-visible:ring-offset-forest disabled:opacity-50 disabled:cursor-not-allowed
+           active:scale-95;
+  }
+  .btn-primary {
+    @apply btn bg-gold text-forest-dark font-semibold hover:bg-gold-light
+           shadow-gold hover:shadow-[0_0_32px_rgba(201,168,76,0.4)];
+  }
+  .btn-ghost {
+    @apply btn border border-forest-light text-mist hover:border-gold hover:text-gold;
+  }
+  .btn-danger {
+    @apply btn bg-danger/10 text-red-400 border border-danger/30 hover:bg-danger/20;
+  }
+
+  .card {
+    @apply bg-charcoal/60 backdrop-blur-sm border border-forest-light/30
+           rounded-2xl p-5 shadow-card;
+  }
+  .card-glow {
+    @apply card border-gold/20 shadow-gold;
+  }
+
+  .input {
+    @apply w-full bg-forest-dark/60 border border-forest-light/40 rounded-xl
+           px-4 py-3 text-ivory placeholder:text-mist/50 text-sm
+           focus:outline-none focus:border-gold/60 focus:ring-1 focus:ring-gold/30
+           transition-colors duration-200;
+  }
+  .input-error { @apply border-danger/60 focus:border-danger focus:ring-danger/30; }
+
+  .label { @apply block text-xs font-medium text-mist mb-1.5 uppercase tracking-widest; }
+
+  .badge {
+    @apply inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full;
+  }
+  .badge-success { @apply badge bg-success/15 text-green-400 border border-success/30; }
+  .badge-warning { @apply badge bg-warning/15 text-yellow-400 border border-warning/30; }
+  .badge-danger  { @apply badge bg-danger/15 text-red-400 border border-danger/30; }
+  .badge-muted   { @apply badge bg-forest-light/20 text-mist border border-forest-light/30; }
+  .badge-gold    { @apply badge bg-gold/15 text-gold border border-gold/30; }
+
+  .section-title { @apply font-display text-2xl text-ivory font-semibold leading-tight; }
+  .section-sub   { @apply text-sm text-mist mt-1 font-body; }
+  .divider       { @apply border-t border-forest-light/30 my-6; }
+  .spinner       { @apply w-5 h-5 rounded-full border-2 border-forest-light border-t-gold animate-spin; }
+}
+/* Cacher navbar quand office ouvert */
+body.office-open nav { display: none !important; }

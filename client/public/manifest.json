@@ -1,0 +1,43 @@
+{
+  "name": "JANGU BI",
+  "short_name": "JANGU BI",
+  "description": "Votre communauté spirituelle numérique — Services en direct, dons, paroisses",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0D3B2E",
+  "theme_color": "#0D3B2E",
+  "orientation": "portrait-primary",
+  "lang": "fr",
+  "categories": ["lifestyle", "social"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Services en direct",
+      "short_name": "Live",
+      "description": "Voir les services en direct",
+      "url": "/live",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Faire un don",
+      "short_name": "Don",
+      "description": "Soutenir ma paroisse",
+      "url": "/donate",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}
