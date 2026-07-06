@@ -115,11 +115,9 @@ async function createUser(data) {
     return existing;
   }
 
-  // Hash password manuellement (pas de pre-save hook dans le seed pour la vitesse)
-  const salt = await bcrypt.genSalt(12);
-  const hashedPassword = await bcrypt.hash(data.password, salt);
-
-  const user = await User.create({ ...data, password: hashedPassword });
+  // Le modèle User a un hook pre('save') qui hache déjà le mot de passe.
+  // Ne PAS hacher ici pour éviter un double hachage (qui casse la comparaison au login).
+  const user = await User.create(data);
   log(`Created user: ${data.email} (${data.role})`);
   return user;
 }
