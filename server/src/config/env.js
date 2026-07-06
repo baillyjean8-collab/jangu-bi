@@ -1,5 +1,8 @@
 'use strict';
-require('dotenv').config({ path: require('path').join(__dirname, '../../.env') });
+// En développement: charger .env local. En production (Render): utiliser les variables d'env directement
+if (process.env.NODE_ENV !== 'production') {
+  require('dotenv').config({ path: require('path').join(__dirname, '../../.env') });
+}
 
 const env = process.env.NODE_ENV || 'development';
 const config = {
