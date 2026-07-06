@@ -41,7 +41,7 @@ async function boot() {
   app.set('io', io);
 
   // ── Step 6: Start listening ────────────────────────────────────────────────
-  const PORT = config.port || 5000;
+  const PORT = config.server.port;
   httpServer.listen(PORT, () => {
     console.log(`\n🚀 JANGU BI server running`);
     console.log(`   ENV:  ${config.env}`);
