@@ -29,6 +29,19 @@ export const postsApi = {
     const q = new URLSearchParams(params || {}).toString();
     return apiFetch('/posts' + (q ? '?' + q : ''));
   },
+  getMine: function(params) {
+    const q = new URLSearchParams(params || {}).toString();
+    return apiFetch('/posts/mine' + (q ? '?' + q : ''));
+  },
+  create: function(data) {
+    return apiFetch('/posts', { method: 'POST', body: JSON.stringify(data) });
+  },
+  update: function(id, data) {
+    return apiFetch('/posts/' + id, { method: 'PATCH', body: JSON.stringify(data) });
+  },
+  remove: function(id) {
+    return apiFetch('/posts/' + id, { method: 'DELETE' });
+  },
   like: function(id) { return apiFetch('/posts/' + id + '/like', { method: 'POST' }); },
   comment: function(id, text) {
     return apiFetch('/posts/' + id + '/comments', {
