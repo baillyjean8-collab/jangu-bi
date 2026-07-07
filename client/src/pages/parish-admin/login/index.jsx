@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../../context/AuthContext';
 
 const OR      = '#C8A84B';
 const VERT    = '#1e2d14';
@@ -8,6 +9,7 @@ const BOGOLAN_DARK = 'repeating-linear-gradient(0deg,transparent,transparent 8px
 
 export default function AdminLoginPage() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [identifiant, setIdentifiant] = useState('');
   const [motDePasse, setMotDePasse]   = useState('');
   const [loading, setLoading]         = useState(false);
@@ -21,31 +23,32 @@ export default function AdminLoginPage() {
     setLoading(true);
     setErreur('');
     try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: identifiant, password: motDePasse }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setErreur(data.message || 'Identifiants incorrects.');
-        return;
-      }
-      const role = data.data && data.data.user && data.data.user.role;
+      // Passe par le meme AuthContext que le login fidele :
+      // - remplit isAuthenticated pour toute l'app (accueil, prieres, lives, stories des autres paroisses)
+      // - garde le token en memoire via tokenStore, comme pour un fidele
+      const { user, accessToken } = await login({ email: identifiant, password: motDePasse });
+
+      const role = user && user.role;
       if (role !== 'parish_admin' && role !== 'super_admin') {
         setErreur('Ce compte ne dispose pas des droits administrateur paroissial.');
         return;
       }
-      const token = data.data && data.data.accessToken;
-      if (token) {
-        localStorage.setItem('jb_admin_token', token);
+
+      // Conserve aussi jb_admin_token / jb_admin_parish pour ne rien casser
+      // dans les pages de gestion existantes (dashboard, dons, fideles, etc.)
+      if (accessToken) {
+        localStorage.setItem('jb_admin_token', accessToken);
       }
-      if (data.data && data.data.user) {
-        localStorage.setItem('jb_admin_user', JSON.stringify(data.data.user));
+      if (user) {
+        localStorage.setItem('jb_admin_user', JSON.stringify(user));
+        if (user.parish) {
+          localStorage.setItem('jb_admin_parish', JSON.stringify(user.parish));
+        }
       }
+
       navigate('/parish-admin/dashboard');
     } catch (e) {
-      setErreur('Erreur de connexion. Vérifiez que le serveur est démarré.');
+      setErreur(e?.response?.data?.message || 'Identifiants incorrects.');
     } finally {
       setLoading(false);
     }
@@ -60,7 +63,7 @@ export default function AdminLoginPage() {
       <div style={{ fontSize: 11, color: 'rgba(200,168,75,0.55)', marginBottom: 8, textAlign: 'center' }}>Espace Administration Paroissiale</div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(200,168,75,0.1)', border: '1px solid rgba(200,168,75,0.2)', borderRadius: 20, padding: '4px 14px', marginBottom: 32 }}>
         <i className="ti ti-shield-check" style={{ fontSize: 12, color: OR }} />
-        <span style={{ fontSize: 9, color: OR, fontWeight: 700 }}>Accès réservé aux paroisses vérifiées</span>
+        <span style={{ fontSize: 9, color: OR, fontWeight: 700 }}>Acces reserve aux paroisses verifiees</span>
       </div>
 
       <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 20 }}>
@@ -81,7 +84,7 @@ export default function AdminLoginPage() {
             onChange={function(e) { setMotDePasse(e.target.value); }}
             onKeyDown={function(e) { if (e.key === 'Enter') handleLogin(); }}
             type="password"
-            placeholder="••••••••••"
+            placeholder="**********"
             style={{ width: '100%', background: 'rgba(255,255,255,0.06)', border: '1.5px solid rgba(200,168,75,0.2)', borderRadius: 12, padding: '12px 14px', fontSize: 12, color: IVOIRE, outline: 'none', fontFamily: 'Georgia,serif', boxSizing: 'border-box' }}
           />
         </div>
@@ -96,16 +99,16 @@ export default function AdminLoginPage() {
       </button>
 
       <div style={{ fontSize: 11, color: 'rgba(245,240,232,0.35)', textAlign: 'center', lineHeight: 1.7 }}>
-        Mot de passe oublié ? Contactez<br/>support@jangu-bi.sn
+        Mot de passe oublie ? Contactez<br/>support@jangu-bi.sn
       </div>
 
       <div style={{ marginTop: 24, padding: '12px 16px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(200,168,75,0.1)', borderRadius: 12, width: '100%' }}>
         <div style={{ fontSize: 9, color: 'rgba(245,240,232,0.3)', textAlign: 'center', lineHeight: 1.7 }}>
           Vous n'avez pas encore de compte paroisse ?<br/>
-          La création est soumise à validation diocésaine.
+          La creation est soumise a validation diocesaine.
         </div>
         <div style={{ fontSize: 10, color: OR, textAlign: 'center', marginTop: 8, cursor: 'pointer', fontWeight: 700, fontFamily: 'Georgia,serif' }}>
-          Faire une demande de création →
+          Faire une demande de creation
         </div>
       </div>
     </div>
