@@ -32,6 +32,17 @@ function formatTemps(date) {
   return 'A l\u2019instant';
 }
 
+const GESTION_ITEMS = [
+  { icon: 'ti-article',        titre: 'Publications & Stories', sous: 'Gerer vos posts et stories',    route: '/parish-admin/publications', couleur: '#2E5C3E' },
+  { icon: 'ti-file-description',titre: 'Demandes des fideles',  sous: 'Valider ou rejeter',              route: '/parish-admin/demandes',     couleur: '#b71c1c' },
+  { icon: 'ti-currency-dollar', titre: 'Dons & Campagnes',      sous: 'Campagnes et historique',         route: '/parish-admin/dons',         couleur: '#8B6020' },
+  { icon: 'ti-users',           titre: 'Fideles & Paroissiens', sous: 'Communaute et contacts',           route: '/parish-admin/fideles',      couleur: '#1565c0' },
+  { icon: 'ti-shield',          titre: 'Moderation',             sous: 'Commentaires signales',            route: '/parish-admin/moderation',   couleur: '#6a1b9a' },
+  { icon: 'ti-affiliate',       titre: 'Branches & Groupes',    sous: 'Chorale, Jeunes, Pastoral...',     route: '/parish-admin/branches',     couleur: '#2e7d32' },
+  { icon: 'ti-broadcast',       titre: 'Gestion Live',           sous: 'Lancer et gerer vos directs',      route: '/parish-admin/live',         couleur: '#c62828' },
+  { icon: 'ti-settings',        titre: 'Ma Paroisse',            sous: 'Infos, horaires, admins',          route: '/parish-admin/paroisse',     couleur: VERT },
+];
+
 const ONGLETS = [
   { id: "publications", label: "Publications" },
   { id: "messes", label: "Horaires messes" },
@@ -41,7 +52,7 @@ const ONGLETS = [
 export default function ParishDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
 
   const [onglet, setOnglet] = useState("publications");
   const [likees, setLikees] = useState([]);
@@ -179,6 +190,14 @@ export default function ParishDetail() {
   function handleProfil(e) {
     const file = e.target.files && e.target.files[0];
     if (file) setPhotoProfil(URL.createObjectURL(file));
+  }
+
+  async function handleLogout() {
+    try { await logout(); } catch (e) { /* ignore */ }
+    localStorage.removeItem('jb_admin_token');
+    localStorage.removeItem('jb_admin_user');
+    localStorage.removeItem('jb_admin_parish');
+    navigate('/login');
   }
 
   function ouvrirCreation() {
@@ -374,6 +393,41 @@ export default function ParishDetail() {
             })}
           </div>
         </div>
+
+        {isOwner && (
+          <div style={{ padding: "16px 16px 0" }}>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 18 }}>
+              <button onClick={ouvrirCreation} style={{ flex: 1, padding: '12px 0', borderRadius: 14, border: 'none', background: 'linear-gradient(135deg,#2E5C3E,#0D3B2E)', color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                <i className="ti ti-plus" style={{ fontSize: 16 }} /> Nouvelle pub.
+              </button>
+              <button onClick={function() { navigate('/parish-admin/live'); }} style={{ flex: 1, padding: '12px 0', borderRadius: 14, border: 'none', background: 'linear-gradient(135deg,#c62828,#8e1616)', color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                <i className="ti ti-broadcast" style={{ fontSize: 16 }} /> Lancer live
+              </button>
+            </div>
+
+            <div style={{ fontSize: 15, fontWeight: 800, color: VERT, marginBottom: 10, fontFamily: 'Georgia,serif' }}>Gestion de la paroisse</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 18 }}>
+              {GESTION_ITEMS.map(function(item, i) {
+                return (
+                  <div key={i} onClick={function() { navigate(item.route); }} style={{ background: '#fff', borderRadius: 14, padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', border: '1px solid #e8e4dc', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+                    <div style={{ width: 40, height: 40, borderRadius: 12, background: item.couleur + '18', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <i className={'ti ' + item.icon} style={{ fontSize: 18, color: item.couleur }} />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: '#2a2a2a' }}>{item.titre}</div>
+                      <div style={{ fontSize: 11, color: '#9A8E7E' }}>{item.sous}</div>
+                    </div>
+                    <i className="ti ti-chevron-right" style={{ fontSize: 16, color: '#ccc' }} />
+                  </div>
+                );
+              })}
+            </div>
+
+            <button onClick={handleLogout} style={{ width: '100%', padding: 13, background: 'rgba(229,57,53,0.08)', border: '1px solid rgba(229,57,53,0.2)', borderRadius: 14, color: '#e53935', fontWeight: 700, fontSize: 13, cursor: 'pointer', marginBottom: 8 }}>
+              Se deconnecter
+            </button>
+          </div>
+        )}
 
         <div style={{ padding: "16px 16px 0" }}>
 
