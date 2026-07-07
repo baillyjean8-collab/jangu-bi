@@ -147,6 +147,15 @@ export default function ProfilePage() {
   const { user, updateUser } = useAuth();
   const fileRef = useRef(null);
   const [activeTab, setActiveTab] = useState(0);
+
+  // Un admin (parish_admin / super_admin) voit la vitrine publique de sa paroisse
+  // a la place du profil fidele classique, comme une Page Facebook geree.
+  useEffect(function() {
+    const isAdmin = user && (user.role === 'parish_admin' || user.role === 'super_admin');
+    if (isAdmin && user.parishId) {
+      navigate('/parishes/' + user.parishId, { replace: true });
+    }
+  }, [user, navigate]);
   const [rawPhoto, setRawPhoto] = useState(null);
   const [showEditor, setShowEditor] = useState(false);
 

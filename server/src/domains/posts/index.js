@@ -9,7 +9,7 @@ const { asyncHandler } = require('../../middlewares/errorHandler');
 const { sendSuccess, sendCreated } = require('../../shared/utils/response');
 const { NotFoundError, AuthorizationError } = require('../../shared/errors');
 
-// ── Repository ─────────────────────────────────
+// -- Repository --------------------------------------------------
 const postRepo = {
   async create(data) {
     return Post.create(data);
@@ -17,6 +17,24 @@ const postRepo = {
 
   async findAll({ page = 1, limit = 10, parishId } = {}) {
     const filter = { isActive: true };
+    if (parishId) filter.parishId = parishId;
+    const [data, total] = await Promise.all([
+      Post.find(filter)
+        .populate('parishId', 'name logoUrl')
+        .populate('comments.userId', 'firstName lastName')
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .lean(),
+      Post.countDocuments(filter),
+    ]);
+    return { data, total };
+  },
+
+  // Comme findAll mais inclut aussi les publications masquees (isActive:false).
+  // Reserve a la gestion admin (page paroisse geree par l'admin, page Publications).
+  async findAllIncludingHidden({ page = 1, limit = 10, parishId } = {}) {
+    const filter = {};
     if (parishId) filter.parishId = parishId;
     const [data, total] = await Promise.all([
       Post.find(filter)
@@ -59,28 +77,44 @@ const postRepo = {
     return post;
   },
 
-  async deleteById(postId, parishId) {
+  async updateById(postId, parishId, updates, allowAnyParish) {
+    const filter = allowAnyParish ? { _id: postId } : { _id: postId, parishId };
+    return Post.findOneAndUpdate(filter, { $set: updates }, { new: true })
+      .populate('parishId', 'name logoUrl');
+  },
+
+  async deleteById(postId, parishId, allowAnyParish) {
+    const filter = allowAnyParish ? { _id: postId } : { _id: postId, parishId };
     return Post.findOneAndUpdate(
-      { _id: postId, parishId },
+      filter,
       { $set: { isActive: false } },
       { new: true }
     );
   },
 };
 
-// ── Controller ─────────────────────────────────
+// -- Controller ---------------------------------------------------
 const postController = {
   async create(req, res) {
-    const { content, imageUrl } = req.body;
+    const { content, imageUrl, type } = req.body;
     const parishId = req.user.parishId;
     if (!parishId) throw new AuthorizationError('No parish assigned');
-    const post = await postRepo.create({ parishId, content, imageUrl });
-    return sendCreated(res, { post }, 'Publication créée');
+    const post = await postRepo.create({ parishId, content, imageUrl, type });
+    return sendCreated(res, { post }, 'Publication creee');
   },
 
   async list(req, res) {
     const { page = 1, limit = 10, parishId } = req.query;
     const result = await postRepo.findAll({ page: +page, limit: +limit, parishId });
+    return sendSuccess(res, result);
+  },
+
+  // Utilise par l'admin (sa propre page de gestion) : inclut aussi les publications masquees
+  async listMine(req, res) {
+    const { page = 1, limit = 30 } = req.query;
+    const parishId = req.user.parishId;
+    if (!parishId) throw new AuthorizationError('No parish assigned');
+    const result = await postRepo.findAllIncludingHidden({ page: +page, limit: +limit, parishId });
     return sendSuccess(res, result);
   },
 
@@ -94,19 +128,45 @@ const postController = {
     return sendSuccess(res, { comments: post.comments });
   },
 
+  async update(req, res) {
+    const allowAny = req.user.role === 'super_admin';
+    const updates = {};
+    if (req.body.content !== undefined) updates.content = req.body.content;
+    if (req.body.imageUrl !== undefined) updates.imageUrl = req.body.imageUrl;
+    if (req.body.type !== undefined) updates.type = req.body.type;
+    if (req.body.isActive !== undefined) updates.isActive = req.body.isActive;
+    const post = await postRepo.updateById(req.params.id, req.user.parishId, updates, allowAny);
+    if (!post) throw new NotFoundError('Post');
+    return sendSuccess(res, { post }, 'Publication mise a jour');
+  },
+
   async delete(req, res) {
-    await postRepo.deleteById(req.params.id, req.user.parishId);
-    return sendSuccess(res, {}, 'Publication supprimée');
+    const allowAny = req.user.role === 'super_admin';
+    const post = await postRepo.deleteById(req.params.id, req.user.parishId, allowAny);
+    if (!post) throw new NotFoundError('Post');
+    return sendSuccess(res, {}, 'Publication masquee');
   },
 };
 
-// ── Routes ──────────────────────────────────────
+// -- Routes ---------------------------------------------------------
 router.get('/', asyncHandler(postController.list));
+
+router.get('/mine',
+  authenticate, requireVerified,
+  authorize('parish_admin', 'super_admin'),
+  asyncHandler(postController.listMine)
+);
 
 router.post('/',
   authenticate, requireVerified,
   authorize('parish_admin', 'super_admin'),
   asyncHandler(postController.create)
+);
+
+router.patch('/:id',
+  authenticate, requireVerified,
+  authorize('parish_admin', 'super_admin'),
+  asyncHandler(postController.update)
 );
 
 router.post('/:id/like',
