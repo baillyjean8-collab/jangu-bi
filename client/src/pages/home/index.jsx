@@ -138,6 +138,14 @@ export default function HomePage() {
   const initiales = ((user?.firstName?.[0] || 'M') + (user?.lastName?.[0] || 'D')).toUpperCase();
   const photo = user?.profilePhoto || null;
   const faithDays = user?.faithDays ?? 34;
+  const isAdmin = user?.role === 'parish_admin' || user?.role === 'super_admin';
+  function estMaParoisse(p) {
+    const nomParoisse = user?.parish?.name;
+    if (!nomParoisse) return false;
+    const a = p.nom.toLowerCase();
+    const b = nomParoisse.toLowerCase();
+    return a.includes(b) || b.includes(a);
+  }
 
   function toggleLike(i) {
     setLiked(l => ({ ...l, [i]: !l[i] }));
@@ -301,7 +309,7 @@ export default function HomePage() {
           {/* Salutation + Photo profil synchronisee */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
             <div>
-              <div style={{ fontFamily: 'Georgia,serif', fontSize: 24, fontWeight: 700, color: '#1e2d14', marginBottom: 2 }}>{prenom} {nom}</div>
+              <div style={{ fontFamily: 'Georgia,serif', fontSize: 24, fontWeight: 700, color: '#1e2d14', marginBottom: 2 }}>{isAdmin && user?.parish?.name ? user.parish.name : prenom + ' ' + nom}</div>
               <div style={{ fontSize: 13, color: '#7A6E5E', fontStyle: 'italic' }}>Que la paix soit avec vous 🙏</div>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, flexShrink: 0, marginLeft: 12 }}>
@@ -360,6 +368,15 @@ export default function HomePage() {
                     border: '2px solid #C8A84B', background: '#1e2d14', display: 'flex',
                     alignItems: 'center', justifyContent: 'center', fontSize: 9, color: 'white', fontWeight: 700,
                   }}>{p.initiales}</div>
+                  {isAdmin && estMaParoisse(p) && (
+                    <div onClick={function(e) { e.stopPropagation(); navigate('/parish-admin/publications'); }} style={{
+                      position: 'absolute', bottom: 6, right: 6, width: 20, height: 20, borderRadius: '50%',
+                      background: '#C8A84B', border: '2px solid white', display: 'flex',
+                      alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 2,
+                    }}>
+                      <i className="ti ti-plus" style={{ fontSize: 11, color: '#1e2d14' }} />
+                    </div>
+                  )}
                   <div style={{
                     position: 'absolute', bottom: 0, left: 0, right: 0,
                     background: 'linear-gradient(to top, rgba(0,0,0,0.7), transparent)', padding: '18px 6px 6px',
@@ -405,6 +422,23 @@ export default function HomePage() {
           </div>
 
         </div>
+
+        {isAdmin && (
+          <div style={{ padding: '0 16px', marginBottom: 12 }}>
+            <div onClick={function() { navigate('/parish-admin/publications'); }} style={{
+              background: 'white', border: '1.5px solid #C8A84B', borderRadius: 12, padding: '10px 12px',
+              display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer',
+            }}>
+              <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#C8A84B', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, color: '#1e2d14', fontWeight: 700, flexShrink: 0 }}>
+                {initiales}
+              </div>
+              <div style={{ flex: 1, fontSize: 11, color: '#8a8a7c' }}>
+                Publier une actualite{user?.parish?.name ? ' pour ' + user.parish.name : ''}...
+              </div>
+              <i className="ti ti-photo" style={{ fontSize: 15, color: '#8B6020' }} />
+            </div>
+          </div>
+        )}
 
         {/* FIL DE PUBLICATIONS */}
         <div style={{ padding: '0 16px', paddingBottom: 90, display: 'flex', flexDirection: 'column', gap: 12 }}>
