@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import AppShell from '../../components/AppShell';
 import { useAuth } from '../../context/AuthContext';
-import { parishesApi, postsApi } from '../../services/api';
+import { parishesApi, postsApi, storiesApi } from '../../services/api';
 
 const VERT = "#1e2d14";
 const OR = "#c8a84b";
@@ -54,6 +54,11 @@ export default function ParishDetail() {
   const [posts, setPosts] = useState([]);
   const [loadingPosts, setLoadingPosts] = useState(true);
 
+  const [stories, setStories] = useState([]);
+  const [showStoryForm, setShowStoryForm] = useState(false);
+  const [storyImageUrl, setStoryImageUrl] = useState('');
+  const [storyCaption, setStoryCaption] = useState('');
+
   const fileCouvertureRef = useRef(null);
   const fileProfilRef = useRef(null);
   const [photoCouverture, setPhotoCouverture] = useState(null);
@@ -101,11 +106,51 @@ export default function ParishDetail() {
       }
     }
 
+    async function loadStories() {
+      try {
+        const res = await storiesApi.getAll({ parishId: id });
+        const items = (res && res.data && res.data.stories) || [];
+        if (!cancelled) setStories(items);
+      } catch (e) {
+        console.log('Stories:', e.message);
+      }
+    }
+
     loadParoisse();
     loadPosts();
+    loadStories();
 
     return function() { cancelled = true; };
   }, [id]);
+
+  function rafraichirStories() {
+    storiesApi.getAll({ parishId: id }).then(function(res) {
+      const items = (res && res.data && res.data.stories) || [];
+      setStories(items);
+    }).catch(function(e) { console.log('Stories:', e.message); });
+  }
+
+  async function creerStory() {
+    if (!storyImageUrl.trim()) return;
+    try {
+      await storiesApi.create({ imageUrl: storyImageUrl.trim(), caption: storyCaption.trim() });
+      setStoryImageUrl('');
+      setStoryCaption('');
+      setShowStoryForm(false);
+      rafraichirStories();
+    } catch (e) {
+      console.log('Creer story:', e.message);
+    }
+  }
+
+  async function supprimerStory(storyId) {
+    try {
+      await storiesApi.remove(storyId);
+      rafraichirStories();
+    } catch (e) {
+      console.log('Supprimer story:', e.message);
+    }
+  }
 
   function rafraichirPosts() {
     postsApi.getAll({ parishId: id, limit: 30 }).then(function(res) {
@@ -332,6 +377,30 @@ export default function ParishDetail() {
 
         <div style={{ padding: "16px 16px 0" }}>
 
+          {isOwner && onglet === "publications" && (
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: VERT, fontFamily: 'Georgia,serif' }}>Vos stories (24h)</div>
+                <div onClick={function() { setShowStoryForm(true); }} style={{ fontSize: 11, color: '#8B6020', fontWeight: 700, cursor: 'pointer' }}>Nouvelle +</div>
+              </div>
+              <div style={{ display: 'flex', gap: 8, overflowX: 'auto' }}>
+                {stories.length === 0 && (
+                  <div style={{ fontSize: 11, color: '#9A8E7E', padding: '8px 0' }}>Aucune story active</div>
+                )}
+                {stories.map(function(s) {
+                  return (
+                    <div key={s._id} style={{ position: 'relative', width: 64, height: 90, borderRadius: 10, overflow: 'hidden', flexShrink: 0, border: '2px solid ' + OR }}>
+                      <img src={s.imageUrl} alt="story" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <button onClick={function() { supprimerStory(s._id); }} style={{ position: 'absolute', top: 3, right: 3, width: 18, height: 18, borderRadius: '50%', background: 'rgba(0,0,0,0.6)', border: 'none', color: '#fff', fontSize: 10, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <i className="ti ti-x" />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {onglet === "publications" && (
             <div>
               {loadingPosts && (
@@ -439,6 +508,26 @@ export default function ParishDetail() {
         <button onClick={ouvrirCreation} style={{ position: 'fixed', right: 20, bottom: 88, width: 52, height: 52, borderRadius: '50%', background: 'linear-gradient(135deg,#C8A84B,#8B6020)', border: 'none', boxShadow: '0 4px 14px rgba(0,0,0,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 100 }}>
           <i className="ti ti-plus" style={{ fontSize: 22, color: VERT }} />
         </button>
+      )}
+
+      {showStoryForm && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'flex-end', zIndex: 200 }}>
+          <div style={{ background: '#F5F0E8', borderRadius: '20px 20px 0 0', padding: '20px 16px 40px', width: '100%', maxWidth: 430, margin: '0 auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+              <div style={{ fontFamily: 'Georgia,serif', fontSize: 15, fontWeight: 700, color: VERT }}>Nouvelle story</div>
+              <button onClick={function() { setShowStoryForm(false); }} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: '#9A8E7E' }}>
+                <i className="ti ti-x" />
+              </button>
+            </div>
+            <div style={{ fontSize: 10, color: '#9A8E7E', marginBottom: 10 }}>Collez l'URL d'une image (l'upload direct n'est pas encore disponible).</div>
+            <input value={storyImageUrl} onChange={function(e) { setStoryImageUrl(e.target.value); }} placeholder="https://..." style={{ width: '100%', border: '1.5px solid rgba(200,168,75,0.2)', borderRadius: 12, padding: 12, fontSize: 12, color: VERT, fontFamily: 'Georgia,serif', background: 'white', outline: 'none', boxSizing: 'border-box', marginBottom: 10 }} />
+            <input value={storyCaption} onChange={function(e) { setStoryCaption(e.target.value); }} placeholder="Legende (optionnel)" style={{ width: '100%', border: '1.5px solid rgba(200,168,75,0.2)', borderRadius: 12, padding: 12, fontSize: 12, color: VERT, fontFamily: 'Georgia,serif', background: 'white', outline: 'none', boxSizing: 'border-box' }} />
+            <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+              <button onClick={function() { setShowStoryForm(false); }} style={{ flex: 1, padding: 11, background: 'none', border: '1.5px solid #e5e0d5', borderRadius: 12, color: '#7A6E5E', fontWeight: 700, fontSize: 12, fontFamily: 'Georgia,serif', cursor: 'pointer' }}>Annuler</button>
+              <button onClick={creerStory} style={{ flex: 2, padding: 11, background: 'linear-gradient(135deg,#1e2d14,#0a140a)', border: 'none', borderRadius: 12, color: OR, fontWeight: 700, fontSize: 12, fontFamily: 'Georgia,serif', cursor: 'pointer' }}>Publier la story</button>
+            </div>
+          </div>
+        </div>
       )}
 
       {showCreate && (

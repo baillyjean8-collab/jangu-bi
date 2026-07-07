@@ -79,7 +79,16 @@ export const notificationsApi = {
 };
 
 export const storiesApi = {
-  getAll: function() { return apiFetch('/stories'); },
+  getAll: function(params) {
+    const q = new URLSearchParams(params || {}).toString();
+    return apiFetch('/stories' + (q ? '?' + q : ''));
+  },
+  create: function(data) {
+    return apiFetch('/stories', { method: 'POST', body: JSON.stringify(data) });
+  },
+  remove: function(id) {
+    return apiFetch('/stories/' + id, { method: 'DELETE' });
+  },
 };
 
 export const liveApi = {
