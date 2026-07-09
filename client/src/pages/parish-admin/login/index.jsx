@@ -46,7 +46,7 @@ export default function AdminLoginPage() {
         }
       }
 
-      navigate('/parish-admin/dashboard');
+      navigate('/profile');
     } catch (e) {
       setErreur(e?.response?.data?.message || 'Identifiants incorrects.');
     } finally {

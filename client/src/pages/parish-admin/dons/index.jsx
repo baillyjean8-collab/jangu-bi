@@ -48,7 +48,7 @@ export default function AdminDons() {
     <AdminShell>
       <div style={{ background: '#0C0A06', backgroundImage: BD, padding: '44px 14px 14px', borderRadius: '0 0 24px 24px', marginBottom: 14 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-          <button onClick={function() { navigate('/parish-admin/dashboard'); }} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+          <button onClick={function() { navigate('/profile'); }} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
             <i className="ti ti-arrow-left" style={{ fontSize: 20, color: OR }} />
           </button>
           <div style={{ fontFamily: 'Georgia,serif', fontSize: 18, fontWeight: 900, color: IVOIRE }}>Dons & Campagnes</div>
