@@ -22,6 +22,13 @@ function AppShell({ children, hideNav }) {
   const photo = user?.profilePhoto || null;
   const isProfile = location.pathname === '/profile';
 
+  // Cas particulier : un admin dont /profile redirige vers /parishes/:id (sa propre
+  // paroisse) doit voir l'icone Profil active, pas l'icone Paroisses.
+  const estSurSaPropreParoisse = !!(
+    user && user.parishId &&
+    location.pathname === '/parishes/' + user.parishId
+  );
+
   return (
     <div style={{ background: '#f5f5f0', minHeight: '100vh', display: 'flex', justifyContent: 'center' }}>
       <div style={{ width: '100%', maxWidth: '430px', background: '#F5F0E8', minHeight: '100vh', boxShadow: '0 10px 25px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', paddingBottom: hideNav ? 0 : '72px', boxSizing: 'border-box' }}>
@@ -53,8 +60,15 @@ function AppShell({ children, hideNav }) {
           WebkitOverflowScrolling: 'touch',
         }}>
           {menuItems.map((item, idx) => {
-            const isActive = location.pathname === item.path ||
+            let isActive = location.pathname === item.path ||
               (item.path !== '/' && location.pathname.startsWith(item.path));
+
+            // Override pour le cas particulier ci-dessus
+            if (estSurSaPropreParoisse) {
+              if (item.path === '/parishes') isActive = false;
+              if (item.path === '/profile') isActive = true;
+            }
+
             const isLast = idx === menuItems.length - 1;
             return (
               <Link key={idx} to={item.path} style={{
