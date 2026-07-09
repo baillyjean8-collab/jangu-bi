@@ -44,7 +44,8 @@ export const postsApi = {
   },
   like: function(id) { return apiFetch('/posts/' + id + '/like', { method: 'POST' }); },
   comment: function(id, text) {
-    return apiFetch('/posts/' + id + '/comments', {
+    // Route reelle cote backend : /posts/:id/comment (singulier), pas /comments
+    return apiFetch('/posts/' + id + '/comment', {
       method: 'POST', body: JSON.stringify({ text })
     });
   },

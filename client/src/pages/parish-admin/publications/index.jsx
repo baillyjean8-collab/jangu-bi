@@ -162,7 +162,7 @@ export default function AdminPublications() {
         )}
         {filtrees.map(function(post) {
           const type = TYPES_PUB.find(function(t) { return t.id === (post.type || '').toLowerCase(); }) || TYPES_PUB[0];
-          const archive = post.isPublished === false;
+          const archive = post.isActive === false;
           return (
             <div key={post._id} style={{ background: 'white', borderRadius: 16, padding: 14, border: '1px solid rgba(0,0,0,0.06)', opacity: archive ? 0.7 : 1 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>

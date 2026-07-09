@@ -93,19 +93,22 @@ export default function HomePage() {
           const items = Array.isArray(data.data) ? data.data : (data.data.items || data.data.data || []);
           if (items.length > 0) {
             // Transformer les posts backend en format attendu par le composant
+            // Les vraies publications sont affichees via le meme rendu que les
+            // publications 'normal' (texte simple) : les champs riches
+            // (media, don avec barre de progression) n'existent pas encore
+            // sur les vraies publications recuperees depuis l'API.
             const formatted = items.map(p => ({
-              id: p._id,
-              _id: p._id,
-              paroisse: p.parishId && p.parishId.name ? p.parishId.name : 'Paroisse',
+              type: 'normal',
               initiales: p.parishId && p.parishId.name ? p.parishId.name.substring(0,2).toUpperCase() : 'SC',
+              bg: '#2E5C3E',
+              paroisse: p.parishId && p.parishId.name ? p.parishId.name : 'Paroisse',
               temps: formatTempsPost(p.createdAt),
-              contenu: p.content || p.text || '',
+              texte: p.content || p.text || '',
               likes: p.likes ? p.likes.length : 0,
               comments: p.comments ? p.comments.length : 0,
-              type: p.type || 'NORMAL',
-              image: p.imageUrl || null,
+              commentsList: [],
             }));
-            setPosts(formatted);
+            setPostsState(formatted);
           }
         }
       } catch(e) {
