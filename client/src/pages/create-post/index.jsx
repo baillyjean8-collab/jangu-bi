@@ -1,8 +1,8 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppShell from '../../components/AppShell';
 import { useAuth } from '../../context/AuthContext';
-import { postsApi, storiesApi } from '../../services/api';
+import { postsApi } from '../../services/api';
 
 const VERT = '#1e2d14';
 const OR   = '#C8A84B';
@@ -17,92 +17,16 @@ const TYPES_PUB = [
   { id: 'MEDIA',       label: 'Media',       color: 'rgba(183,28,28,0.08)', tc: '#b71c1c' },
 ];
 
-const FILTRES = [
-  { id: 'normal',     label: 'Normal',     css: 'none' },
-  { id: 'vif',        label: 'Vif',        css: 'saturate(1.6) contrast(1.05)' },
-  { id: 'chaleureux', label: 'Chaleureux', css: 'sepia(0.35) saturate(1.2)' },
-  { id: 'nb',         label: 'N&B',        css: 'grayscale(1)' },
-  { id: 'contraste',  label: 'Contraste',  css: 'contrast(1.4)' },
-];
-
-const AUTO_ADJUST_CSS = 'contrast(1.12) saturate(1.18) brightness(1.04)';
-
-function detecterType(url) {
-  const u = url.toLowerCase();
-  if (u.match(/\.(mp4|mov|webm|m4v)(\?|$)/)) return 'video';
-  return 'image';
-}
-
 export default function CreatePostPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
-
   const [typePub, setTypePub]     = useState('NORMAL');
   const [texte, setTexte]         = useState('');
+  const [imageUrl, setImageUrl]   = useState('');
   const [publishing, setPublishing] = useState(false);
   const [erreur, setErreur]       = useState('');
-  const [aussiEnStory, setAussiEnStory] = useState(false);
-
-  const [mediaItems, setMediaItems] = useState([]); // [{ url, kind, filtre, auto }]
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [showFiltres, setShowFiltres] = useState(false);
-  const [showAjoutMedia, setShowAjoutMedia] = useState(false);
-  const [nouvelleUrl, setNouvelleUrl] = useState('');
-  const [effetsMessage, setEffetsMessage] = useState('');
 
   const initiales = ((user?.firstName?.[0] || '') + (user?.lastName?.[0] || '')).toUpperCase() || 'MD';
-  const activeMedia = mediaItems[activeIndex] || null;
-
-  function ajouterMedia() {
-    const url = nouvelleUrl.trim();
-    if (!url) return;
-    const item = { url, kind: detecterType(url), filtre: 'normal', auto: false };
-    setMediaItems(function(prev) {
-      const next = [...prev, item];
-      setActiveIndex(next.length - 1);
-      return next;
-    });
-    setNouvelleUrl('');
-    setShowAjoutMedia(false);
-  }
-
-  function retirerMediaActif() {
-    setMediaItems(function(prev) {
-      const next = prev.filter(function(_, i) { return i !== activeIndex; });
-      setActiveIndex(0);
-      return next;
-    });
-  }
-
-  function toggleAutoAjust() {
-    setMediaItems(function(prev) {
-      return prev.map(function(m, i) {
-        if (i !== activeIndex) return m;
-        return { ...m, auto: !m.auto };
-      });
-    });
-  }
-
-  function choisirFiltre(filtreId) {
-    setMediaItems(function(prev) {
-      return prev.map(function(m, i) {
-        if (i !== activeIndex) return m;
-        return { ...m, filtre: filtreId };
-      });
-    });
-  }
-
-  function styleFiltreActif() {
-    if (!activeMedia) return 'none';
-    const parts = [];
-    if (activeMedia.auto) parts.push(AUTO_ADJUST_CSS);
-    const f = FILTRES.find(function(x) { return x.id === activeMedia.filtre; });
-    if (f && f.css !== 'none') parts.push(f.css);
-    return parts.length ? parts.join(' ') : 'none';
-  }
-
-  const premiereImage = mediaItems.find(function(m) { return m.kind === 'image'; });
-  const peutStory = !!premiereImage;
 
   async function publier() {
     if (!texte.trim()) {
@@ -112,24 +36,14 @@ export default function CreatePostPage() {
     setPublishing(true);
     setErreur('');
     try {
-      // Limite reelle actuelle du modele : une seule image par publication.
-      // On envoie donc la premiere image selectionnee, s'il y en a une.
-      const premiereUrl = mediaItems.length > 0 ? mediaItems[0].url : undefined;
-
       await postsApi.create({
         content: texte.trim(),
         type: typePub,
-        imageUrl: premiereUrl,
+        imageUrl: imageUrl.trim() || undefined,
       });
-
-      if (aussiEnStory && peutStory) {
-        try {
-          await storiesApi.create({ imageUrl: premiereImage.url, caption: texte.trim() });
-        } catch (e) {
-          console.log('Story:', e.message);
-        }
-      }
-
+      // Publication reussie : l'accueil et le profil rechargent les vraies
+      // donnees a chaque affichage, donc revenir en arriere suffit pour que
+      // la nouvelle publication apparaisse partout (admin + visiteurs).
       navigate(-1);
     } catch (e) {
       setErreur(e?.message || 'Une erreur est survenue, veuillez reessayer.');
@@ -151,7 +65,7 @@ export default function CreatePostPage() {
 
         <div style={{ padding: 16 }}>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 18 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
             <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'linear-gradient(135deg,#C8A84B,#8B7030)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: VERT }}>
               {initiales}
             </div>
@@ -176,120 +90,27 @@ export default function CreatePostPage() {
             value={texte}
             onChange={function(e) { setTexte(e.target.value); setErreur(''); }}
             placeholder="Partagez une nouvelle avec vos fideles..."
-            style={{ width: '100%', border: '1.5px solid rgba(200,168,75,0.25)', borderRadius: 14, padding: 14, fontSize: 13, color: VERT, fontFamily: 'Georgia,serif', resize: 'none', height: 120, background: 'white', outline: 'none', boxSizing: 'border-box', marginBottom: 18 }}
+            style={{ width: '100%', border: '1.5px solid rgba(200,168,75,0.25)', borderRadius: 14, padding: 14, fontSize: 13, color: VERT, fontFamily: 'Georgia,serif', resize: 'none', height: 140, background: 'white', outline: 'none', boxSizing: 'border-box', marginBottom: 16 }}
           />
 
           <div style={{ fontSize: 11, color: '#9A8E7E', fontWeight: 700, marginBottom: 8, letterSpacing: '.04em' }}>MEDIA (OPTIONNEL)</div>
-
-          {mediaItems.length === 0 && (
-            <div onClick={function() { setShowAjoutMedia(true); }} style={{ background: 'rgba(200,168,75,0.06)', border: '1.5px dashed rgba(200,168,75,0.35)', borderRadius: 14, padding: '34px 16px', textAlign: 'center', marginBottom: 18, cursor: 'pointer' }}>
-              <div style={{ fontSize: 28, marginBottom: 8 }}>+</div>
-              <div style={{ fontSize: 12, color: '#8B6020', fontWeight: 700 }}>Ajouter une photo ou une video</div>
-              <div style={{ fontSize: 10, color: '#9A8E7E', marginTop: 4 }}>Une ou plusieurs, avec ajustements et filtres</div>
+          <div style={{ background: 'rgba(200,168,75,0.06)', border: '1px dashed rgba(200,168,75,0.3)', borderRadius: 12, padding: 12, marginBottom: 6 }}>
+            <div style={{ fontSize: 10, color: '#8a6d00', marginBottom: 8 }}>
+              L'envoi direct d'une photo/video depuis votre appareil n'est pas encore disponible. En attendant, vous pouvez coller l'URL d'une image deja hebergee en ligne.
             </div>
-          )}
-
-          {mediaItems.length > 0 && (
-            <div style={{ position: 'relative', borderRadius: 14, overflow: 'hidden', height: 260, marginBottom: 18, background: '#0C0A06' }}>
-
-              {activeMedia.kind === 'video' ? (
-                <video src={activeMedia.url} style={{ width: '100%', height: '100%', objectFit: 'cover', filter: styleFiltreActif() }} muted loop autoPlay playsInline />
-              ) : (
-                <img src={activeMedia.url} alt="media" style={{ width: '100%', height: '100%', objectFit: 'cover', filter: styleFiltreActif() }} onError={function(e) { e.target.style.opacity = 0.2; }} />
-              )}
-
-              <button onClick={retirerMediaActif} style={{ position: 'absolute', top: 12, left: 12, width: 30, height: 30, borderRadius: '50%', background: 'rgba(0,0,0,0.45)', border: 'none', color: '#fff', fontSize: 14, cursor: 'pointer', zIndex: 2 }}>
-                <i className="ti ti-x" />
-              </button>
-
-              {mediaItems.length > 1 && (
-                <div style={{ position: 'absolute', top: 16, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 4, zIndex: 2 }}>
-                  {mediaItems.map(function(_, i) {
-                    return (
-                      <div key={i} onClick={function() { setActiveIndex(i); }} style={{ width: i === activeIndex ? 16 : 6, height: 6, borderRadius: 3, background: i === activeIndex ? '#fff' : 'rgba(255,255,255,0.4)', cursor: 'pointer', transition: 'all .2s' }} />
-                    );
-                  })}
-                </div>
-              )}
-
-              <button onClick={function() { setShowAjoutMedia(true); }} style={{ position: 'absolute', top: 12, right: 56, width: 34, height: 34, borderRadius: '50%', background: 'rgba(0,0,0,0.45)', border: 'none', color: '#fff', fontSize: 16, cursor: 'pointer', zIndex: 2 }}>
-                +
-              </button>
-
-              <div style={{ position: 'absolute', top: 12, right: 12, display: 'flex', flexDirection: 'column', gap: 10, zIndex: 2 }}>
-                <button onClick={toggleAutoAjust} style={{ width: 34, height: 34, borderRadius: '50%', border: 'none', cursor: 'pointer', background: activeMedia.auto ? OR : 'rgba(0,0,0,0.45)', color: activeMedia.auto ? VERT : '#fff', fontSize: 14 }} title="Ajustement automatique">
-                  <i className="ti ti-sparkles" />
-                </button>
-                <button onClick={function() { setShowFiltres(function(v) { return !v; }); }} style={{ width: 34, height: 34, borderRadius: '50%', border: 'none', cursor: 'pointer', background: showFiltres ? OR : 'rgba(0,0,0,0.45)', color: showFiltres ? VERT : '#fff', fontSize: 14 }} title="Filtres">
-                  <i className="ti ti-palette" />
-                </button>
-                <button onClick={function() { setEffetsMessage('Effets avances bientot disponibles.'); setTimeout(function() { setEffetsMessage(''); }, 2500); }} style={{ width: 34, height: 34, borderRadius: '50%', border: 'none', cursor: 'pointer', background: 'rgba(0,0,0,0.45)', color: '#fff', fontSize: 14 }} title="Effets">
-                  <i className="ti ti-sun" />
-                </button>
-              </div>
-
-              {effetsMessage && (
-                <div style={{ position: 'absolute', bottom: showFiltres ? 74 : 12, left: 12, right: 12, background: 'rgba(0,0,0,0.7)', color: '#fff', fontSize: 10, padding: '6px 10px', borderRadius: 8, textAlign: 'center', zIndex: 3 }}>
-                  {effetsMessage}
-                </div>
-              )}
-
-              {showFiltres && (
-                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.6), transparent)', padding: '26px 10px 10px', display: 'flex', gap: 8, overflowX: 'auto', zIndex: 2 }}>
-                  {FILTRES.map(function(f) {
-                    const actif = activeMedia.filtre === f.id;
-                    return (
-                      <div key={f.id} onClick={function() { choisirFiltre(f.id); }} style={{ flexShrink: 0, textAlign: 'center', cursor: 'pointer' }}>
-                        <div style={{ width: 38, height: 38, borderRadius: 8, backgroundImage: activeMedia.kind === 'image' ? 'url(' + activeMedia.url + ')' : 'none', backgroundColor: '#333', backgroundSize: 'cover', backgroundPosition: 'center', filter: f.css, border: actif ? '2px solid ' + OR : '1.5px solid rgba(255,255,255,0.4)' }} />
-                        <div style={{ fontSize: 8, color: '#fff', marginTop: 3 }}>{f.label}</div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          )}
-
-          {showAjoutMedia && (
-            <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'flex-end', zIndex: 200 }}>
-              <div style={{ background: '#F5F0E8', borderRadius: '20px 20px 0 0', padding: '20px 16px 40px', width: '100%', maxWidth: 430, margin: '0 auto' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                  <div style={{ fontFamily: 'Georgia,serif', fontSize: 15, fontWeight: 700, color: VERT }}>Ajouter un media</div>
-                  <button onClick={function() { setShowAjoutMedia(false); setNouvelleUrl(''); }} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: '#9A8E7E' }}>
-                    <i className="ti ti-x" />
-                  </button>
-                </div>
-                <div style={{ fontSize: 10, color: '#9A8E7E', marginBottom: 10 }}>
-                  L'envoi direct depuis votre appareil n'est pas encore disponible. Collez l'URL d'une photo ou d'une video en attendant (detection automatique du type).
-                </div>
-                <input
-                  value={nouvelleUrl}
-                  onChange={function(e) { setNouvelleUrl(e.target.value); }}
-                  onKeyDown={function(e) { if (e.key === 'Enter') ajouterMedia(); }}
-                  placeholder="https://..."
-                  style={{ width: '100%', border: '1.5px solid rgba(200,168,75,0.25)', borderRadius: 12, padding: 12, fontSize: 12, color: VERT, fontFamily: 'Georgia,serif', background: 'white', outline: 'none', boxSizing: 'border-box', marginBottom: 14 }}
-                />
-                <button onClick={ajouterMedia} style={{ width: '100%', padding: 12, background: 'linear-gradient(135deg,#1e2d14,#0a140a)', border: 'none', borderRadius: 12, color: OR, fontWeight: 700, fontSize: 13, fontFamily: 'Georgia,serif', cursor: 'pointer' }}>
-                  Ajouter
-                </button>
-              </div>
-            </div>
-          )}
-
-          {peutStory && (
-            <div onClick={function() { setAussiEnStory(function(v) { return !v; }); }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#fff', border: '1px solid rgba(0,0,0,0.06)', borderRadius: 12, padding: '12px 14px', marginBottom: 20, cursor: 'pointer' }}>
-              <div>
-                <div style={{ fontSize: 12, fontWeight: 700, color: VERT }}>Publier aussi en story</div>
-                <div style={{ fontSize: 10, color: '#9A8E7E' }}>Visible 24h en plus de la publication</div>
-              </div>
-              <div style={{ width: 42, height: 24, borderRadius: 20, background: aussiEnStory ? OR : '#e5e0d5', position: 'relative', transition: 'background .2s', flexShrink: 0 }}>
-                <div style={{ width: 18, height: 18, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3, left: aussiEnStory ? 21 : 3, transition: 'left .2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
-              </div>
-            </div>
-          )}
+            <input
+              value={imageUrl}
+              onChange={function(e) { setImageUrl(e.target.value); }}
+              placeholder="https://..."
+              style={{ width: '100%', border: '1px solid rgba(200,168,75,0.25)', borderRadius: 10, padding: '10px 12px', fontSize: 12, color: VERT, fontFamily: 'Georgia,serif', background: 'white', outline: 'none', boxSizing: 'border-box' }}
+            />
+            {imageUrl.trim() && (
+              <img src={imageUrl.trim()} alt="apercu" style={{ width: '100%', maxHeight: 160, objectFit: 'cover', borderRadius: 10, marginTop: 10 }} onError={function(e) { e.target.style.display = 'none'; }} />
+            )}
+          </div>
 
           {erreur && (
-            <div style={{ marginBottom: 12, padding: '10px 14px', background: 'rgba(229,57,53,0.08)', border: '1px solid rgba(229,57,53,0.2)', borderRadius: 10, fontSize: 12, color: '#e53935' }}>
+            <div style={{ marginTop: 12, padding: '10px 14px', background: 'rgba(229,57,53,0.08)', border: '1px solid rgba(229,57,53,0.2)', borderRadius: 10, fontSize: 12, color: '#e53935' }}>
               {erreur}
             </div>
           )}
@@ -297,7 +118,7 @@ export default function CreatePostPage() {
           <button
             onClick={publier}
             disabled={publishing}
-            style={{ width: '100%', padding: 14, background: publishing ? 'rgba(200,168,75,0.5)' : 'linear-gradient(135deg,#C8A84B,#8B6020)', border: 'none', borderRadius: 14, color: VERT, fontWeight: 700, fontSize: 14, fontFamily: 'Georgia,serif', cursor: publishing ? 'default' : 'pointer' }}
+            style={{ width: '100%', marginTop: 20, padding: 14, background: publishing ? 'rgba(200,168,75,0.5)' : 'linear-gradient(135deg,#C8A84B,#8B6020)', border: 'none', borderRadius: 14, color: VERT, fontWeight: 700, fontSize: 14, fontFamily: 'Georgia,serif', cursor: publishing ? 'default' : 'pointer' }}
           >
             {publishing ? 'Publication en cours...' : 'Publier'}
           </button>
