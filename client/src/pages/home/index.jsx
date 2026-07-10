@@ -372,7 +372,7 @@ export default function HomePage() {
                     alignItems: 'center', justifyContent: 'center', fontSize: 9, color: 'white', fontWeight: 700,
                   }}>{p.initiales}</div>
                   {isAdmin && estMaParoisse(p) && (
-                    <div onClick={function(e) { e.stopPropagation(); navigate('/profile'); }} style={{
+                    <div onClick={function(e) { e.stopPropagation(); navigate('/create'); }} style={{
                       position: 'absolute', bottom: 6, right: 6, width: 20, height: 20, borderRadius: '50%',
                       background: '#C8A84B', border: '2px solid white', display: 'flex',
                       alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 2,
@@ -428,7 +428,7 @@ export default function HomePage() {
 
         {isAdmin && (
           <div style={{ padding: '0 16px', marginBottom: 12 }}>
-            <div onClick={function() { navigate('/profile'); }} style={{
+            <div onClick={function() { navigate('/create'); }} style={{
               background: 'white', border: '1.5px solid #C8A84B', borderRadius: 12, padding: '10px 12px',
               display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer',
             }}>

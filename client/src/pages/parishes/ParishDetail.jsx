@@ -391,7 +391,7 @@ export default function ParishDetail() {
           {isOwner && onglet === "publications" && (
             <div style={{ marginBottom: 16 }}>
               <div style={{ display: 'flex', gap: 8, marginBottom: 18 }}>
-                <button onClick={ouvrirCreation} style={{ flex: 1, padding: '12px 0', borderRadius: 14, border: 'none', background: 'linear-gradient(135deg,#2E5C3E,#0D3B2E)', color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                <button onClick={function() { navigate('/create'); }} style={{ flex: 1, padding: '12px 0', borderRadius: 14, border: 'none', background: 'linear-gradient(135deg,#2E5C3E,#0D3B2E)', color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
                   <i className="ti ti-plus" style={{ fontSize: 16 }} /> Nouvelle pub.
                 </button>
                 <button onClick={function() { navigate('/parish-admin/live'); }} style={{ flex: 1, padding: '12px 0', borderRadius: 14, border: 'none', background: 'linear-gradient(135deg,#c62828,#8e1616)', color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
@@ -553,7 +553,7 @@ export default function ParishDetail() {
       </div>
 
       {isOwner && onglet === 'publications' && (
-        <button onClick={ouvrirCreation} style={{ position: 'fixed', right: 20, bottom: 88, width: 52, height: 52, borderRadius: '50%', background: 'linear-gradient(135deg,#C8A84B,#8B6020)', border: 'none', boxShadow: '0 4px 14px rgba(0,0,0,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 100 }}>
+        <button onClick={function() { navigate('/create'); }} style={{ position: 'fixed', right: 20, bottom: 88, width: 52, height: 52, borderRadius: '50%', background: 'linear-gradient(135deg,#C8A84B,#8B6020)', border: 'none', boxShadow: '0 4px 14px rgba(0,0,0,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 100 }}>
           <i className="ti ti-plus" style={{ fontSize: 22, color: VERT }} />
         </button>
       )}

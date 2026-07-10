@@ -2,6 +2,8 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 // Pages
 import HomePage from './pages/home';
+import CreatePostPage from './pages/create-post';
+import CreatePostPage from './pages/create-post';
 import AnnouncementsPage from './pages/announcements';
 import { ParishesPage } from './pages/parishes';
 import ParishDetail from './pages/parishes/ParishDetail';
@@ -48,6 +50,8 @@ export default function App() {
             <Route path="/"             element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
             <Route path="/home"         element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
             <Route path="/accueil"      element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
+            <Route path="/create"       element={<ProtectedRoute><CreatePostPage /></ProtectedRoute>} />
+            <Route path="/create"       element={<ProtectedRoute><CreatePostPage /></ProtectedRoute>} />
             <Route path="/parishes"     element={<ProtectedRoute><ParishesPage /></ProtectedRoute>} />
             <Route path="/parishes/:id" element={<ProtectedRoute><ParishDetail /></ProtectedRoute>} />
             <Route path="/announcements" element={<ProtectedRoute><AnnouncementsPage /></ProtectedRoute>} />
