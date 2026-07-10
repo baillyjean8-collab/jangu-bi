@@ -372,7 +372,7 @@ export default function HomePage() {
                     alignItems: 'center', justifyContent: 'center', fontSize: 9, color: 'white', fontWeight: 700,
                   }}>{p.initiales}</div>
                   {isAdmin && estMaParoisse(p) && (
-                    <div onClick={function(e) { e.stopPropagation(); navigate('/parish-admin/publications'); }} style={{
+                    <div onClick={function(e) { e.stopPropagation(); navigate('/profile'); }} style={{
                       position: 'absolute', bottom: 6, right: 6, width: 20, height: 20, borderRadius: '50%',
                       background: '#C8A84B', border: '2px solid white', display: 'flex',
                       alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 2,
