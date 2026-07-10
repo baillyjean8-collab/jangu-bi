@@ -81,6 +81,21 @@ export default function CreatePostPage() {
     });
   }
 
+  function enregistrerRatio(largeur, hauteur) {
+    if (!largeur || !hauteur) return;
+    let ratio = largeur / hauteur;
+    // Limites raisonnables (comme Instagram) pour eviter un cadre demesurement
+    // haut (portrait extreme) ou large (panoramique extreme).
+    if (ratio < 0.8) ratio = 0.8;
+    if (ratio > 1.91) ratio = 1.91;
+    setMediaItems(function(prev) {
+      return prev.map(function(m, i) {
+        if (i !== activeIndex) return m;
+        return { ...m, ratio: ratio };
+      });
+    });
+  }
+
   function toggleRognage() {
     setMediaItems(function(prev) {
       return prev.map(function(m, i) {
@@ -221,12 +236,12 @@ export default function CreatePostPage() {
           )}
 
           {mediaItems.length > 0 && (
-            <div style={{ position: 'relative', borderRadius: 14, overflow: 'hidden', height: 260, marginBottom: 12, background: '#0C0A06' }}>
+            <div style={{ position: 'relative', borderRadius: 14, overflow: 'hidden', marginBottom: 12, background: '#0C0A06', ...(activeMedia.mode === 'cover' ? { height: 260 } : { aspectRatio: (activeMedia.ratio || 1) + ' / 1', maxHeight: 480 }) }}>
 
               {activeMedia.kind === 'video' ? (
-                <video src={activeMedia.url} style={{ width: '100%', height: '100%', objectFit: activeMedia.mode === 'cover' ? 'cover' : 'contain', backgroundColor: '#000', transform: activeMedia.mode === 'cover' ? 'scale(' + activeMedia.zoom + ')' : 'none', filter: styleFiltreActif() }} muted loop autoPlay playsInline />
+                <video src={activeMedia.url} onLoadedMetadata={function(e) { enregistrerRatio(e.target.videoWidth, e.target.videoHeight); }} style={{ width: '100%', height: '100%', objectFit: 'cover', transform: activeMedia.mode === 'cover' ? 'scale(' + activeMedia.zoom + ')' : 'none', filter: styleFiltreActif() }} muted loop autoPlay playsInline />
               ) : (
-                <img src={activeMedia.url} alt="media" style={{ width: '100%', height: '100%', objectFit: activeMedia.mode === 'cover' ? 'cover' : 'contain', backgroundColor: '#000', transform: activeMedia.mode === 'cover' ? 'scale(' + activeMedia.zoom + ')' : 'none', filter: styleFiltreActif() }} onError={function(e) { e.target.style.opacity = 0.2; }} />
+                <img src={activeMedia.url} alt="media" onLoad={function(e) { enregistrerRatio(e.target.naturalWidth, e.target.naturalHeight); }} style={{ width: '100%', height: '100%', objectFit: 'cover', transform: activeMedia.mode === 'cover' ? 'scale(' + activeMedia.zoom + ')' : 'none', filter: styleFiltreActif() }} onError={function(e) { e.target.style.opacity = 0.2; }} />
               )}
 
               <button onClick={retirerMediaActif} style={{ position: 'absolute', top: 12, left: 12, width: 30, height: 30, borderRadius: '50%', background: 'rgba(0,0,0,0.45)', border: 'none', color: '#fff', fontSize: 14, cursor: 'pointer', zIndex: 2 }}>
