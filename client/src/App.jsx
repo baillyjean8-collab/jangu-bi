@@ -3,7 +3,6 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 // Pages
 import HomePage from './pages/home';
 import CreatePostPage from './pages/create-post';
-import CreatePostPage from './pages/create-post';
 import AnnouncementsPage from './pages/announcements';
 import { ParishesPage } from './pages/parishes';
 import ParishDetail from './pages/parishes/ParishDetail';
