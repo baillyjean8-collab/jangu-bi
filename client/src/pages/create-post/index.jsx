@@ -61,6 +61,8 @@ export default function CreatePostPage() {
         filtre: 'normal',
         auto: false,
         local: true,
+        mode: 'contain', // image entiere visible par defaut, rien n'est coupe
+        zoom: 1,
       };
     });
     setMediaItems(function(prev) {
@@ -76,6 +78,24 @@ export default function CreatePostPage() {
       const next = prev.filter(function(_, i) { return i !== activeIndex; });
       setActiveIndex(0);
       return next;
+    });
+  }
+
+  function toggleRognage() {
+    setMediaItems(function(prev) {
+      return prev.map(function(m, i) {
+        if (i !== activeIndex) return m;
+        return { ...m, mode: m.mode === 'cover' ? 'contain' : 'cover', zoom: 1 };
+      });
+    });
+  }
+
+  function changerZoom(valeur) {
+    setMediaItems(function(prev) {
+      return prev.map(function(m, i) {
+        if (i !== activeIndex) return m;
+        return { ...m, zoom: valeur };
+      });
     });
   }
 
@@ -204,9 +224,9 @@ export default function CreatePostPage() {
             <div style={{ position: 'relative', borderRadius: 14, overflow: 'hidden', height: 260, marginBottom: 12, background: '#0C0A06' }}>
 
               {activeMedia.kind === 'video' ? (
-                <video src={activeMedia.url} style={{ width: '100%', height: '100%', objectFit: 'cover', filter: styleFiltreActif() }} muted loop autoPlay playsInline />
+                <video src={activeMedia.url} style={{ width: '100%', height: '100%', objectFit: activeMedia.mode === 'cover' ? 'cover' : 'contain', backgroundColor: '#000', transform: activeMedia.mode === 'cover' ? 'scale(' + activeMedia.zoom + ')' : 'none', filter: styleFiltreActif() }} muted loop autoPlay playsInline />
               ) : (
-                <img src={activeMedia.url} alt="media" style={{ width: '100%', height: '100%', objectFit: 'cover', filter: styleFiltreActif() }} onError={function(e) { e.target.style.opacity = 0.2; }} />
+                <img src={activeMedia.url} alt="media" style={{ width: '100%', height: '100%', objectFit: activeMedia.mode === 'cover' ? 'cover' : 'contain', backgroundColor: '#000', transform: activeMedia.mode === 'cover' ? 'scale(' + activeMedia.zoom + ')' : 'none', filter: styleFiltreActif() }} onError={function(e) { e.target.style.opacity = 0.2; }} />
               )}
 
               <button onClick={retirerMediaActif} style={{ position: 'absolute', top: 12, left: 12, width: 30, height: 30, borderRadius: '50%', background: 'rgba(0,0,0,0.45)', border: 'none', color: '#fff', fontSize: 14, cursor: 'pointer', zIndex: 2 }}>
@@ -228,6 +248,9 @@ export default function CreatePostPage() {
               </button>
 
               <div style={{ position: 'absolute', top: 12, right: 12, display: 'flex', flexDirection: 'column', gap: 10, zIndex: 2 }}>
+                <button onClick={toggleRognage} style={{ width: 34, height: 34, borderRadius: '50%', border: 'none', cursor: 'pointer', background: activeMedia.mode === 'cover' ? OR : 'rgba(0,0,0,0.45)', color: activeMedia.mode === 'cover' ? VERT : '#fff', fontSize: 14 }} title="Rogner">
+                  <i className="ti ti-crop" />
+                </button>
                 <button onClick={toggleAutoAjust} style={{ width: 34, height: 34, borderRadius: '50%', border: 'none', cursor: 'pointer', background: activeMedia.auto ? OR : 'rgba(0,0,0,0.45)', color: activeMedia.auto ? VERT : '#fff', fontSize: 14 }} title="Ajustement automatique">
                   <i className="ti ti-sparkles" />
                 </button>
@@ -238,6 +261,14 @@ export default function CreatePostPage() {
                   <i className="ti ti-sun" />
                 </button>
               </div>
+
+              {activeMedia.mode === 'cover' && (
+                <div style={{ position: 'absolute', bottom: showFiltres ? 74 : 14, left: 14, right: 70, zIndex: 2, display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <i className="ti ti-zoom-out" style={{ color: '#fff', fontSize: 13 }} />
+                  <input type="range" min="1" max="2.5" step="0.05" value={activeMedia.zoom} onChange={function(e) { changerZoom(parseFloat(e.target.value)); }} style={{ flex: 1 }} />
+                  <i className="ti ti-zoom-in" style={{ color: '#fff', fontSize: 13 }} />
+                </div>
+              )}
 
               {effetsMessage && (
                 <div style={{ position: 'absolute', bottom: showFiltres ? 74 : 12, left: 12, right: 12, background: 'rgba(0,0,0,0.7)', color: '#fff', fontSize: 10, padding: '6px 10px', borderRadius: 8, textAlign: 'center', zIndex: 3 }}>
