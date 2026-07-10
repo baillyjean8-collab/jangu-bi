@@ -31,6 +31,7 @@ export default function CreatePostPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const fileInputRef = useRef(null);
+  const dragRef = useRef({ actif: false, startX: 0, startY: 0, baseX: 0, baseY: 0 });
 
   const [typePub, setTypePub]     = useState('NORMAL');
   const [texte, setTexte]         = useState('');
@@ -63,6 +64,8 @@ export default function CreatePostPage() {
         local: true,
         mode: 'contain', // image entiere visible par defaut, rien n'est coupe
         zoom: 1,
+        offsetX: 0,
+        offsetY: 0,
       };
     });
     setMediaItems(function(prev) {
@@ -100,9 +103,34 @@ export default function CreatePostPage() {
     setMediaItems(function(prev) {
       return prev.map(function(m, i) {
         if (i !== activeIndex) return m;
-        return { ...m, mode: m.mode === 'cover' ? 'contain' : 'cover', zoom: 1 };
+        // On active/desactive juste le recadrage : le cadre garde sa taille,
+        // seuls le zoom et la position a l'interieur changent.
+        return { ...m, mode: m.mode === 'cover' ? 'contain' : 'cover' };
       });
     });
+  }
+
+  function demarrerGlisser(e) {
+    if (!activeMedia || activeMedia.mode !== 'cover') return;
+    const point = e.touches ? e.touches[0] : e;
+    dragRef.current = { actif: true, startX: point.clientX, startY: point.clientY, baseX: activeMedia.offsetX, baseY: activeMedia.offsetY };
+  }
+
+  function bougerGlisser(e) {
+    if (!dragRef.current.actif) return;
+    const point = e.touches ? e.touches[0] : e;
+    const dx = point.clientX - dragRef.current.startX;
+    const dy = point.clientY - dragRef.current.startY;
+    setMediaItems(function(prev) {
+      return prev.map(function(m, i) {
+        if (i !== activeIndex) return m;
+        return { ...m, offsetX: dragRef.current.baseX + dx, offsetY: dragRef.current.baseY + dy };
+      });
+    });
+  }
+
+  function arreterGlisser() {
+    dragRef.current.actif = false;
   }
 
   function changerZoom(valeur) {
@@ -236,12 +264,16 @@ export default function CreatePostPage() {
           )}
 
           {mediaItems.length > 0 && (
-            <div style={{ position: 'relative', borderRadius: 14, overflow: 'hidden', marginBottom: 12, background: '#0C0A06', ...(activeMedia.mode === 'cover' ? { height: 260 } : { aspectRatio: (activeMedia.ratio || 1) + ' / 1', maxHeight: 480 }) }}>
+            <div
+              onMouseDown={demarrerGlisser} onMouseMove={bougerGlisser} onMouseUp={arreterGlisser} onMouseLeave={arreterGlisser}
+              onTouchStart={demarrerGlisser} onTouchMove={bougerGlisser} onTouchEnd={arreterGlisser}
+              style={{ position: 'relative', borderRadius: 14, overflow: 'hidden', marginBottom: 12, background: '#0C0A06', aspectRatio: (activeMedia.ratio || 1) + ' / 1', maxHeight: 480, cursor: activeMedia.mode === 'cover' ? 'grab' : 'default' }}
+            >
 
               {activeMedia.kind === 'video' ? (
-                <video src={activeMedia.url} onLoadedMetadata={function(e) { enregistrerRatio(e.target.videoWidth, e.target.videoHeight); }} style={{ width: '100%', height: '100%', objectFit: 'cover', transform: activeMedia.mode === 'cover' ? 'scale(' + activeMedia.zoom + ')' : 'none', filter: styleFiltreActif() }} muted loop autoPlay playsInline />
+                <video src={activeMedia.url} onLoadedMetadata={function(e) { enregistrerRatio(e.target.videoWidth, e.target.videoHeight); }} style={{ width: '100%', height: '100%', objectFit: 'cover', transform: activeMedia.mode === 'cover' ? 'translate(' + activeMedia.offsetX + 'px,' + activeMedia.offsetY + 'px) scale(' + activeMedia.zoom + ')' : 'none', filter: styleFiltreActif(), pointerEvents: 'none' }} muted loop autoPlay playsInline />
               ) : (
-                <img src={activeMedia.url} alt="media" onLoad={function(e) { enregistrerRatio(e.target.naturalWidth, e.target.naturalHeight); }} style={{ width: '100%', height: '100%', objectFit: 'cover', transform: activeMedia.mode === 'cover' ? 'scale(' + activeMedia.zoom + ')' : 'none', filter: styleFiltreActif() }} onError={function(e) { e.target.style.opacity = 0.2; }} />
+                <img src={activeMedia.url} alt="media" draggable="false" onLoad={function(e) { enregistrerRatio(e.target.naturalWidth, e.target.naturalHeight); }} style={{ width: '100%', height: '100%', objectFit: 'cover', transform: activeMedia.mode === 'cover' ? 'translate(' + activeMedia.offsetX + 'px,' + activeMedia.offsetY + 'px) scale(' + activeMedia.zoom + ')' : 'none', filter: styleFiltreActif(), pointerEvents: 'none' }} onError={function(e) { e.target.style.opacity = 0.2; }} />
               )}
 
               <button onClick={retirerMediaActif} style={{ position: 'absolute', top: 12, left: 12, width: 30, height: 30, borderRadius: '50%', background: 'rgba(0,0,0,0.45)', border: 'none', color: '#fff', fontSize: 14, cursor: 'pointer', zIndex: 2 }}>
