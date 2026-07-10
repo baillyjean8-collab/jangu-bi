@@ -398,7 +398,7 @@ export default function CreatePostPage() {
       </div>
 
       {editionOuverte && activeMedia && (
-        <div style={{ position: 'fixed', inset: 0, background: '#000', zIndex: 300, display: 'flex', flexDirection: 'column' }}>
+        <div style={{ position: 'fixed', top: 0, bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: 430, background: '#000', zIndex: 300, display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '44px 16px 12px' }}>
             <div onClick={function() { setEditionOuverte(false); }} style={{ color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>Annuler</div>
             <div style={{ color: '#fff', fontSize: 13, fontWeight: 700 }}>Modifier</div>
