@@ -428,7 +428,7 @@ export default function HomePage() {
 
         {isAdmin && (
           <div style={{ padding: '0 16px', marginBottom: 12 }}>
-            <div onClick={function() { navigate('/parish-admin/publications'); }} style={{
+            <div onClick={function() { navigate('/profile'); }} style={{
               background: 'white', border: '1.5px solid #C8A84B', borderRadius: 12, padding: '10px 12px',
               display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer',
             }}>

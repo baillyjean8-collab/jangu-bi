@@ -119,7 +119,7 @@ export default function AdminPublications() {
     <AdminShell>
       <div style={{ background: '#0C0A06', backgroundImage: BOGOLAN_DARK, padding: '16px 14px 14px', borderRadius: '0 0 22px 22px', marginBottom: 14 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-          <button onClick={function() { navigate('/profile'); }} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+          <button onClick={function() { navigate(-1); }} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
             <i className="ti ti-arrow-left" style={{ fontSize: 18, color: OR }} />
           </button>
           <div style={{ fontFamily: 'Georgia,serif', fontSize: 16, fontWeight: 700, color: IVOIRE }}>Publications</div>
