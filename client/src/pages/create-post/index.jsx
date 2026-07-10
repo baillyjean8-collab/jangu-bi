@@ -32,6 +32,22 @@ export default function CreatePostPage() {
   const { user } = useAuth();
   const fileInputRef = useRef(null);
   const dragRef = useRef({ actif: false, startX: 0, startY: 0, baseX: 0, baseY: 0 });
+  const conteneurMediaRef = useRef(null);
+
+  function limiterOffset(offsetX, offsetY, zoom) {
+    const el = conteneurMediaRef.current;
+    if (!el) return { x: offsetX, y: offsetY };
+    const rect = el.getBoundingClientRect();
+    // Au-dela du zoom=1, l'image deborde de (zoom-1)*taille/2 de chaque cote :
+    // on ne laisse jamais le glissement depasser ce debordement, sinon le fond
+    // du cadre (noir) deviendrait visible sur un bord.
+    const maxX = (rect.width * (zoom - 1)) / 2;
+    const maxY = (rect.height * (zoom - 1)) / 2;
+    return {
+      x: Math.max(-maxX, Math.min(maxX, offsetX)),
+      y: Math.max(-maxY, Math.min(maxY, offsetY)),
+    };
+  }
 
   const [typePub, setTypePub]     = useState('NORMAL');
   const [texte, setTexte]         = useState('');
@@ -89,8 +105,8 @@ export default function CreatePostPage() {
     let ratio = largeur / hauteur;
     // Limites raisonnables (comme Instagram) pour eviter un cadre demesurement
     // haut (portrait extreme) ou large (panoramique extreme).
-    if (ratio < 0.8) ratio = 0.8;
-    if (ratio > 1.91) ratio = 1.91;
+    // Aucune limite : le cadre epouse exactement la vraie forme de l'image ou de la
+    // video, meme tres haute ou tres large, pour que rien ne soit jamais coupe par defaut.
     setMediaItems(function(prev) {
       return prev.map(function(m, i) {
         if (i !== activeIndex) return m;
@@ -124,7 +140,8 @@ export default function CreatePostPage() {
     setMediaItems(function(prev) {
       return prev.map(function(m, i) {
         if (i !== activeIndex) return m;
-        return { ...m, offsetX: dragRef.current.baseX + dx, offsetY: dragRef.current.baseY + dy };
+        const limite = limiterOffset(dragRef.current.baseX + dx, dragRef.current.baseY + dy, m.zoom);
+        return { ...m, offsetX: limite.x, offsetY: limite.y };
       });
     });
   }
@@ -137,7 +154,8 @@ export default function CreatePostPage() {
     setMediaItems(function(prev) {
       return prev.map(function(m, i) {
         if (i !== activeIndex) return m;
-        return { ...m, zoom: valeur };
+        const limite = limiterOffset(m.offsetX, m.offsetY, valeur);
+        return { ...m, zoom: valeur, offsetX: limite.x, offsetY: limite.y };
       });
     });
   }
@@ -267,7 +285,8 @@ export default function CreatePostPage() {
             <div
               onMouseDown={demarrerGlisser} onMouseMove={bougerGlisser} onMouseUp={arreterGlisser} onMouseLeave={arreterGlisser}
               onTouchStart={demarrerGlisser} onTouchMove={bougerGlisser} onTouchEnd={arreterGlisser}
-              style={{ position: 'relative', borderRadius: 14, overflow: 'hidden', marginBottom: 12, background: '#0C0A06', aspectRatio: (activeMedia.ratio || 1) + ' / 1', maxHeight: 480, cursor: activeMedia.mode === 'cover' ? 'grab' : 'default' }}
+              ref={conteneurMediaRef}
+              style={{ position: 'relative', borderRadius: 14, overflow: 'hidden', marginBottom: 12, background: '#0C0A06', aspectRatio: (activeMedia.ratio || 1) + ' / 1', cursor: activeMedia.mode === 'cover' ? 'grab' : 'default' }}
             >
 
               {activeMedia.kind === 'video' ? (
