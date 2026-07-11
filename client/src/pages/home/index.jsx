@@ -104,6 +104,7 @@ export default function HomePage() {
               paroisse: p.parishId && p.parishId.name ? p.parishId.name : 'Paroisse',
               temps: formatTempsPost(p.createdAt),
               texte: p.content || p.text || '',
+              image: p.image || p.imageUrl || (p.images && p.images[0]) || '',
               likes: p.likes ? p.likes.length : 0,
               comments: p.comments ? p.comments.length : 0,
               commentsList: [],
