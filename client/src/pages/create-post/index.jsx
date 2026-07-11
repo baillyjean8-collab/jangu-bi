@@ -100,7 +100,7 @@ export default function CreatePostPage() {
         zoom: 1,
         offsetX: 0,
         offsetY: 0,
-        cadre: 'original',
+        cadre: 'portrait', // 4:5 par defaut : homogeneite garantie sans que l'admin y pense
         texteAjoute: '',
       };
     });
@@ -339,10 +339,14 @@ export default function CreatePostPage() {
         {showCadres && (
           <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.6), transparent)', padding: '26px 10px 10px', display: 'flex', gap: 8, overflowX: 'auto', zIndex: 3 }}>
             {CADRES.map(function(c) {
-              const actif = (activeMedia.cadre || 'original') === c.id;
+              const actif = (activeMedia.cadre || 'portrait') === c.id;
+              const r = c.ratio || (activeMedia.ratio || 1);
+              const iconH = 22;
+              const iconW = Math.max(12, Math.min(30, iconH * r));
               return (
-                <div key={c.id} onClick={function() { choisirCadre(c.id); }} style={{ flexShrink: 0, padding: '8px 14px', borderRadius: 20, background: actif ? OR : 'rgba(255,255,255,0.12)', color: actif ? VERT : '#fff', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>
-                  {c.label}
+                <div key={c.id} onClick={function() { choisirCadre(c.id); }} style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, padding: '6px 10px', borderRadius: 12, background: actif ? OR : 'rgba(255,255,255,0.12)', cursor: 'pointer' }}>
+                  <div style={{ width: iconW, height: iconH, border: '2px solid ' + (actif ? VERT : '#fff'), borderRadius: 2 }} />
+                  <span style={{ fontSize: 9, fontWeight: 700, color: actif ? VERT : '#fff' }}>{c.label}</span>
                 </div>
               );
             })}
@@ -490,9 +494,11 @@ export default function CreatePostPage() {
             ref={conteneurMediaRef}
             onMouseDown={demarrerGlisser} onMouseMove={bougerGlisser} onMouseUp={arreterGlisser} onMouseLeave={arreterGlisser}
             onTouchStart={demarrerGlisser} onTouchMove={bougerGlisser} onTouchEnd={arreterGlisser}
-            style={{ position: 'relative', flex: 1, overflow: 'hidden', background: '#000', cursor: activeMedia.mode === 'cover' ? 'grab' : 'default' }}
+            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000', padding: 12, boxSizing: 'border-box' }}
           >
-            {rendreMedia()}
+            <div style={{ position: 'relative', width: '100%', maxHeight: '100%', aspectRatio: ratioEffectif(activeMedia) + ' / 1', overflow: 'hidden', borderRadius: 4, cursor: activeMedia.mode === 'cover' ? 'grab' : 'default' }}>
+              {rendreMedia()}
+            </div>
           </div>
 
           {showTexteInput && (
