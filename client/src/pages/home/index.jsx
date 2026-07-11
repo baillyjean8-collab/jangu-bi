@@ -375,38 +375,32 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Vraies stories des paroisses (chargees depuis l'API) */}
-          {storiesWithContent.length > 0 && (
-            <div style={{ display: 'flex', gap: 10, marginBottom: 12, overflowX: 'auto', scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-              {storiesWithContent.map((s, i) => (
-                <div
-                  key={s.id}
-                  onClick={() => { setStoryViewer(i); startStoryTimer(i); }}
-                  style={{
-                    position: 'relative', width: 78, height: 108, borderRadius: 14, overflow: 'hidden',
-                    flexShrink: 0, cursor: 'pointer', border: '2px solid #C8A84B',
-                    backgroundImage: 'url(' + s.imageUrl + ')', backgroundSize: 'cover', backgroundPosition: 'center',
-                  }}
-                >
-                  <div style={{
-                    position: 'absolute', top: 6, left: 6, width: 26, height: 26, borderRadius: '50%',
-                    border: '2px solid #C8A84B', background: '#1e2d14', display: 'flex',
-                    alignItems: 'center', justifyContent: 'center', fontSize: 9, color: 'white', fontWeight: 700,
-                  }}>{s.initiales}</div>
-                  <div style={{
-                    position: 'absolute', bottom: 0, left: 0, right: 0,
-                    background: 'linear-gradient(to top, rgba(0,0,0,0.7), transparent)', padding: '18px 6px 6px',
-                  }}>
-                    <div style={{ fontSize: 8, color: 'white', fontWeight: 700 }}>{s.nom}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
           {/* Paroisses fusionnees avec Stories (format Facebook pour celles avec story active) */}
           <div style={{ fontSize: 15, fontWeight: 700, color: '#1e2d14', marginBottom: 10, fontFamily: 'Georgia,serif' }}>Vos Paroisses</div>
           <div style={{ display: 'flex', gap: 10, marginBottom: 16, overflowX: 'auto', scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+            {storiesWithContent.map((s, i) => (
+              <div
+                key={s.id}
+                onClick={() => { setStoryViewer(i); startStoryTimer(i); }}
+                style={{
+                  position: 'relative', width: 78, height: 108, borderRadius: 14, overflow: 'hidden',
+                  flexShrink: 0, cursor: 'pointer', border: '2px solid #C8A84B',
+                  backgroundImage: 'url(' + s.imageUrl + ')', backgroundSize: 'cover', backgroundPosition: 'center',
+                }}
+              >
+                <div style={{
+                  position: 'absolute', top: 6, left: 6, width: 26, height: 26, borderRadius: '50%',
+                  border: '2px solid #C8A84B', background: '#1e2d14', display: 'flex',
+                  alignItems: 'center', justifyContent: 'center', fontSize: 9, color: 'white', fontWeight: 700,
+                }}>{s.initiales}</div>
+                <div style={{
+                  position: 'absolute', bottom: 0, left: 0, right: 0,
+                  background: 'linear-gradient(to top, rgba(0,0,0,0.7), transparent)', padding: '18px 6px 6px',
+                }}>
+                  <div style={{ fontSize: 8, color: 'white', fontWeight: 700 }}>{s.nom}</div>
+                </div>
+              </div>
+            ))}
             {PAROISSES.map((p) => (
               p.hasStory ? (
                 <div
