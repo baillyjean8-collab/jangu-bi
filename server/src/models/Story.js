@@ -3,7 +3,10 @@ const mongoose = require('mongoose');
 
 const storySchema = new mongoose.Schema({
   parishId:  { type: mongoose.Schema.Types.ObjectId, ref: 'Parish', required: true },
-  imageUrl:  { type: String, required: true },
+  type:      { type: String, enum: ['image', 'video', 'texte'], default: 'image' },
+  imageUrl:  { type: String, default: '' },
+  videoUrl:  { type: String, default: '' },
+  bgColor:   { type: String, default: '' },
   caption:   { type: String, maxlength: 300, default: '' },
   likes:     [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   views:     [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
