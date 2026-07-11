@@ -86,16 +86,48 @@ export default function CreatePostPage() {
     if (fileInputRef.current) fileInputRef.current.click();
   }
 
-  function surFichiersChoisis(e) {
+  function redimensionnerEnBase64(file) {
+    return new Promise(function(resolve, reject) {
+      if (file.type.startsWith('video/')) {
+        // Les videos restent en apercu local pour l'instant (trop lourdes pour du base64).
+        resolve({ url: URL.createObjectURL(file), kind: 'video', local: true });
+        return;
+      }
+      const img = new Image();
+      const objectUrl = URL.createObjectURL(file);
+      img.onload = function() {
+        const MAX = 1280;
+        let w = img.naturalWidth, h = img.naturalHeight;
+        if (w > MAX || h > MAX) {
+          if (w > h) { h = Math.round(h * (MAX / w)); w = MAX; }
+          else { w = Math.round(w * (MAX / h)); h = MAX; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        URL.revokeObjectURL(objectUrl);
+        resolve({ url: canvas.toDataURL('image/jpeg', 0.82), kind: 'image', local: false });
+      };
+      img.onerror = function() {
+        URL.revokeObjectURL(objectUrl);
+        resolve({ url: objectUrl, kind: 'image', local: true });
+      };
+      img.src = objectUrl;
+    });
+  }
+
+  async function surFichiersChoisis(e) {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
-    const nouveaux = files.map(function(file) {
+    const resultats = await Promise.all(files.map(redimensionnerEnBase64));
+    const nouveaux = resultats.map(function(r) {
       return {
-        url: URL.createObjectURL(file),
-        kind: file.type.startsWith('video/') ? 'video' : 'image',
+        url: r.url,
+        kind: r.kind,
         filtre: 'normal',
         auto: false,
-        local: true,
+        local: r.local,
         mode: 'contain',
         zoom: 1,
         offsetX: 0,
@@ -236,6 +268,7 @@ export default function CreatePostPage() {
     setErreur('');
     try {
       const premiereUrlValide = mediaItems.length > 0 && !mediaItems[0].local ? mediaItems[0].url : undefined;
+      // (les photos passees par redimensionnerEnBase64 ont local=false : elles sont envoyees normalement)
 
       await postsApi.create({
         content: texte.trim(),
@@ -453,7 +486,7 @@ export default function CreatePostPage() {
 
           {yAMediaLocal && (
             <div style={{ fontSize: 10, color: '#8a6d00', background: 'rgba(200,168,75,0.1)', border: '1px solid rgba(200,168,75,0.25)', borderRadius: 10, padding: '8px 12px', marginBottom: 18 }}>
-              Apercu local uniquement : l'envoi reel vers le serveur n'est pas encore active, ce media ne sera pas visible par les autres fideles pour le moment.
+              Cette video reste en apercu local pour l'instant (trop volumineuse) : elle ne sera pas visible par les autres fideles. Les photos, elles, sont deja envoyees normalement.
             </div>
           )}
 
