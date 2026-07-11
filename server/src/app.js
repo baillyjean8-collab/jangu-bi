@@ -114,7 +114,7 @@ if (!origin || allowed.includes(origin)) {
   // Webhook routes need the raw buffer to verify HMAC signatures.
   // We capture rawBody on ALL requests, but only use it for /webhook routes.
  // ── 4 & 5. JSON body parser ───────────────────────────────────────────────
-  app.use(express.json({ limit: '50kb' }));
+  app.use(express.json({ limit: '8mb' })); // releve pour autoriser les photos en base64 (voir composeur de publications)
   app.use(express.urlencoded({ extended: false, limit: '50kb' }));
 
   // ── 6. Cookie parser ──────────────────────────────────────────────────────
