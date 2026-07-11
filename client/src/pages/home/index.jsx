@@ -420,49 +420,8 @@ export default function HomePage() {
                 </div>
               </div>
             ))}
-            {PAROISSES.map((p) => (
-              false ? ( // demo hasStory desactive: seules les vraies stories (storiesWithContent) ont l'anneau dore
-                <div
-                  key={p.id}
-                  onClick={() => openStory(p.id)}
-                  style={{
-                    position: 'relative', width: 78, height: 108, borderRadius: 14, overflow: 'hidden',
-                    flexShrink: 0, cursor: 'pointer', border: '2px solid #C8A84B',
-                    background: `linear-gradient(160deg, ${p.bg}, #0C0A06)`,
-                  }}
-                >
-                  <div style={{
-                    position: 'absolute', top: 6, left: 6, width: 26, height: 26, borderRadius: '50%',
-                    border: '2px solid #C8A84B', background: '#1e2d14', display: 'flex',
-                    alignItems: 'center', justifyContent: 'center', fontSize: 9, color: 'white', fontWeight: 700,
-                  }}>{p.initiales}</div>
-                  {isAdmin && estMaParoisse(p) && (
-                    <div onClick={function(e) { e.stopPropagation(); navigate('/create'); }} style={{
-                      position: 'absolute', bottom: 6, right: 6, width: 20, height: 20, borderRadius: '50%',
-                      background: '#C8A84B', border: '2px solid white', display: 'flex',
-                      alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 2,
-                    }}>
-                      <i className="ti ti-plus" style={{ fontSize: 11, color: '#1e2d14' }} />
-                    </div>
-                  )}
-                  <div style={{
-                    position: 'absolute', bottom: 0, left: 0, right: 0,
-                    background: 'linear-gradient(to top, rgba(0,0,0,0.7), transparent)', padding: '18px 6px 6px',
-                  }}>
-                    <div style={{ fontSize: 8, color: 'white', fontWeight: 700 }}>{p.nom}</div>
-                  </div>
-                </div>
-              ) : (
-                <div key={p.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: 78, flexShrink: 0, cursor: 'pointer' }}>
-                  <div style={{ width: 44, height: 44, borderRadius: '50%', background: p.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: 'white', border: '2.5px solid #F5F0E8', boxShadow: '0 2px 6px rgba(0,0,0,.1)' }}>{p.initiales}</div>
-                  <span style={{ fontSize: 9, color: '#7A6E5E', marginTop: 5, whiteSpace: 'nowrap' }}>{p.nom}</span>
-                </div>
-              )
-            ))}
-            <div onClick={() => navigate('/parishes')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: 78, flexShrink: 0, cursor: 'pointer' }}>
-              <div onClick={() => navigate('/demandes')} style={{ width: 44, height: 44, borderRadius: '50%', border: '1.5px dashed rgba(200,168,75,.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, color: '#C8A84B' }}>+</div>
-              <span style={{ fontSize: 9, color: '#C8A84B', marginTop: 5 }}>Ajouter</span>
-            </div>
+            {/* Paroisses de demo et bouton Ajouter retires de cette rangee :
+                non connectes aux vraies stories et sans action utile ici. */}
           </div>
 
           {/* Actions rapides */}
