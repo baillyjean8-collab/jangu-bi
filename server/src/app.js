@@ -127,7 +127,7 @@ if (!origin || allowed.includes(origin)) {
   // ── 6c. Request size guard (secondary defense before body parse)
   // Skip avatar uploads — multer's own 3MB limit governs that route instead.
   app.use((req, res, next) => {
-    if (req.path.includes('/avatar')) return next();
+    if (req.path.includes('/avatar') || req.path.includes('/posts') || req.path.includes('/stories')) return next(); // ces routes acceptent des photos en base64, plus volumineuses
     return requestSizeGuard(51_200)(req, res, next);
   });
 
