@@ -118,6 +118,21 @@ export default function HomePage() {
     }
     loadPosts();
   }, []);
+
+  const [realStories, setRealStories] = useState([]);
+  useEffect(() => {
+    async function loadStories() {
+      try {
+        const { storiesApi } = await import('../../services/api');
+        const data = await storiesApi.getAll();
+        const list = data && data.data && Array.isArray(data.data.stories) ? data.data.stories : [];
+        setRealStories(list);
+      } catch(e) {
+        console.log('Stories API:', e.message);
+      }
+    }
+    loadStories();
+  }, []);
   const navigate = useNavigate();
   const { user } = useAuth();
   const [liked, setLiked] = useState({});
@@ -240,7 +255,14 @@ export default function HomePage() {
     return haystack.includes(q);
   }
 
-  const storiesWithContent = PAROISSES.filter(p => p.hasStory);
+  const storiesWithContent = realStories.map(s => ({
+    id: s._id,
+    initiales: s.parishId && s.parishId.name ? s.parishId.name.substring(0,2).toUpperCase() : 'PA',
+    nom: s.parishId && s.parishId.name ? s.parishId.name : 'Paroisse',
+    bg: '#2E5C3E',
+    storyText: s.caption || '',
+    imageUrl: s.imageUrl,
+  }));
 
   function openStory(parishId) {
     const idx = storiesWithContent.findIndex(p => p.id === parishId);
@@ -352,6 +374,35 @@ export default function HomePage() {
               </div>
             </div>
           </div>
+
+          {/* Vraies stories des paroisses (chargees depuis l'API) */}
+          {storiesWithContent.length > 0 && (
+            <div style={{ display: 'flex', gap: 10, marginBottom: 12, overflowX: 'auto', scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+              {storiesWithContent.map((s, i) => (
+                <div
+                  key={s.id}
+                  onClick={() => { setStoryViewer(i); startStoryTimer(i); }}
+                  style={{
+                    position: 'relative', width: 78, height: 108, borderRadius: 14, overflow: 'hidden',
+                    flexShrink: 0, cursor: 'pointer', border: '2px solid #C8A84B',
+                    backgroundImage: 'url(' + s.imageUrl + ')', backgroundSize: 'cover', backgroundPosition: 'center',
+                  }}
+                >
+                  <div style={{
+                    position: 'absolute', top: 6, left: 6, width: 26, height: 26, borderRadius: '50%',
+                    border: '2px solid #C8A84B', background: '#1e2d14', display: 'flex',
+                    alignItems: 'center', justifyContent: 'center', fontSize: 9, color: 'white', fontWeight: 700,
+                  }}>{s.initiales}</div>
+                  <div style={{
+                    position: 'absolute', bottom: 0, left: 0, right: 0,
+                    background: 'linear-gradient(to top, rgba(0,0,0,0.7), transparent)', padding: '18px 6px 6px',
+                  }}>
+                    <div style={{ fontSize: 8, color: 'white', fontWeight: 700 }}>{s.nom}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* Paroisses fusionnees avec Stories (format Facebook pour celles avec story active) */}
           <div style={{ fontSize: 15, fontWeight: 700, color: '#1e2d14', marginBottom: 10, fontFamily: 'Georgia,serif' }}>Vos Paroisses</div>
@@ -663,12 +714,15 @@ export default function HomePage() {
             </div>
             <button onClick={closeStory} style={{ position: 'absolute', top: 56, right: 14, background: 'rgba(0,0,0,0.4)', border: 'none', borderRadius: '50%', width: 28, height: 28, color: 'white', fontSize: 14, cursor: 'pointer' }}>✕</button>
             <div style={{
-              position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-              background: `linear-gradient(160deg, ${storiesWithContent[storyViewer]?.bg}, #0C0A06)`,
+              position: 'absolute', inset: 0, display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+              backgroundImage: storiesWithContent[storyViewer]?.imageUrl ? ('url(' + storiesWithContent[storyViewer]?.imageUrl + ')') : `linear-gradient(160deg, ${storiesWithContent[storyViewer]?.bg}, #0C0A06)`,
+              backgroundSize: 'cover', backgroundPosition: 'center',
             }}>
-              <div style={{ color: '#C8A84B', fontFamily: 'Georgia,serif', fontSize: 15, textAlign: 'center', padding: '0 30px' }}>
-                {storiesWithContent[storyViewer]?.storyText}
-              </div>
+              {storiesWithContent[storyViewer]?.storyText && (
+                <div style={{ color: 'white', fontFamily: 'Georgia,serif', fontSize: 14, textAlign: 'center', padding: '14px 20px 40px', background: 'linear-gradient(to top, rgba(0,0,0,0.75), transparent)', width: '100%' }}>
+                  {storiesWithContent[storyViewer]?.storyText}
+                </div>
+              )}
             </div>
             <div onClick={closeStory} style={{ position: 'absolute', inset: 0 }} />
           </div>
