@@ -87,6 +87,9 @@ export const storiesApi = {
   create: function(data) {
     return apiFetch('/stories', { method: 'POST', body: JSON.stringify(data) });
   },
+  view: function(id) {
+    return apiFetch('/stories/' + id + '/view', { method: 'POST' });
+  },
   remove: function(id) {
     return apiFetch('/stories/' + id, { method: 'DELETE' });
   },

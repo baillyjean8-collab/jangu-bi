@@ -264,6 +264,7 @@ export default function HomePage() {
     imageUrl: s.imageUrl,
     videoUrl: s.videoUrl,
     type: s.type || 'image',
+    seen: !!(user && Array.isArray(s.views) && s.views.some(function(v) { return String(v) === String(user._id); })),
   }));
 
   function openStory(parishId) {
@@ -389,10 +390,23 @@ export default function HomePage() {
             {storiesWithContent.map((s, i) => (
               <div
                 key={s.id}
-                onClick={() => { setStoryViewer(i); startStoryTimer(i); }}
+                onClick={() => {
+                  setStoryViewer(i);
+                  startStoryTimer(i);
+                  import('../../services/api').then(function(mod) { mod.storiesApi.view(s.id).catch(function(){}); });
+                  setRealStories(function(prev) {
+                    return prev.map(function(rs) {
+                      if (String(rs._id) !== String(s.id)) return rs;
+                      const uid = user && user._id;
+                      const dejaVu = Array.isArray(rs.views) && rs.views.some(function(v) { return String(v) === String(uid); });
+                      if (dejaVu || !uid) return rs;
+                      return { ...rs, views: (rs.views || []).concat([uid]) };
+                    });
+                  });
+                }}
                 style={{
                   position: 'relative', width: 78, height: 108, borderRadius: 14, overflow: 'hidden',
-                  flexShrink: 0, cursor: 'pointer', border: '2px solid #C8A84B',
+                  flexShrink: 0, cursor: 'pointer', border: s.seen ? '2px solid #B8B8B8' : '2px solid #C8A84B',
                   background: s.type === 'texte' ? (s.bg || '#2E5C3E') : '#1e2d14',
                 }}
               >
@@ -409,7 +423,7 @@ export default function HomePage() {
                 )}
                 <div style={{
                   position: 'absolute', top: 6, left: 6, width: 26, height: 26, borderRadius: '50%',
-                  border: '2px solid #C8A84B', background: '#1e2d14', display: 'flex',
+                  border: s.seen ? '2px solid #B8B8B8' : '2px solid #C8A84B', background: '#1e2d14', display: 'flex',
                   alignItems: 'center', justifyContent: 'center', fontSize: 9, color: 'white', fontWeight: 700,
                 }}>{s.initiales}</div>
                 <div style={{
