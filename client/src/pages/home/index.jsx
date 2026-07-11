@@ -402,7 +402,7 @@ export default function HomePage() {
               </div>
             ))}
             {PAROISSES.map((p) => (
-              p.hasStory ? (
+              false ? ( // demo hasStory desactive: seules les vraies stories (storiesWithContent) ont l'anneau dore
                 <div
                   key={p.id}
                   onClick={() => openStory(p.id)}
