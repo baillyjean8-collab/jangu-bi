@@ -480,7 +480,7 @@ export default function CreatePostPage() {
       </div>
 
       {editionOuverte && activeMedia && (
-        <div style={{ position: 'fixed', top: 0, bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: 430, background: '#000', zIndex: 300, display: 'flex', flexDirection: 'column' }}>
+        <div style={{ position: 'fixed', top: 0, bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: 430, background: '#000', zIndex: 1000, display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '44px 16px 12px' }}>
             <div onClick={function() { setEditionOuverte(false); }} style={{ color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>Annuler</div>
             <div style={{ color: '#fff', fontSize: 13, fontWeight: 700 }}>Modifier</div>
@@ -496,7 +496,7 @@ export default function CreatePostPage() {
           </div>
 
           {showTexteInput && (
-            <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 400, padding: 20 }}>
+            <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100, padding: 20 }}>
               <div style={{ background: '#F5F0E8', borderRadius: 16, padding: 18, width: '100%', maxWidth: 360 }}>
                 <div style={{ fontSize: 13, fontWeight: 700, color: VERT, marginBottom: 10, fontFamily: 'Georgia,serif' }}>Texte sur l'image</div>
                 <textarea
