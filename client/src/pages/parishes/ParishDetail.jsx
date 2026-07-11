@@ -460,6 +460,9 @@ export default function ParishDetail() {
                       </div>
                       <p style={{ margin: 0, fontSize: 14, color: "#2a2a2a", lineHeight: 1.6 }}>{pub.content}</p>
                     </div>
+                    {pub.imageUrl && (
+                      <img src={pub.imageUrl} alt="publication" style={{ width: '100%', display: 'block', maxHeight: 480, objectFit: 'cover' }} />
+                    )}
 
                     {isOwner && (
                       <div style={{ display: 'flex', gap: 6, padding: '0 14px 10px' }}>
