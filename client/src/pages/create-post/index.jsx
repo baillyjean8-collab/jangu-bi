@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import AppShell from '../../components/AppShell';
 import { useAuth } from '../../context/AuthContext';
 import { postsApi, storiesApi } from '../../services/api';
+import { uploadToCloudinary } from '../../services/cloudinary';
 
 const VERT = '#1e2d14';
 const OR   = '#C8A84B';
@@ -89,8 +90,9 @@ export default function CreatePostPage() {
   function redimensionnerEnBase64(file) {
     return new Promise(function(resolve, reject) {
       if (file.type.startsWith('video/')) {
-        // Les videos restent en apercu local pour l'instant (trop lourdes pour du base64).
-        resolve({ url: URL.createObjectURL(file), kind: 'video', local: true });
+        uploadToCloudinary(file, 'video')
+          .then(function(url) { resolve({ url: url, kind: 'video', local: false }); })
+          .catch(function() { resolve({ url: URL.createObjectURL(file), kind: 'video', local: true }); });
         return;
       }
       const img = new Image();

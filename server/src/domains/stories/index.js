@@ -56,10 +56,11 @@ const storyRepo = {
 // ── Controller ─────────────────────────────────
 const storyController = {
   async create(req, res) {
-    const { imageUrl, caption } = req.body;
+    const { imageUrl, videoUrl, caption, type, bgColor } = req.body;
     const parishId = req.user.parishId;
     if (!parishId) throw new AuthorizationError('No parish assigned');
-    const story = await storyRepo.create({ parishId, imageUrl, caption });
+    const resolvedType = type || (videoUrl ? 'video' : (imageUrl ? 'image' : 'texte'));
+    const story = await storyRepo.create({ parishId, imageUrl, videoUrl, caption, type: resolvedType, bgColor });
     return sendCreated(res, { story }, 'Story créée');
   },
 
