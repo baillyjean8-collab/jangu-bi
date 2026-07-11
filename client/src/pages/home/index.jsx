@@ -259,9 +259,11 @@ export default function HomePage() {
     id: s._id,
     initiales: s.parishId && s.parishId.name ? s.parishId.name.substring(0,2).toUpperCase() : 'PA',
     nom: s.parishId && s.parishId.name ? s.parishId.name : 'Paroisse',
-    bg: '#2E5C3E',
+    bg: s.bgColor || '#2E5C3E',
     storyText: s.caption || '',
     imageUrl: s.imageUrl,
+    videoUrl: s.videoUrl,
+    type: s.type || 'image',
   }));
 
   function openStory(parishId) {
@@ -378,6 +380,12 @@ export default function HomePage() {
           {/* Paroisses fusionnees avec Stories (format Facebook pour celles avec story active) */}
           <div style={{ fontSize: 15, fontWeight: 700, color: '#1e2d14', marginBottom: 10, fontFamily: 'Georgia,serif' }}>Vos Paroisses</div>
           <div style={{ display: 'flex', gap: 10, marginBottom: 16, overflowX: 'auto', scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+            {isAdmin && (
+              <div onClick={() => navigate('/create-story')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: 78, flexShrink: 0, cursor: 'pointer' }}>
+                <div style={{ width: 44, height: 44, borderRadius: '50%', border: '2px dashed #C8A84B', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, color: '#C8A84B', background: 'white' }}>+</div>
+                <span style={{ fontSize: 9, color: '#C8A84B', marginTop: 5, whiteSpace: 'nowrap' }}>Story</span>
+              </div>
+            )}
             {storiesWithContent.map((s, i) => (
               <div
                 key={s.id}
@@ -385,9 +393,20 @@ export default function HomePage() {
                 style={{
                   position: 'relative', width: 78, height: 108, borderRadius: 14, overflow: 'hidden',
                   flexShrink: 0, cursor: 'pointer', border: '2px solid #C8A84B',
-                  backgroundImage: 'url(' + s.imageUrl + ')', backgroundSize: 'cover', backgroundPosition: 'center',
+                  background: s.type === 'texte' ? (s.bg || '#2E5C3E') : '#1e2d14',
                 }}
               >
+                {s.type === 'image' && (
+                  <img src={s.imageUrl} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                )}
+                {s.type === 'video' && (
+                  <video src={s.videoUrl} muted style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                )}
+                {s.type === 'texte' && (
+                  <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8 }}>
+                    <div style={{ color: 'white', fontSize: 9, fontFamily: 'Georgia,serif', textAlign: 'center', lineHeight: 1.3 }}>{s.storyText}</div>
+                  </div>
+                )}
                 <div style={{
                   position: 'absolute', top: 6, left: 6, width: 26, height: 26, borderRadius: '50%',
                   border: '2px solid #C8A84B', background: '#1e2d14', display: 'flex',
@@ -709,11 +728,24 @@ export default function HomePage() {
             <button onClick={closeStory} style={{ position: 'absolute', top: 56, right: 14, background: 'rgba(0,0,0,0.4)', border: 'none', borderRadius: '50%', width: 28, height: 28, color: 'white', fontSize: 14, cursor: 'pointer' }}>✕</button>
             <div style={{
               position: 'absolute', inset: 0, display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
-              backgroundImage: storiesWithContent[storyViewer]?.imageUrl ? ('url(' + storiesWithContent[storyViewer]?.imageUrl + ')') : `linear-gradient(160deg, ${storiesWithContent[storyViewer]?.bg}, #0C0A06)`,
-              backgroundSize: 'cover', backgroundPosition: 'center',
+              background: storiesWithContent[storyViewer]?.type === 'texte' ? (storiesWithContent[storyViewer]?.bg || '#1e2d14') : '#000',
+              overflow: 'hidden',
             }}>
-              {storiesWithContent[storyViewer]?.storyText && (
-                <div style={{ color: 'white', fontFamily: 'Georgia,serif', fontSize: 14, textAlign: 'center', padding: '14px 20px 40px', background: 'linear-gradient(to top, rgba(0,0,0,0.75), transparent)', width: '100%' }}>
+              {storiesWithContent[storyViewer]?.type === 'image' && (
+                <img src={storiesWithContent[storyViewer]?.imageUrl} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+              )}
+              {storiesWithContent[storyViewer]?.type === 'video' && (
+                <video src={storiesWithContent[storyViewer]?.videoUrl} autoPlay muted playsInline style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+              )}
+              {storiesWithContent[storyViewer]?.type === 'texte' && (
+                <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 30px' }}>
+                  <div style={{ color: 'white', fontFamily: 'Georgia,serif', fontSize: 20, textAlign: 'center', lineHeight: 1.5 }}>
+                    {storiesWithContent[storyViewer]?.storyText}
+                  </div>
+                </div>
+              )}
+              {storiesWithContent[storyViewer]?.type !== 'texte' && storiesWithContent[storyViewer]?.storyText && (
+                <div style={{ position: 'relative', zIndex: 1, color: 'white', fontFamily: 'Georgia,serif', fontSize: 14, textAlign: 'center', padding: '14px 20px 40px', background: 'linear-gradient(to top, rgba(0,0,0,0.75), transparent)', width: '100%' }}>
                   {storiesWithContent[storyViewer]?.storyText}
                 </div>
               )}
