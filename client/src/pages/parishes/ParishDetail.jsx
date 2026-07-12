@@ -499,7 +499,7 @@ export default function ParishDetail() {
               <div style={{ fontSize: 14, fontWeight: 700, color: OR }}>{(paroisse.stats && paroisse.stats.memberCount) || 0}</div>
               <div style={{ fontSize: 8, color: OR, fontWeight: 700 }}>Fideles {isOwner ? '\u203a' : ''}</div>
             </div>
-            <div style={{ background: "rgba(255,255,255,0.08)", borderRadius: 8, padding: "8px 4px", textAlign: "center" }}>
+            <div onClick={isOwner ? function() { navigate('/parish-admin/messages'); } : undefined} style={{ position: "relative", background: "rgba(255,255,255,0.08)", borderRadius: 8, padding: "8px 4px", textAlign: "center", cursor: isOwner ? 'pointer' : 'default' }}>
               {isOwner && (
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 3, marginBottom: 2 }}>
                   <i className="ti ti-message-circle" style={{ fontSize: 9, color: OR, opacity: 0.7 }} />

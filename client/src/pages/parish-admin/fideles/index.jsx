@@ -37,6 +37,26 @@ export default function AdminFideles() {
   const [message, setMessage]     = useState('');
   const token = localStorage.getItem('jb_admin_token');
 
+  async function envoyerMessageAuFidele(fidele, texte) {
+    try {
+      const BASE = import.meta.env.VITE_API_URL || '/api';
+      const resConv = await fetch(BASE + '/parish-admin/conversations', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: fidele._id }),
+      });
+      const dataConv = await resConv.json();
+      const conv = dataConv && dataConv.data && dataConv.data.conversation;
+      if (!conv) return;
+      await fetch(BASE + '/parish-admin/conversations/' + conv._id + '/messages', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: texte }),
+      });
+      navigate('/parish-admin/messages/' + conv._id);
+    } catch (e) { console.log('Message fidele:', e.message); }
+  }
+
   async function loadFideles() {
     try {
       const q = new URLSearchParams({ limit: 50, type: onglet !== 'tous' ? onglet : '' }).toString();
@@ -176,7 +196,7 @@ export default function AdminFideles() {
             )}
             <div style={{ display: 'flex', gap: 8 }}>
               <button onClick={function() { setAction(null); }} style={{ flex: 1, padding: 12, background: 'none', border: '1.5px solid #e5e0d5', borderRadius: 12, color: '#7A6E5E', fontWeight: 700, fontSize: 12, fontFamily: 'Georgia,serif', cursor: 'pointer' }}>Annuler</button>
-              <button onClick={function() { setAction(null); }} style={{ flex: 1, padding: 12, background: action.type === 'signaler' ? '#e53935' : action.type === 'suspendre' ? '#e65100' : 'linear-gradient(135deg,#1e2d14,#0a140a)', border: 'none', borderRadius: 12, color: action.type === 'message' ? OR : 'white', fontWeight: 700, fontSize: 12, fontFamily: 'Georgia,serif', cursor: 'pointer' }}>
+              <button onClick={function() { if (action.type === 'message') { envoyerMessageAuFidele(action.fidele, message); setMessage(''); } setAction(null); }} style={{ flex: 1, padding: 12, background: action.type === 'signaler' ? '#e53935' : action.type === 'suspendre' ? '#e65100' : 'linear-gradient(135deg,#1e2d14,#0a140a)', border: 'none', borderRadius: 12, color: action.type === 'message' ? OR : 'white', fontWeight: 700, fontSize: 12, fontFamily: 'Georgia,serif', cursor: 'pointer' }}>
                 {action.type === 'message' ? 'Envoyer' : action.type === 'suspendre' ? 'Suspendre' : 'Signaler'}
               </button>
             </div>
