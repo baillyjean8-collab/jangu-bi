@@ -70,6 +70,7 @@ export default function ParishDetail() {
 
   const [photoCouverture, setPhotoCouverture] = useState(null);
   const [photoProfil, setPhotoProfil] = useState(null);
+  const [notifCount, setNotifCount] = useState({ nouveauxFideles: 0, messagesNonRepondus: 0 });
 
   const [showCreate, setShowCreate] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -130,6 +131,17 @@ export default function ParishDetail() {
 
     return function() { cancelled = true; };
   }, [id]);
+
+  useEffect(function() {
+    if (!isOwner) return;
+    const token = localStorage.getItem('jb_admin_token');
+    if (!token) return;
+    const BASE = import.meta.env.VITE_API_URL || '/api';
+    fetch(BASE + '/parish-admin/notifications-count', { headers: { Authorization: 'Bearer ' + token } })
+      .then(function(r) { return r.json(); })
+      .then(function(d) { if (d && d.data) setNotifCount(d.data); })
+      .catch(function(e) { console.log('Notifications count:', e.message); });
+  }, [isOwner]);
 
   function rafraichirPosts() {
     postsApi.getAll({ parishId: id, limit: 30 }).then(function(res) {
@@ -480,11 +492,22 @@ export default function ParishDetail() {
               <div style={{ fontSize: 14, fontWeight: 700, color: "#fff" }}>{posts.length}</div>
               <div style={{ fontSize: 8, color: "rgba(255,255,255,0.5)" }}>Publications</div>
             </div>
-            <div onClick={isOwner ? function() { navigate('/parish-admin/fideles'); } : undefined} style={{ background: "rgba(200,168,75,0.18)", border: "1px solid rgba(200,168,75,0.35)", borderRadius: 8, padding: "8px 4px", textAlign: "center", cursor: isOwner ? 'pointer' : 'default' }}>
+            <div onClick={isOwner ? function() { navigate('/parish-admin/fideles'); } : undefined} style={{ position: "relative", background: "rgba(200,168,75,0.18)", border: "1px solid rgba(200,168,75,0.35)", borderRadius: 8, padding: "8px 4px", textAlign: "center", cursor: isOwner ? 'pointer' : 'default' }}>
+              {isOwner && notifCount.nouveauxFideles > 0 && (
+                <span style={{ position: "absolute", top: -6, left: -6, background: "#E24B4A", color: "#fff", fontSize: 9, fontWeight: 700, minWidth: 16, height: 16, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 4px", border: "2px solid " + VERT }}>{notifCount.nouveauxFideles}</span>
+              )}
               <div style={{ fontSize: 14, fontWeight: 700, color: OR }}>{(paroisse.stats && paroisse.stats.memberCount) || 0}</div>
               <div style={{ fontSize: 8, color: OR, fontWeight: 700 }}>Fideles {isOwner ? '\u203a' : ''}</div>
             </div>
             <div style={{ background: "rgba(255,255,255,0.08)", borderRadius: 8, padding: "8px 4px", textAlign: "center" }}>
+              {isOwner && (
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 3, marginBottom: 2 }}>
+                  <i className="ti ti-message-circle" style={{ fontSize: 9, color: OR, opacity: 0.7 }} />
+                  {notifCount.messagesNonRepondus > 0 && (
+                    <span style={{ background: "#E24B4A", color: "#fff", fontSize: 8, fontWeight: 700, borderRadius: 8, padding: "0 4px", minWidth: 12, lineHeight: "14px" }}>{notifCount.messagesNonRepondus}</span>
+                  )}
+                </div>
+              )}
               <div style={{ fontSize: 14, fontWeight: 700, color: "#fff" }}>{posts.reduce(function(acc, p) { return acc + (p.likes ? p.likes.length : 0) + (p.comments ? p.comments.length : 0); }, 0)}</div>
               <div style={{ fontSize: 8, color: "rgba(255,255,255,0.5)" }}>Interactions</div>
             </div>

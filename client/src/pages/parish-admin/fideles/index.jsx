@@ -52,7 +52,25 @@ export default function AdminFideles() {
     finally { setLoading(false); }
   }
 
+  const [counts, setCounts] = useState({ paroissiens: 0, abonnes: 0 });
+
+  async function loadCounts() {
+    try {
+      const BASE = import.meta.env.VITE_API_URL || '/api';
+      const res = await fetch(BASE + '/parish-admin/fideles/counts', { headers: { Authorization: 'Bearer ' + token } });
+      const data = await res.json();
+      if (data && data.data) setCounts(data.data);
+    } catch(e) { console.log('Counts fideles:', e.message); }
+  }
+
   useEffect(function() { if (token) loadFideles(); }, [onglet]);
+
+  useEffect(function() {
+    if (!token) return;
+    loadCounts();
+    const BASE = import.meta.env.VITE_API_URL || '/api';
+    fetch(BASE + '/parish-admin/fideles/vu', { method: 'POST', headers: { Authorization: 'Bearer ' + token } }).catch(function() {});
+  }, []);
 
   const filtres = fideles.filter(function(f) {
     if (!recherche) return true;
@@ -71,6 +89,9 @@ export default function AdminFideles() {
             <div style={{ fontFamily: 'Georgia,serif', fontSize: 18, fontWeight: 900, color: IVOIRE }}>Fidèles</div>
             <div style={{ fontSize: 9, color: 'rgba(200,168,75,0.5)' }}>{fideles.length} membres chargés</div>
           </div>
+        </div>
+        <div style={{ fontSize: 10, color: 'rgba(245,240,232,0.7)', marginBottom: 8 }}>
+          <span style={{ color: OR, fontWeight: 700 }}>{counts.paroissiens}</span> paroissiens&nbsp;&middot;&nbsp;<span style={{ color: OR, fontWeight: 700 }}>{counts.abonnes}</span> abonnes
         </div>
         <div style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(200,168,75,0.2)', borderRadius: 10, padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
           <i className="ti ti-search" style={{ fontSize: 14, color: 'rgba(200,168,75,0.6)' }} />
