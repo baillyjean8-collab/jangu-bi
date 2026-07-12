@@ -119,22 +119,6 @@ export default function HomePage() {
     loadPosts();
   }, []);
 
-  const [parishLogo, setParishLogo] = useState(null);
-  useEffect(() => {
-    async function loadParishLogo() {
-      if (!user || (user.role !== 'parish_admin' && user.role !== 'super_admin')) return;
-      if (!user.parishId) return;
-      try {
-        const { parishesApi } = await import('../../services/api');
-        const data = await parishesApi.getOne(user.parishId);
-        const p = data && data.data && data.data.parish;
-        if (p && p.logoUrl) setParishLogo(p.logoUrl);
-      } catch(e) {
-        console.log('Parish logo:', e.message);
-      }
-    }
-    loadParishLogo();
-  }, [user]);
   const [realStories, setRealStories] = useState([]);
   useEffect(() => {
     async function loadStories() {
@@ -151,6 +135,23 @@ export default function HomePage() {
   }, []);
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [parishLogo, setParishLogo] = useState(null);
+  useEffect(() => {
+    async function loadParishLogo() {
+      if (!user || (user.role !== 'parish_admin' && user.role !== 'super_admin')) return;
+      if (!user.parishId) return;
+      try {
+        const { parishesApi } = await import('../../services/api');
+        const data = await parishesApi.getOne(user.parishId);
+        const p = data && data.data && data.data.parish;
+        if (p && p.logoUrl) setParishLogo(p.logoUrl);
+      } catch(e) {
+        console.log('Parish logo:', e.message);
+      }
+    }
+    loadParishLogo();
+  }, [user]);
+
   const [liked, setLiked] = useState({});
   const [avertissement, setAvertissement] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
