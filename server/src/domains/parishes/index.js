@@ -32,7 +32,10 @@ const parishSchemas = {
     name: Joi.string().trim().min(3).max(100).optional(),
     description: Joi.string().trim().max(1000).allow(null).optional(),
     denomination: Joi.string().trim().max(100).allow(null).optional(),
-    logoUrl: Joi.string().uri({ scheme: ['https', 'http'] }).allow(null).optional(),
+    logoUrl: Joi.alternatives().try(
+      Joi.string().uri({ scheme: ['https', 'http'] }),
+      Joi.string().pattern(/^data:image\/(jpeg|jpg|png|webp|gif);base64,/)
+    ).allow(null).optional(),
     location: Joi.object({
       country: Joi.string().trim().max(100).optional(),
       city: Joi.string().trim().max(100).optional(),
