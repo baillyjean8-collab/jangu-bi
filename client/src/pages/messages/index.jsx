@@ -92,7 +92,7 @@ export default function MessagesPage() {
           <button onClick={retourListe} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
             <i className="ti ti-arrow-left" style={{ fontSize: 20, color: OR }} />
           </button>
-          <div style={{ width: 34, height: 34, borderRadius: '50%', background: OR, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: VERT, flexShrink: 0 }}>{getInitiales(parish)}</div>
+          <div style={{ width: 34, height: 34, borderRadius: '50%', background: OR, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: VERT, flexShrink: 0 }}>{parish && parish.logoUrl ? <img src={parish.logoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} /> : getInitiales(parish)}</div>
           <div style={{ fontFamily: 'Georgia,serif', fontSize: 14, fontWeight: 700, color: 'white' }}>{parish ? parish.name : 'Paroisse'}</div>
         </div>
 
@@ -140,7 +140,7 @@ export default function MessagesPage() {
           const nonLu = conv.unreadUser > 0;
           return (
             <div key={conv._id} onClick={function() { ouvrirConversation(conv); }} style={{ background: 'white', borderRadius: 14, border: '1px solid rgba(0,0,0,0.06)', padding: '10px 12px', display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
-              <div style={{ width: 40, height: 40, borderRadius: '50%', background: VERT, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: OR, flexShrink: 0 }}>{getInitiales(parish)}</div>
+              <div style={{ width: 40, height: 40, borderRadius: '50%', background: VERT, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: OR, flexShrink: 0 }}>{parish && parish.logoUrl ? <img src={parish.logoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} /> : getInitiales(parish)}</div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 12, fontWeight: nonLu ? 700 : 600, color: VERT, fontFamily: 'Georgia,serif' }}>{parish ? parish.name : 'Paroisse'}</div>
                 <div style={{ fontSize: 10, color: '#9A8E7E', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{conv.lastMessage || 'Nouvelle conversation'}</div>

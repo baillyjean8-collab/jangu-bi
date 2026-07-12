@@ -117,7 +117,7 @@ export default function AdminMessages() {
           <button onClick={retourListe} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
             <i className="ti ti-arrow-left" style={{ fontSize: 20, color: OR }} />
           </button>
-          <div style={{ width: 34, height: 34, borderRadius: '50%', background: getCouleur(user && user._id), display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: 'white', flexShrink: 0 }}>{getInitiales(user)}</div>
+          <div style={{ width: 34, height: 34, borderRadius: '50%', background: getCouleur(user && user._id), display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: 'white', flexShrink: 0 }}>{user && user.avatarUrl ? <img src={user.avatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} /> : getInitiales(user)}</div>
           <div style={{ fontFamily: 'Georgia,serif', fontSize: 14, fontWeight: 700, color: IVOIRE }}>{user ? (user.firstName + ' ' + user.lastName) : 'Fidele'}</div>
         </div>
 
@@ -170,7 +170,7 @@ export default function AdminMessages() {
           const nonLu = conv.unreadParish > 0;
           return (
             <div key={conv._id} onClick={function() { ouvrirConversation(conv); }} style={{ background: 'white', borderRadius: 14, border: '1px solid rgba(0,0,0,0.06)', padding: '10px 12px', display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
-              <div style={{ width: 40, height: 40, borderRadius: '50%', background: getCouleur(user && user._id), display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: 'white', flexShrink: 0 }}>{getInitiales(user)}</div>
+              <div style={{ width: 40, height: 40, borderRadius: '50%', background: getCouleur(user && user._id), display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: 'white', flexShrink: 0 }}>{user && user.avatarUrl ? <img src={user.avatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} /> : getInitiales(user)}</div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 12, fontWeight: nonLu ? 700 : 600, color: VERT, fontFamily: 'Georgia,serif' }}>{user ? (user.firstName + ' ' + user.lastName) : 'Fidele'}</div>
                 <div style={{ fontSize: 10, color: '#9A8E7E', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{conv.lastMessage || 'Nouvelle conversation'}</div>

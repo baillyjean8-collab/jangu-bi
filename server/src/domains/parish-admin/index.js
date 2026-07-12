@@ -56,7 +56,7 @@ router.get('/activite', ...guard, asyncHandler(async (req, res) => {
   const oid = new mongoose.Types.ObjectId(parishId);
   const [recentDons, recentDemandes] = await Promise.all([
     Donation.find({ parishId: oid, status: 'SUCCESS' }).sort({ createdAt: -1 }).limit(5)
-      .populate('userId', 'firstName lastName').lean(),
+      .populate('userId', 'firstName lastName avatarUrl').lean(),
     Post.find({ parishId: oid, type: 'INSCRIPTION' }).sort({ createdAt: -1 }).limit(5).lean(),
   ]);
 
@@ -190,7 +190,7 @@ router.get('/conversations', ...guard, asyncHandler(async (req, res) => {
   const oid = new mongoose.Types.ObjectId(parishId);
   const conversations = await Conversation.find({ parishId: oid })
     .sort({ lastMessageAt: -1 })
-    .populate('userId', 'firstName lastName')
+    .populate('userId', 'firstName lastName avatarUrl')
     .lean();
   return sendSuccess(res, conversations);
 }));
