@@ -247,7 +247,7 @@ export default function ParishDetail() {
     localStorage.removeItem('jb_admin_token');
     localStorage.removeItem('jb_admin_user');
     localStorage.removeItem('jb_admin_parish');
-    navigate('/login');
+    navigate('/splash'); // meme comportement que la deconnexion fidele : retour a la page vitrine
   }
 
   if (loadingParoisse) {
