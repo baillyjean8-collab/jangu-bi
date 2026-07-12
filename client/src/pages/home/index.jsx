@@ -119,6 +119,22 @@ export default function HomePage() {
     loadPosts();
   }, []);
 
+  const [parishLogo, setParishLogo] = useState(null);
+  useEffect(() => {
+    async function loadParishLogo() {
+      if (!user || (user.role !== 'parish_admin' && user.role !== 'super_admin')) return;
+      if (!user.parishId) return;
+      try {
+        const { parishesApi } = await import('../../services/api');
+        const data = await parishesApi.getOne(user.parishId);
+        const p = data && data.data && data.data.parish;
+        if (p && p.logoUrl) setParishLogo(p.logoUrl);
+      } catch(e) {
+        console.log('Parish logo:', e.message);
+      }
+    }
+    loadParishLogo();
+  }, [user]);
   const [realStories, setRealStories] = useState([]);
   useEffect(() => {
     async function loadStories() {
@@ -157,7 +173,7 @@ export default function HomePage() {
   const prenom = user?.firstName || 'Marie';
   const nom = user?.lastName || 'Diallo';
   const initiales = ((user?.firstName?.[0] || 'M') + (user?.lastName?.[0] || 'D')).toUpperCase();
-  const photo = user?.profilePhoto || null;
+  const photo = parishLogo || user?.profilePhoto || null;
   const faithDays = user?.faithDays ?? 34;
   const isAdmin = user?.role === 'parish_admin' || user?.role === 'super_admin';
   function estMaParoisse(p) {
