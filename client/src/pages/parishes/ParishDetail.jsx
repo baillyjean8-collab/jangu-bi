@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import AppShell from '../../components/AppShell';
 import { useAuth } from '../../context/AuthContext';
@@ -179,60 +179,147 @@ export default function ParishDetail() {
     window.open("https://www.google.com/maps/dir/?api=1&destination=" + lat + "," + lng, "_blank");
   };
 
-  // Redimensionne et convertit en base64 (comme pour les photos de publication),
-  // puis sauvegarde reellement sur la paroisse via l'API. Le modele Parish n'a
-  // qu'un seul champ image (logoUrl) : on l'utilise pour la couverture ET la
-  // photo de profil, faute de champ separe pour l'instant.
-  function redimensionnerEnBase64(file) {
-    return new Promise(function(resolve) {
-      const img = new Image();
-      const objectUrl = URL.createObjectURL(file);
-      img.onload = function() {
-        const MAX = 1280;
-        let w = img.naturalWidth, h = img.naturalHeight;
-        if (w > MAX || h > MAX) {
-          if (w > h) { h = Math.round(h * (MAX / w)); w = MAX; }
-          else { w = Math.round(w * (MAX / h)); h = MAX; }
-        }
-        const canvas = document.createElement('canvas');
-        canvas.width = w; canvas.height = h;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, w, h);
-        URL.revokeObjectURL(objectUrl);
-        resolve(canvas.toDataURL('image/jpeg', 0.82));
-      };
-      img.onerror = function() {
-        URL.revokeObjectURL(objectUrl);
-        resolve(null);
-      };
-      img.src = objectUrl;
-    });
+  // Ecran d'edition photo (couverture / profil) : meme mecanisme que le
+  // composeur de publications (recadrage, zoom, glisser, filtres), avec
+  // "gravure" finale dans un canvas au moment de valider, pour que le
+  // recadrage choisi soit reellement celui qui est sauvegarde.
+  const [editionPhotoOuverte, setEditionPhotoOuverte] = useState(null); // 'couverture' | 'profil' | null
+  const [editUrl, setEditUrl] = useState(null);
+  const [editZoom, setEditZoom] = useState(1);
+  const [editOffsetX, setEditOffsetX] = useState(0);
+  const [editOffsetY, setEditOffsetY] = useState(0);
+  const [editFiltre, setEditFiltre] = useState('normal');
+  const [editAuto, setEditAuto] = useState(false);
+  const [editShowFiltres, setEditShowFiltres] = useState(false);
+  const editDragRef = useRef({ actif: false, startX: 0, startY: 0, baseX: 0, baseY: 0 });
+  const editConteneurRef = useRef(null);
+
+  const EDIT_FILTRES = [
+    { id: 'normal',     label: 'Normal',     css: 'none' },
+    { id: 'vif',        label: 'Vif',        css: 'saturate(1.6) contrast(1.05)' },
+    { id: 'chaleureux', label: 'Chaleureux', css: 'sepia(0.35) saturate(1.2)' },
+    { id: 'nb',         label: 'N&B',        css: 'grayscale(1)' },
+    { id: 'contraste',  label: 'Contraste',  css: 'contrast(1.4)' },
+  ];
+  const EDIT_AUTO_CSS = 'contrast(1.12) saturate(1.18) brightness(1.04)';
+
+  function editStyleFiltre() {
+    const parts = [];
+    if (editAuto) parts.push(EDIT_AUTO_CSS);
+    const f = EDIT_FILTRES.find(function(x) { return x.id === editFiltre; });
+    if (f && f.css !== 'none') parts.push(f.css);
+    return parts.length ? parts.join(' ') : 'none';
   }
 
-  async function handleCouverture(e) {
-    const file = e.target.files && e.target.files[0];
-    if (!file) return;
-    const dataUrl = await redimensionnerEnBase64(file);
-    if (!dataUrl) return;
-    setPhotoCouverture(dataUrl);
-    try {
-      await parishesApi.update(id, { logoUrl: dataUrl });
-    } catch (err) {
-      console.log('Sauvegarde couverture:', err.message);
-    }
+  function editLimiterOffset(offsetX, offsetY, zoom) {
+    const el = editConteneurRef.current;
+    if (!el) return { x: offsetX, y: offsetY };
+    const rect = el.getBoundingClientRect();
+    const maxX = (rect.width * (zoom - 1)) / 2;
+    const maxY = (rect.height * (zoom - 1)) / 2;
+    return {
+      x: Math.max(-maxX, Math.min(maxX, offsetX)),
+      y: Math.max(-maxY, Math.min(maxY, offsetY)),
+    };
   }
 
-  async function handleProfil(e) {
+  function editDemarrerGlisser(e) {
+    const point = e.touches ? e.touches[0] : e;
+    editDragRef.current = { actif: true, startX: point.clientX, startY: point.clientY, baseX: editOffsetX, baseY: editOffsetY };
+  }
+  function editBougerGlisser(e) {
+    if (!editDragRef.current.actif) return;
+    const point = e.touches ? e.touches[0] : e;
+    const dx = point.clientX - editDragRef.current.startX;
+    const dy = point.clientY - editDragRef.current.startY;
+    const limite = editLimiterOffset(editDragRef.current.baseX + dx, editDragRef.current.baseY + dy, editZoom);
+    setEditOffsetX(limite.x);
+    setEditOffsetY(limite.y);
+  }
+  function editArreterGlisser() {
+    editDragRef.current.actif = false;
+  }
+  function editChangerZoom(valeur) {
+    const limite = editLimiterOffset(editOffsetX, editOffsetY, valeur);
+    setEditZoom(valeur);
+    setEditOffsetX(limite.x);
+    setEditOffsetY(limite.y);
+  }
+
+  function ouvrirEditionPhoto(cible, file) {
+    const url = URL.createObjectURL(file);
+    setEditUrl(url);
+    setEditZoom(1);
+    setEditOffsetX(0);
+    setEditOffsetY(0);
+    setEditFiltre('normal');
+    setEditAuto(false);
+    setEditShowFiltres(false);
+    setEditionPhotoOuverte(cible);
+  }
+
+  function handleCouverture(e) {
     const file = e.target.files && e.target.files[0];
-    if (!file) return;
-    const dataUrl = await redimensionnerEnBase64(file);
-    if (!dataUrl) return;
-    setPhotoProfil(dataUrl);
-    try {
-      await parishesApi.update(id, { logoUrl: dataUrl });
-    } catch (err) {
-      console.log('Sauvegarde photo de profil:', err.message);
-    }
+    if (file) ouvrirEditionPhoto('couverture', file);
+    e.target.value = '';
+  }
+
+  function handleProfil(e) {
+    const file = e.target.files && e.target.files[0];
+    if (file) ouvrirEditionPhoto('profil', file);
+    e.target.value = '';
+  }
+
+  async function validerEditionPhoto() {
+    const cible = editionPhotoOuverte;
+    const el = editConteneurRef.current;
+    if (!editUrl || !el) return;
+    const rect = el.getBoundingClientRect();
+
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = async function() {
+      const targetW = cible === 'profil' ? 600 : 1200;
+      const targetH = cible === 'profil' ? 600 : 400;
+      const canvas = document.createElement('canvas');
+      canvas.width = targetW; canvas.height = targetH;
+      const ctx = canvas.getContext('2d');
+      ctx.filter = editStyleFiltre();
+
+      const coverScale = Math.max(targetW / img.naturalWidth, targetH / img.naturalHeight);
+      const scale = coverScale * editZoom;
+      const drawW = img.naturalWidth * scale;
+      const drawH = img.naturalHeight * scale;
+
+      const fracX = rect.width ? (editOffsetX / rect.width) : 0;
+      const fracY = rect.height ? (editOffsetY / rect.height) : 0;
+
+      const dx = (targetW - drawW) / 2 + fracX * targetW;
+      const dy = (targetH - drawH) / 2 + fracY * targetH;
+
+      ctx.drawImage(img, dx, dy, drawW, drawH);
+      const finalUrl = canvas.toDataURL('image/jpeg', 0.85);
+
+      if (cible === 'couverture') setPhotoCouverture(finalUrl);
+      else setPhotoProfil(finalUrl);
+
+      setEditionPhotoOuverte(null);
+      URL.revokeObjectURL(editUrl);
+      setEditUrl(null);
+
+      try {
+        await parishesApi.update(id, { logoUrl: finalUrl });
+      } catch (err) {
+        console.log('Sauvegarde photo:', err.message);
+      }
+    };
+    img.src = editUrl;
+  }
+
+  function annulerEditionPhoto() {
+    if (editUrl) URL.revokeObjectURL(editUrl);
+    setEditUrl(null);
+    setEditionPhotoOuverte(null);
   }
 
   function ouvrirCreation() {
@@ -650,6 +737,69 @@ export default function ParishDetail() {
               <button onClick={function() { setShowStoryForm(false); }} style={{ flex: 1, padding: 11, background: 'none', border: '1.5px solid #e5e0d5', borderRadius: 12, color: '#7A6E5E', fontWeight: 700, fontSize: 12, fontFamily: 'Georgia,serif', cursor: 'pointer' }}>Annuler</button>
               <button onClick={creerStory} style={{ flex: 2, padding: 11, background: 'linear-gradient(135deg,#1e2d14,#0a140a)', border: 'none', borderRadius: 12, color: OR, fontWeight: 700, fontSize: 12, fontFamily: 'Georgia,serif', cursor: 'pointer' }}>Publier la story</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {editionPhotoOuverte && editUrl && (
+        <div style={{ position: 'fixed', top: 0, bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: 430, background: '#000', zIndex: 1000, display: 'flex', flexDirection: 'column' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '44px 16px 12px' }}>
+            <div onClick={annulerEditionPhoto} style={{ color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>Annuler</div>
+            <div style={{ color: '#fff', fontSize: 13, fontWeight: 700 }}>{editionPhotoOuverte === 'profil' ? 'Photo de profil' : 'Photo de couverture'}</div>
+            <div onClick={validerEditionPhoto} style={{ color: OR, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>Valider</div>
+          </div>
+
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000', padding: 20, boxSizing: 'border-box' }}>
+            <div
+              ref={editConteneurRef}
+              onMouseDown={editDemarrerGlisser} onMouseMove={editBougerGlisser} onMouseUp={editArreterGlisser} onMouseLeave={editArreterGlisser}
+              onTouchStart={editDemarrerGlisser} onTouchMove={editBougerGlisser} onTouchEnd={editArreterGlisser}
+              style={{
+                position: 'relative', overflow: 'hidden', cursor: 'grab',
+                width: editionPhotoOuverte === 'profil' ? 260 : '100%',
+                aspectRatio: editionPhotoOuverte === 'profil' ? '1 / 1' : '3 / 1',
+                borderRadius: editionPhotoOuverte === 'profil' ? '50%' : 12,
+                background: '#111',
+              }}
+            >
+              <img
+                src={editUrl}
+                alt="edition"
+                draggable="false"
+                style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none', filter: editStyleFiltre(), transform: 'translate(' + editOffsetX + 'px,' + editOffsetY + 'px) scale(' + editZoom + ')' }}
+              />
+            </div>
+          </div>
+
+          <div style={{ padding: '10px 16px 30px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+              <i className="ti ti-zoom-out" style={{ color: '#fff', fontSize: 14 }} />
+              <input type="range" min="1" max="2.5" step="0.05" value={editZoom} onChange={function(e) { editChangerZoom(parseFloat(e.target.value)); }} style={{ flex: 1 }} />
+              <i className="ti ti-zoom-in" style={{ color: '#fff', fontSize: 14 }} />
+            </div>
+
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'center', marginBottom: 14 }}>
+              <button onClick={function() { setEditAuto(function(v) { return !v; }); }} style={{ width: 40, height: 40, borderRadius: '50%', border: 'none', cursor: 'pointer', background: editAuto ? OR : 'rgba(255,255,255,0.12)', color: editAuto ? VERT : '#fff', fontSize: 16 }} title="Ajustement automatique">
+                <i className="ti ti-sparkles" />
+              </button>
+              <button onClick={function() { setEditShowFiltres(function(v) { return !v; }); }} style={{ width: 40, height: 40, borderRadius: '50%', border: 'none', cursor: 'pointer', background: editShowFiltres ? OR : 'rgba(255,255,255,0.12)', color: editShowFiltres ? VERT : '#fff', fontSize: 16 }} title="Filtres">
+                <i className="ti ti-palette" />
+              </button>
+            </div>
+
+            {editShowFiltres && (
+              <div style={{ display: 'flex', gap: 8, overflowX: 'auto', justifyContent: 'center' }}>
+                {EDIT_FILTRES.map(function(f) {
+                  const actif = editFiltre === f.id;
+                  return (
+                    <div key={f.id} onClick={function() { setEditFiltre(f.id); }} style={{ flexShrink: 0, textAlign: 'center', cursor: 'pointer' }}>
+                      <div style={{ width: 42, height: 42, borderRadius: 8, backgroundImage: 'url(' + editUrl + ')', backgroundSize: 'cover', backgroundPosition: 'center', filter: f.css, border: actif ? '2px solid ' + OR : '1.5px solid rgba(255,255,255,0.4)' }} />
+                      <div style={{ fontSize: 8, color: '#fff', marginTop: 3 }}>{f.label}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
       )}
