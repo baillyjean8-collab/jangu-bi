@@ -101,3 +101,15 @@ export const storiesApi = {
 export const liveApi = {
   getActifs: function() { return apiFetch('/live?status=active&limit=10'); },
 };
+
+export const messagesApi = {
+  getAll: function() { return apiFetch('/messages'); },
+  getOne: function(id) { return apiFetch('/messages/' + id); },
+  unreadCount: function() { return apiFetch('/messages/unread-count'); },
+  start: function(parishId) {
+    return apiFetch('/messages/start', { method: 'POST', body: JSON.stringify({ parishId }) });
+  },
+  send: function(id, text) {
+    return apiFetch('/messages/' + id, { method: 'POST', body: JSON.stringify({ text }) });
+  },
+};

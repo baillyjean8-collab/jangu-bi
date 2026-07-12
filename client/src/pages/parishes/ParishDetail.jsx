@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import AppShell from '../../components/AppShell';
 import { useAuth } from '../../context/AuthContext';
-import { parishesApi, postsApi, storiesApi } from '../../services/api';
+import { parishesApi, postsApi, storiesApi, messagesApi } from '../../services/api';
 
 const VERT = "#1e2d14";
 const OR = "#c8a84b";
@@ -177,6 +177,14 @@ export default function ParishDetail() {
     } catch (e) {
       console.log('Supprimer story:', e.message);
     }
+  }
+
+  async function envoyerMessageParoisse() {
+    try {
+      const data = await messagesApi.start(id);
+      const conv = data && data.data && data.data.conversation;
+      if (conv) navigate('/messages/' + conv._id);
+    } catch (e) { console.log('Demarrer conversation:', e.message); }
   }
 
   const toggleLike = function(postId) {
@@ -524,9 +532,14 @@ export default function ParishDetail() {
                 </button>
               </>
             ) : (
-              <button onClick={function() { navigate('/donate'); }} style={{ width: "100%", padding: "11px 0", borderRadius: 12, border: "none", background: OR, color: VERT, fontWeight: 700, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
-                <i className="ti ti-hand-finger" style={{ fontSize: 16 }} /> Faire un don
-              </button>
+              <>
+                <button onClick={function() { navigate('/donate'); }} style={{ flex: 1, padding: "11px 0", borderRadius: 12, border: "none", background: OR, color: VERT, fontWeight: 700, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+                  <i className="ti ti-hand-finger" style={{ fontSize: 16 }} /> Faire un don
+                </button>
+                <button onClick={envoyerMessageParoisse} style={{ flex: 1, padding: "11px 0", borderRadius: 12, border: "none", background: VERT, color: "#fff", fontWeight: 700, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+                  <i className="ti ti-message-circle" style={{ fontSize: 16 }} /> Message
+                </button>
+              </>
             )}
           </div>
 

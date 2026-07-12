@@ -19,6 +19,7 @@ import SplashPage from './pages/splash';
 import NotificationsPage from './pages/notifications';
 import SettingsPage from './pages/settings';
 import MesDemandesPage from './pages/mes-demandes';
+import MessagesPage from './pages/messages';
 // Context
 import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './components/ui';
@@ -68,6 +69,8 @@ export default function App() {
             <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
             <Route path="/mes-demandes" element={<ProtectedRoute><MesDemandesPage /></ProtectedRoute>} />
+            <Route path="/messages" element={<ProtectedRoute><MessagesPage /></ProtectedRoute>} />
+            <Route path="/messages/:conversationId" element={<ProtectedRoute><MessagesPage /></ProtectedRoute>} />
           
             {/* ── Panel Admin Paroisse ── */}
             <Route path="/parish-admin/login"        element={<AdminLoginPage />} />

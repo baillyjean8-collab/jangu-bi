@@ -137,6 +137,19 @@ export default function HomePage() {
   const { user } = useAuth();
   const [parishLogo, setParishLogo] = useState(null);
   useEffect(() => {
+    async function loadUnreadMessages() {
+      try {
+        const { messagesApi } = await import('../../services/api');
+        const data = await messagesApi.unreadCount();
+        if (data && data.data) setUnreadMessages(data.data.total || 0);
+      } catch (e) {
+        console.log('Unread messages:', e.message);
+      }
+    }
+    loadUnreadMessages();
+  }, []);
+
+  useEffect(() => {
     async function loadParishLogo() {
       if (!user || (user.role !== 'parish_admin' && user.role !== 'super_admin')) return;
       if (!user.parishId) return;
@@ -154,6 +167,7 @@ export default function HomePage() {
 
   const [liked, setLiked] = useState({});
   const [avertissement, setAvertissement] = useState('');
+  const [unreadMessages, setUnreadMessages] = useState(0);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [storyGroupIndex, setStoryGroupIndex] = useState(null); // index du groupe (paroisse) en cours
@@ -393,6 +407,12 @@ export default function HomePage() {
               </div>
               <div onClick={() => setSearchOpen(o => !o)} style={{ width: 32, height: 32, borderRadius: '50%', background: searchOpen ? '#1e2d14' : 'rgba(0,0,0,.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
                 <i className="ti ti-search" style={{ fontSize: 16, color: searchOpen ? '#C8A84B' : '#666' }} />
+              </div>
+              <div onClick={() => navigate('/messages')} style={{ position: 'relative', width: 32, height: 32, borderRadius: '50%', background: 'rgba(0,0,0,.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                <i className="ti ti-message-circle" style={{ fontSize: 16, color: '#666' }} />
+                {unreadMessages > 0 && (
+                  <div style={{ position: 'absolute', top: -3, right: -3, minWidth: 15, height: 15, borderRadius: 8, background: '#e53935', border: '1.5px solid #F5F0E8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8, fontWeight: 700, color: 'white', padding: '0 3px' }}>{unreadMessages}</div>
+                )}
               </div>
               <div onClick={() => navigate('/notifications')} style={{ position: 'relative', width: 32, height: 32, borderRadius: '50%', background: 'rgba(0,0,0,.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
                 <i className="ti ti-bell" style={{ fontSize: 16, color: '#666' }} />
