@@ -308,7 +308,7 @@ export default function ParishDetail() {
       setEditUrl(null);
 
       try {
-        await parishesApi.update(id, { logoUrl: finalUrl });
+        await parishesApi.update(id, cible === 'couverture' ? { coverUrl: finalUrl } : { logoUrl: finalUrl });
       } catch (err) {
         console.log('Sauvegarde photo:', err.message);
       }
@@ -414,9 +414,9 @@ export default function ParishDetail() {
       <div style={{ background: "#f7f5f0", minHeight: "100vh", paddingBottom: 80 }}>
 
         {/* PHOTO DE COUVERTURE */}
-        <div style={{ position: "relative", height: 180, background: (photoCouverture || paroisse.logoUrl) ? "none" : "linear-gradient(135deg, #1e2d14 0%, #2d4a1e 100%)", overflow: "visible" }}>
-          {(photoCouverture || paroisse.logoUrl)
-            ? <img src={photoCouverture || paroisse.logoUrl} alt="couverture" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        <div style={{ position: "relative", height: 180, background: (photoCouverture || paroisse.coverUrl) ? "none" : "linear-gradient(135deg, #1e2d14 0%, #2d4a1e 100%)", overflow: "visible" }}>
+          {(photoCouverture || paroisse.coverUrl)
+            ? <img src={photoCouverture || paroisse.coverUrl} alt="couverture" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
             : (
               <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 6 }}>
                 <span style={{ fontSize: 40, opacity: 0.3, color: '#fff' }}>+</span>

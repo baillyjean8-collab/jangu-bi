@@ -139,6 +139,16 @@ const parishSchema = new mongoose.Schema(
         message: 'logoUrl must be a valid HTTPS URL',
       },
     },
+    // Photo de couverture, distincte de logoUrl (photo de profil/logo de la paroisse).
+    coverUrl: {
+      type: String,
+      trim: true,
+      default: null,
+      validate: {
+        validator: isSafeUrl,
+        message: 'coverUrl must be a valid HTTPS URL',
+      },
+    },
     denomination: {
       type: String,
       trim: true,

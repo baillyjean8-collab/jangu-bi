@@ -36,6 +36,10 @@ const parishSchemas = {
       Joi.string().uri({ scheme: ['https', 'http'] }),
       Joi.string().pattern(/^data:image\/(jpeg|jpg|png|webp|gif);base64,/)
     ).allow(null).optional(),
+    coverUrl: Joi.alternatives().try(
+      Joi.string().uri({ scheme: ['https', 'http'] }),
+      Joi.string().pattern(/^data:image\/(jpeg|jpg|png|webp|gif);base64,/)
+    ).allow(null).optional(),
     location: Joi.object({
       country: Joi.string().trim().max(100).optional(),
       city: Joi.string().trim().max(100).optional(),
