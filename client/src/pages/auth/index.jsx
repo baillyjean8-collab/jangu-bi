@@ -329,6 +329,11 @@ export function LoginPage() {
           </div>
         </button>
 
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 14 }}>
+          <div style={{ width: 52, height: 52, borderRadius: '50%', background: 'rgba(200,168,75,0.1)', border: '1px solid rgba(200,168,75,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>
+            🕯️
+          </div>
+        </div>
         <h1 style={{...S.title, color:'#C8A84B'}}>Connexion</h1>
         <p style={S.sub}>Bon retour parmi nous 🙏</p>
         <form onSubmit={handleSubmit} noValidate>

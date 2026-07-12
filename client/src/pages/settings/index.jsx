@@ -46,7 +46,7 @@ export default function SettingsPage() {
 
   function handleLogout() {
     logout?.();
-    navigate('/login');
+    navigate('/splash'); // retour a la page vitrine (eglise), pas directement au formulaire
   }
 
   return (
