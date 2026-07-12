@@ -40,7 +40,8 @@ export default function AdminFideles() {
   async function loadFideles() {
     try {
       const q = new URLSearchParams({ limit: 50, type: onglet !== 'tous' ? onglet : '' }).toString();
-      const res = await fetch('/api/parish-admin/fideles?' + q, {
+      const BASE = import.meta.env.VITE_API_URL || '/api';
+      const res = await fetch(BASE + '/parish-admin/fideles?' + q, {
         headers: { Authorization: 'Bearer ' + token }
       });
       const data = await res.json();
