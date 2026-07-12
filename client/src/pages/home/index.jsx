@@ -139,7 +139,9 @@ export default function HomePage() {
   const [avertissement, setAvertissement] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [storyViewer, setStoryViewer] = useState(null); // index de la story en cours
+  const [storyGroupIndex, setStoryGroupIndex] = useState(null); // index du groupe (paroisse) en cours
+  const [storySlideIndex, setStorySlideIndex] = useState(0); // index de la story dans le groupe
+  const [storyPaused, setStoryPaused] = useState(false); // maintien du doigt = pause
   const storyTimerRef = useRef(null);
   const [postsState, setPostsState] = useState(() => POSTS.map(p => ({ ...p, commentsList: [] })));
   const [visibleCount, setVisibleCount] = useState(10);
@@ -255,41 +257,106 @@ export default function HomePage() {
     return haystack.includes(q);
   }
 
-  const storiesWithContent = realStories.map(s => ({
-    id: s._id,
-    initiales: s.parishId && s.parishId.name ? s.parishId.name.substring(0,2).toUpperCase() : 'PA',
-    nom: s.parishId && s.parishId.name ? s.parishId.name : 'Paroisse',
-    bg: s.bgColor || '#2E5C3E',
-    storyText: s.caption || '',
-    imageUrl: s.imageUrl,
-    videoUrl: s.videoUrl,
-    type: s.type || 'image',
-    seen: !!(user && Array.isArray(s.views) && s.views.some(function(v) { return String(v) === String(user._id); })),
-  }));
+  const storyGroups = (function() {
+    const map = {};
+    const order = [];
+    realStories.forEach(function(s) {
+      const pid = s.parishId && s.parishId._id ? String(s.parishId._id) : ('inconnu-' + s._id);
+      if (!map[pid]) {
+        map[pid] = {
+          parishId: pid,
+          nom: s.parishId && s.parishId.name ? s.parishId.name : 'Paroisse',
+          initiales: s.parishId && s.parishId.name ? s.parishId.name.substring(0,2).toUpperCase() : 'PA',
+          slides: [],
+        };
+        order.push(pid);
+      }
+      map[pid].slides.push({
+        id: s._id,
+        bg: s.bgColor || '#2E5C3E',
+        storyText: s.caption || '',
+        imageUrl: s.imageUrl,
+        videoUrl: s.videoUrl,
+        type: s.type || 'image',
+        createdAt: s.createdAt,
+        seen: !!(user && Array.isArray(s.views) && s.views.some(function(v) { return String(v) === String(user._id); })),
+      });
+    });
+    order.forEach(function(pid) {
+      map[pid].slides.sort(function(a, b) { return new Date(a.createdAt) - new Date(b.createdAt); });
+    });
+    return order.map(function(pid) {
+      const g = map[pid];
+      g.allSeen = g.slides.every(function(sl) { return sl.seen; });
+      return g;
+    });
+  })();
 
-  function openStory(parishId) {
-    const idx = storiesWithContent.findIndex(p => p.id === parishId);
-    if (idx === -1) return;
-    setStoryViewer(idx);
-    startStoryTimer(idx);
+  function marquerVue(slideId) {
+    import('../../services/api').then(function(mod) { mod.storiesApi.view(slideId).catch(function(){}); });
+    setRealStories(function(prev) {
+      return prev.map(function(rs) {
+        if (String(rs._id) !== String(slideId)) return rs;
+        const uid = user && user._id;
+        const dejaVu = Array.isArray(rs.views) && rs.views.some(function(v) { return String(v) === String(uid); });
+        if (dejaVu || !uid) return rs;
+        return { ...rs, views: (rs.views || []).concat([uid]) };
+      });
+    });
   }
 
-  function startStoryTimer(idx) {
-    clearTimeout(storyTimerRef.current);
-    storyTimerRef.current = setTimeout(() => {
-      if (idx + 1 < storiesWithContent.length) {
-        setStoryViewer(idx + 1);
-        startStoryTimer(idx + 1);
-      } else {
-        closeStory();
-      }
-    }, 4000);
+  function openStoryGroup(groupIdx) {
+    setStoryGroupIndex(groupIdx);
+    setStorySlideIndex(0);
+    setStoryPaused(false);
   }
 
   function closeStory() {
     clearTimeout(storyTimerRef.current);
-    setStoryViewer(null);
+    setStoryGroupIndex(null);
+    setStorySlideIndex(0);
+    setStoryPaused(false);
   }
+
+  function avancerStory() {
+    if (storyGroupIndex === null) return;
+    const groupe = storyGroups[storyGroupIndex];
+    if (!groupe) { closeStory(); return; }
+    if (storySlideIndex + 1 < groupe.slides.length) {
+      setStorySlideIndex(storySlideIndex + 1);
+    } else if (storyGroupIndex + 1 < storyGroups.length) {
+      setStoryGroupIndex(storyGroupIndex + 1);
+      setStorySlideIndex(0);
+    } else {
+      closeStory();
+    }
+  }
+
+  function reculerStory() {
+    if (storyGroupIndex === null) return;
+    if (storySlideIndex > 0) {
+      setStorySlideIndex(storySlideIndex - 1);
+    } else if (storyGroupIndex > 0) {
+      const groupePrec = storyGroups[storyGroupIndex - 1];
+      setStoryGroupIndex(storyGroupIndex - 1);
+      setStorySlideIndex(groupePrec ? groupePrec.slides.length - 1 : 0);
+    }
+  }
+
+  useEffect(function() {
+    if (storyGroupIndex === null) return;
+    const groupe = storyGroups[storyGroupIndex];
+    const slide = groupe && groupe.slides[storySlideIndex];
+    if (!slide) return;
+
+    marquerVue(slide.id);
+
+    clearTimeout(storyTimerRef.current);
+    if (slide.type !== 'video' && !storyPaused) {
+      storyTimerRef.current = setTimeout(function() { avancerStory(); }, 4000);
+    }
+    return function() { clearTimeout(storyTimerRef.current); };
+  }, [storyGroupIndex, storySlideIndex, storyPaused]);
 
   return (
     <AppShell>
@@ -387,55 +454,43 @@ export default function HomePage() {
                 <span style={{ fontSize: 9, color: '#C8A84B', marginTop: 5, whiteSpace: 'nowrap' }}>Story</span>
               </div>
             )}
-            {storiesWithContent.map((s, i) => (
+            {storyGroups.map((g, i) => (
               <div
-                key={s.id}
-                onClick={() => {
-                  setStoryViewer(i);
-                  startStoryTimer(i);
-                  import('../../services/api').then(function(mod) { mod.storiesApi.view(s.id).catch(function(){}); });
-                  setRealStories(function(prev) {
-                    return prev.map(function(rs) {
-                      if (String(rs._id) !== String(s.id)) return rs;
-                      const uid = user && user._id;
-                      const dejaVu = Array.isArray(rs.views) && rs.views.some(function(v) { return String(v) === String(uid); });
-                      if (dejaVu || !uid) return rs;
-                      return { ...rs, views: (rs.views || []).concat([uid]) };
-                    });
-                  });
-                }}
+                key={g.parishId}
+                onClick={() => openStoryGroup(i)}
                 style={{
                   position: 'relative', width: 78, height: 108, borderRadius: 14, overflow: 'hidden',
-                  flexShrink: 0, cursor: 'pointer', border: s.seen ? '2px solid #B8B8B8' : '2px solid #C8A84B',
-                  background: s.type === 'texte' ? (s.bg || '#2E5C3E') : '#1e2d14',
+                  flexShrink: 0, cursor: 'pointer', border: g.allSeen ? '2px solid #B8B8B8' : '2px solid #C8A84B',
+                  background: g.slides[0].type === 'texte' ? (g.slides[0].bg || '#2E5C3E') : '#1e2d14',
                 }}
               >
-                {s.type === 'image' && (
-                  <img src={s.imageUrl} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                {g.slides[0].type === 'image' && (
+                  <img src={g.slides[0].imageUrl} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
                 )}
-                {s.type === 'video' && (
-                  <video src={s.videoUrl} muted style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                {g.slides[0].type === 'video' && (
+                  <video src={g.slides[0].videoUrl} muted style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
                 )}
-                {s.type === 'texte' && (
+                {g.slides[0].type === 'texte' && (
                   <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8 }}>
-                    <div style={{ color: 'white', fontSize: 9, fontFamily: 'Georgia,serif', textAlign: 'center', lineHeight: 1.3 }}>{s.storyText}</div>
+                    <div style={{ color: 'white', fontSize: 9, fontFamily: 'Georgia,serif', textAlign: 'center', lineHeight: 1.3 }}>{g.slides[0].storyText}</div>
                   </div>
+                )}
+                {g.slides.length > 1 && (
+                  <div style={{ position: 'absolute', top: 6, right: 6, background: 'rgba(0,0,0,0.55)', borderRadius: 10, padding: '2px 6px', fontSize: 8, color: 'white', fontWeight: 700 }}>{g.slides.length}</div>
                 )}
                 <div style={{
                   position: 'absolute', top: 6, left: 6, width: 26, height: 26, borderRadius: '50%',
-                  border: s.seen ? '2px solid #B8B8B8' : '2px solid #C8A84B', background: '#1e2d14', display: 'flex',
+                  border: g.allSeen ? '2px solid #B8B8B8' : '2px solid #C8A84B', background: '#1e2d14', display: 'flex',
                   alignItems: 'center', justifyContent: 'center', fontSize: 9, color: 'white', fontWeight: 700,
-                }}>{s.initiales}</div>
+                }}>{g.initiales}</div>
                 <div style={{
                   position: 'absolute', bottom: 0, left: 0, right: 0,
                   background: 'linear-gradient(to top, rgba(0,0,0,0.7), transparent)', padding: '18px 6px 6px',
                 }}>
-                  <div style={{ fontSize: 8, color: 'white', fontWeight: 700 }}>{s.nom}</div>
+                  <div style={{ fontSize: 8, color: 'white', fontWeight: 700 }}>{g.nom}</div>
                 </div>
               </div>
             ))}
-            {/* Paroisses de demo et bouton Ajouter retires de cette rangee :
-                non connectes aux vraies stories et sans action utile ici. */}
           </div>
 
           {/* Actions rapides */}
@@ -678,52 +733,78 @@ export default function HomePage() {
         </div>
 
 
-        {/* LECTEUR DE STORIES plein ecran */}
-        {storyViewer !== null && (
-          <div style={{ position: 'fixed', inset: 0, background: '#000', zIndex: 999, maxWidth: 430, margin: '0 auto', overflow: 'hidden' }}>
-            <div style={{ display: 'flex', gap: 4, padding: '46px 10px 0' }}>
-              {storiesWithContent.map((s, i) => (
-                <div key={s.id} style={{ flex: 1, height: 2, background: 'rgba(255,255,255,0.3)', borderRadius: 2, overflow: 'hidden' }}>
+        {/* LECTEUR DE STORIES plein ecran (groupees par paroisse, tap gauche/droite, maintien = pause) */}
+        {storyGroupIndex !== null && storyGroups[storyGroupIndex] && (
+          <div style={{ position: 'fixed', inset: 0, background: '#000', zIndex: 99999, maxWidth: 430, margin: '0 auto', overflow: 'hidden' }}>
+            <div style={{ display: 'flex', gap: 4, padding: '46px 10px 0', position: 'relative', zIndex: 3 }}>
+              {storyGroups[storyGroupIndex].slides.map((sl, i) => (
+                <div key={sl.id} style={{ flex: 1, height: 2, background: 'rgba(255,255,255,0.3)', borderRadius: 2, overflow: 'hidden' }}>
                   <div style={{
                     height: '100%', background: 'white',
-                    width: i < storyViewer ? '100%' : i === storyViewer ? '100%' : '0%',
-                    transition: i === storyViewer ? 'width 4s linear' : 'none',
+                    width: i < storySlideIndex ? '100%' : i === storySlideIndex ? '100%' : '0%',
+                    transition: i === storySlideIndex && !storyPaused && sl.type !== 'video' ? 'width 4s linear' : 'none',
                   }} />
                 </div>
               ))}
             </div>
-            <div style={{ position: 'absolute', top: 58, left: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ position: 'absolute', top: 58, left: 14, display: 'flex', alignItems: 'center', gap: 8, zIndex: 3 }}>
               <div style={{ width: 30, height: 30, borderRadius: '50%', background: '#1e2d14', border: '1.5px solid #C8A84B', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 10, fontWeight: 700 }}>
-                {storiesWithContent[storyViewer]?.initiales}
+                {storyGroups[storyGroupIndex].initiales}
               </div>
-              <span style={{ color: 'white', fontSize: 12, fontWeight: 700 }}>{storiesWithContent[storyViewer]?.nom}</span>
+              <span style={{ color: 'white', fontSize: 12, fontWeight: 700 }}>{storyGroups[storyGroupIndex].nom}</span>
             </div>
-            <button onClick={closeStory} style={{ position: 'absolute', top: 56, right: 14, background: 'rgba(0,0,0,0.4)', border: 'none', borderRadius: '50%', width: 28, height: 28, color: 'white', fontSize: 14, cursor: 'pointer' }}>✕</button>
+            <button onClick={closeStory} style={{ position: 'absolute', top: 56, right: 14, background: 'rgba(0,0,0,0.4)', border: 'none', borderRadius: '50%', width: 28, height: 28, color: 'white', fontSize: 14, cursor: 'pointer', zIndex: 3 }}>✕</button>
             <div style={{
               position: 'absolute', inset: 0, display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
-              background: storiesWithContent[storyViewer]?.type === 'texte' ? (storiesWithContent[storyViewer]?.bg || '#1e2d14') : '#000',
+              background: storyGroups[storyGroupIndex].slides[storySlideIndex].type === 'texte' ? (storyGroups[storyGroupIndex].slides[storySlideIndex].bg || '#1e2d14') : '#000',
               overflow: 'hidden',
             }}>
-              {storiesWithContent[storyViewer]?.type === 'image' && (
-                <img src={storiesWithContent[storyViewer]?.imageUrl} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+              {storyGroups[storyGroupIndex].slides[storySlideIndex].type === 'image' && (
+                <img src={storyGroups[storyGroupIndex].slides[storySlideIndex].imageUrl} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
               )}
-              {storiesWithContent[storyViewer]?.type === 'video' && (
-                <video src={storiesWithContent[storyViewer]?.videoUrl} autoPlay muted playsInline style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+              {storyGroups[storyGroupIndex].slides[storySlideIndex].type === 'video' && (
+                <video
+                  src={storyGroups[storyGroupIndex].slides[storySlideIndex].videoUrl}
+                  autoPlay muted playsInline
+                  onEnded={avancerStory}
+                  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+                />
               )}
-              {storiesWithContent[storyViewer]?.type === 'texte' && (
+              {storyGroups[storyGroupIndex].slides[storySlideIndex].type === 'texte' && (
                 <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 30px' }}>
                   <div style={{ color: 'white', fontFamily: 'Georgia,serif', fontSize: 20, textAlign: 'center', lineHeight: 1.5 }}>
-                    {storiesWithContent[storyViewer]?.storyText}
+                    {storyGroups[storyGroupIndex].slides[storySlideIndex].storyText}
                   </div>
                 </div>
               )}
-              {storiesWithContent[storyViewer]?.type !== 'texte' && storiesWithContent[storyViewer]?.storyText && (
+              {storyGroups[storyGroupIndex].slides[storySlideIndex].type !== 'texte' && storyGroups[storyGroupIndex].slides[storySlideIndex].storyText && (
                 <div style={{ position: 'relative', zIndex: 1, color: 'white', fontFamily: 'Georgia,serif', fontSize: 14, textAlign: 'center', padding: '14px 20px 40px', background: 'linear-gradient(to top, rgba(0,0,0,0.75), transparent)', width: '100%' }}>
-                  {storiesWithContent[storyViewer]?.storyText}
+                  {storyGroups[storyGroupIndex].slides[storySlideIndex].storyText}
                 </div>
               )}
             </div>
-            <div onClick={closeStory} style={{ position: 'absolute', inset: 0 }} />
+
+            {/* Zones tactiles : gauche = precedent, droite = suivant, maintien = pause */}
+            <div style={{ position: 'absolute', inset: 0, display: 'flex', zIndex: 2 }}>
+              <div
+                onClick={reculerStory}
+                onMouseDown={() => setStoryPaused(true)}
+                onMouseUp={() => setStoryPaused(false)}
+                onMouseLeave={() => setStoryPaused(false)}
+                onTouchStart={() => setStoryPaused(true)}
+                onTouchEnd={() => setStoryPaused(false)}
+                style={{ width: '50%', height: '100%' }}
+              />
+              <div
+                onClick={avancerStory}
+                onMouseDown={() => setStoryPaused(true)}
+                onMouseUp={() => setStoryPaused(false)}
+                onMouseLeave={() => setStoryPaused(false)}
+                onTouchStart={() => setStoryPaused(true)}
+                onTouchEnd={() => setStoryPaused(false)}
+                style={{ width: '50%', height: '100%' }}
+              />
+            </div>
           </div>
         )}
 
