@@ -179,14 +179,60 @@ export default function ParishDetail() {
     window.open("https://www.google.com/maps/dir/?api=1&destination=" + lat + "," + lng, "_blank");
   };
 
-  function handleCouverture(e) {
-    const file = e.target.files && e.target.files[0];
-    if (file) setPhotoCouverture(URL.createObjectURL(file));
+  // Redimensionne et convertit en base64 (comme pour les photos de publication),
+  // puis sauvegarde reellement sur la paroisse via l'API. Le modele Parish n'a
+  // qu'un seul champ image (logoUrl) : on l'utilise pour la couverture ET la
+  // photo de profil, faute de champ separe pour l'instant.
+  function redimensionnerEnBase64(file) {
+    return new Promise(function(resolve) {
+      const img = new Image();
+      const objectUrl = URL.createObjectURL(file);
+      img.onload = function() {
+        const MAX = 1280;
+        let w = img.naturalWidth, h = img.naturalHeight;
+        if (w > MAX || h > MAX) {
+          if (w > h) { h = Math.round(h * (MAX / w)); w = MAX; }
+          else { w = Math.round(w * (MAX / h)); h = MAX; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        URL.revokeObjectURL(objectUrl);
+        resolve(canvas.toDataURL('image/jpeg', 0.82));
+      };
+      img.onerror = function() {
+        URL.revokeObjectURL(objectUrl);
+        resolve(null);
+      };
+      img.src = objectUrl;
+    });
   }
 
-  function handleProfil(e) {
+  async function handleCouverture(e) {
     const file = e.target.files && e.target.files[0];
-    if (file) setPhotoProfil(URL.createObjectURL(file));
+    if (!file) return;
+    const dataUrl = await redimensionnerEnBase64(file);
+    if (!dataUrl) return;
+    setPhotoCouverture(dataUrl);
+    try {
+      await parishesApi.update(id, { logoUrl: dataUrl });
+    } catch (err) {
+      console.log('Sauvegarde couverture:', err.message);
+    }
+  }
+
+  async function handleProfil(e) {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const dataUrl = await redimensionnerEnBase64(file);
+    if (!dataUrl) return;
+    setPhotoProfil(dataUrl);
+    try {
+      await parishesApi.update(id, { logoUrl: dataUrl });
+    } catch (err) {
+      console.log('Sauvegarde photo de profil:', err.message);
+    }
   }
 
   function ouvrirCreation() {
