@@ -57,6 +57,9 @@ export const parishesApi = {
     return apiFetch('/parishes' + (q ? '?' + q : ''));
   },
   getOne: function(id) { return apiFetch('/parishes/' + id); },
+  update: function(id, data) {
+    return apiFetch('/parishes/' + id, { method: 'PATCH', body: JSON.stringify(data) });
+  },
 };
 
 export const donationsApi = {
