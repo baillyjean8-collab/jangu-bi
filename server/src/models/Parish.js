@@ -21,6 +21,10 @@ const validator = require('validator');
 
 function isSafeUrl(v) {
   if (!v) return true;
+  // Autorise precisement les images encodees en base64 (photo de couverture,
+  // photo de profil de paroisse) : seul le prefixe data:image/... est permis,
+  // tout le reste (data:text/html, javascript:, vbscript:) reste bloque.
+  if (/^data:image\/(jpeg|jpg|png|webp|gif);base64,/i.test(v)) return true;
   if (/^(javascript:|data:|vbscript:)/i.test(v)) return false;
   return validator.isURL(v, {
     protocols: ['https', 'http'],
