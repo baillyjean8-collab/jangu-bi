@@ -62,6 +62,16 @@ export function AuthProvider({ children }) {
     const { data } = await authApi.login(credentials);
     tokenStore.set(data.data.accessToken);
     dispatch({ type: 'SET_USER', payload: data.data.user });
+    // Remplit aussi le stockage historique (jb_admin_token) utilise par les
+    // anciennes pages de gestion admin (Fideles, Dons, Demandes, Moderation,
+    // Branches, Live, Ma Paroisse), quelle que soit la page de connexion
+    // utilisee -- evite qu'elles restent bloquees sur "Chargement..." faute
+    // de token trouve.
+    const role = data.data.user && data.data.user.role;
+    if (role === 'parish_admin' || role === 'super_admin') {
+      localStorage.setItem('jb_admin_token', data.data.accessToken);
+      localStorage.setItem('jb_admin_user', JSON.stringify(data.data.user));
+    }
     return data.data;
   }, []);
 
