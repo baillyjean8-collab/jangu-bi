@@ -440,8 +440,8 @@ export default function ParishDetail() {
           <div style={{ position: "absolute", bottom: -40, left: 16 }}>
             <div style={{ position: "relative", width: 80, height: 80 }}>
               <div style={{ width: 80, height: 80, borderRadius: "50%", border: "3px solid #fff", overflow: "hidden", background: VERT, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 8px rgba(0,0,0,0.2)", fontSize: 28, fontWeight: 700, color: OR }}>
-                {photoProfil
-                  ? <img src={photoProfil} alt="profil" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                {(photoProfil || paroisse.logoUrl)
+                  ? <img src={photoProfil || paroisse.logoUrl} alt="profil" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   : initiales2
                 }
               </div>
