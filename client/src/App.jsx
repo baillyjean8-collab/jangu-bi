@@ -33,6 +33,7 @@ import AdminModeration   from './pages/parish-admin/moderation';
 import AdminBranches     from './pages/parish-admin/branches';
 import AdminLive         from './pages/parish-admin/live';
 import AdminParoisse     from './pages/parish-admin/paroisse';
+import AdminMessages     from './pages/parish-admin/messages';
 
 export default function App() {
   return (
@@ -79,6 +80,8 @@ export default function App() {
             <Route path="/parish-admin/branches"     element={<AdminBranches />} />
             <Route path="/parish-admin/live"         element={<AdminLive />} />
             <Route path="/parish-admin/paroisse"     element={<AdminParoisse />} />
+            <Route path="/parish-admin/messages"     element={<AdminMessages />} />
+            <Route path="/parish-admin/messages/:conversationId" element={<AdminMessages />} />
           </Routes>
         </Router>
       </ToastProvider>

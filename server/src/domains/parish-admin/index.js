@@ -1,12 +1,12 @@
 'use strict';
 const router = require('express').Router();
 const mongoose = require('mongoose');
-const { User, Post, Donation, Conversation } = require('../../models');
+const { User, Post, Donation, Conversation, Message } = require('../../models');
 const { authenticate, requireVerified } = require('../../middlewares/authenticate');
 const { authorize } = require('../../middlewares/authorize');
 const { asyncHandler } = require('../../middlewares/errorHandler');
 const { sendSuccess, sendPaginated } = require('../../shared/utils/response');
-const { NotFoundError } = require('../../shared/errors');
+const { NotFoundError, ValidationError } = require('../../shared/errors');
 
 const guard = [authenticate, requireVerified, authorize('parish_admin', 'super_admin')];
 
@@ -184,6 +184,62 @@ router.post('/fideles/:id/signaler', ...guard, asyncHandler(async (req, res) => 
 }));
 
 // ── Messages ──────────────────────────────────────────────────
+router.get('/conversations', ...guard, asyncHandler(async (req, res) => {
+  const parishId = await getParishId(req);
+  if (!parishId) return sendSuccess(res, []);
+  const oid = new mongoose.Types.ObjectId(parishId);
+  const conversations = await Conversation.find({ parishId: oid })
+    .sort({ lastMessageAt: -1 })
+    .populate('userId', 'firstName lastName')
+    .lean();
+  return sendSuccess(res, conversations);
+}));
+
+router.post('/conversations', ...guard, asyncHandler(async (req, res) => {
+  const parishId = await getParishId(req);
+  if (!parishId) throw new ValidationError('Aucune paroisse associee a ce compte admin');
+  const userId = req.body.userId;
+  if (!userId) throw new ValidationError('userId requis');
+  const oid = new mongoose.Types.ObjectId(parishId);
+  let conversation = await Conversation.findOne({ userId, parishId: oid });
+  if (!conversation) {
+    conversation = await Conversation.create({ userId, parishId: oid });
+  }
+  return sendSuccess(res, { conversation });
+}));
+
+router.get('/conversations/:id/messages', ...guard, asyncHandler(async (req, res) => {
+  const parishId = await getParishId(req);
+  const conversation = await Conversation.findById(req.params.id);
+  if (!conversation) throw new NotFoundError('Conversation');
+  if (parishId && String(conversation.parishId) !== parishId) throw new NotFoundError('Conversation');
+
+  const messages = await Message.find({ conversationId: conversation._id }).sort({ createdAt: 1 }).lean();
+  await Conversation.findByIdAndUpdate(conversation._id, { $set: { unreadParish: 0 } });
+
+  return sendSuccess(res, { conversation, messages });
+}));
+
+router.post('/conversations/:id/messages', ...guard, asyncHandler(async (req, res) => {
+  const conversation = await Conversation.findById(req.params.id);
+  if (!conversation) throw new NotFoundError('Conversation');
+  const text = (req.body.text || '').trim();
+  if (!text) throw new ValidationError('Message vide');
+
+  const message = await Message.create({
+    conversationId: conversation._id,
+    senderId: req.user.userId,
+    senderType: 'parish',
+    text,
+  });
+
+  await Conversation.findByIdAndUpdate(conversation._id, {
+    $set: { lastMessage: text, lastMessageAt: new Date() },
+    $inc: { unreadUser: 1 },
+  });
+
+  return sendSuccess(res, { message }, 'Message envoye');
+}));
 router.post('/messages', ...guard, asyncHandler(async (req, res) => {
   return sendSuccess(res, null, 'Message envoyé');
 }));
