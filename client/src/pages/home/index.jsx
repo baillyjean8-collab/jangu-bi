@@ -188,7 +188,7 @@ export default function HomePage() {
   const prenom = user?.firstName || 'Marie';
   const nom = user?.lastName || 'Diallo';
   const initiales = ((user?.firstName?.[0] || 'M') + (user?.lastName?.[0] || 'D')).toUpperCase();
-  const photo = parishLogo || user?.profilePhoto || null;
+  const photo = parishLogo || user?.profilePhoto || user?.avatarUrl || null;
   const faithDays = user?.faithDays ?? 34;
   const isAdmin = user?.role === 'parish_admin' || user?.role === 'super_admin';
   function estMaParoisse(p) {

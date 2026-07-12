@@ -159,7 +159,7 @@ export default function ProfilePage() {
   const [rawPhoto, setRawPhoto] = useState(null);
   const [showEditor, setShowEditor] = useState(false);
 
-  const photo    = user?.profilePhoto || null;
+  const photo    = user?.profilePhoto || user?.avatarUrl || null;
   const prenom   = user?.firstName || 'Marie';
   const nom      = user?.lastName  || 'Diallo';
   const initiales = ((prenom[0] || 'M') + (nom[0] || 'D')).toUpperCase();
@@ -184,14 +184,22 @@ export default function ProfilePage() {
     reader.readAsDataURL(file);
   }
 
-  function handleSavePhoto(cropped) {
+  async function handleSavePhoto(cropped) {
     setShowEditor(false);
     setRawPhoto(null);
-    // Sauvegarder dans le contexte utilisateur
-    if (updateUser) updateUser({ profilePhoto: cropped });
+    // Sauvegarder dans le contexte utilisateur (affichage immediat)
+    if (updateUser) updateUser({ profilePhoto: cropped, avatarUrl: cropped });
     else {
       // Fallback: stocker dans localStorage
       localStorage.setItem('jangubi_profile_photo', cropped);
+    }
+    // Persister cote serveur (champ avatarUrl du modele User) pour que la
+    // photo survive a un rafraichissement de page.
+    try {
+      const { userApi } = await import('../../services/api');
+      await userApi.updateMe({ avatarUrl: cropped });
+    } catch (e) {
+      console.log('Sauvegarde photo profil:', e.message);
     }
   }
 
