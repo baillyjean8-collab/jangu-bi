@@ -1,7 +1,7 @@
 'use strict';
 const router = require('express').Router();
 const mongoose = require('mongoose');
-const { User, Post, Donation } = require('../../models');
+const { User, Post, Donation, Conversation } = require('../../models');
 const { authenticate, requireVerified } = require('../../middlewares/authenticate');
 const { authorize } = require('../../middlewares/authorize');
 const { asyncHandler } = require('../../middlewares/errorHandler');
@@ -107,6 +107,46 @@ router.patch('/demandes/:id/rejeter', ...guard, asyncHandler(async (req, res) =>
 }));
 
 // ── Fidèles ───────────────────────────────────────────────────
+router.get('/notifications-count', ...guard, asyncHandler(async (req, res) => {
+  const parishId = await getParishId(req);
+  if (!parishId) return sendSuccess(res, { nouveauxFideles: 0, messagesNonRepondus: 0 });
+
+  const oid = new mongoose.Types.ObjectId(parishId);
+  const adminUser = await User.findById(req.user.userId).select('lastFidelesViewAt').lean();
+  const depuis = (adminUser && adminUser.lastFidelesViewAt) || new Date(0);
+
+  const [nouveauxFideles, conversationsAgg] = await Promise.all([
+    User.countDocuments({
+      isActive: true,
+      createdAt: { $gt: depuis },
+      $or: [{ parishId: oid }, { followedParishes: oid }],
+    }),
+    Conversation.aggregate([
+      { $match: { parishId: oid, unreadParish: { $gt: 0 } } },
+      { $group: { _id: null, total: { $sum: '$unreadParish' } } },
+    ]),
+  ]);
+
+  const messagesNonRepondus = (conversationsAgg[0] && conversationsAgg[0].total) || 0;
+  return sendSuccess(res, { nouveauxFideles, messagesNonRepondus });
+}));
+
+router.post('/fideles/vu', ...guard, asyncHandler(async (req, res) => {
+  await User.findByIdAndUpdate(req.user.userId, { $set: { lastFidelesViewAt: new Date() } });
+  return sendSuccess(res, null, 'Marque comme vu');
+}));
+
+router.get('/fideles/counts', ...guard, asyncHandler(async (req, res) => {
+  const parishId = await getParishId(req);
+  if (!parishId) return sendSuccess(res, { paroissiens: 0, abonnes: 0 });
+  const oid = new mongoose.Types.ObjectId(parishId);
+  const [paroissiens, abonnes] = await Promise.all([
+    User.countDocuments({ parishId: oid, isActive: true }),
+    User.countDocuments({ followedParishes: oid, isActive: true }),
+  ]);
+  return sendSuccess(res, { paroissiens, abonnes });
+}));
+
 router.get('/fideles', ...guard, asyncHandler(async (req, res) => {
   const parishId = await getParishId(req);
   const page  = Number(req.query.page)  || 1;

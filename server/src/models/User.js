@@ -138,6 +138,10 @@ message: 'Phone must be in E.164 format (e.g. +221771234567)',
       type: Date,
       default: null,
     },
+    lastFidelesViewAt: {
+      type: Date,
+      default: null,
+    },
     loginAttempts: {
       type: Number,
       default: 0,
