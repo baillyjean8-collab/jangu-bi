@@ -509,6 +509,7 @@ export default function ParishDetail() {
                   <i className="ti ti-users" style={{ fontSize: 19, color: OR }} />
                 </div>
               </div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: OR, marginBottom: 1 }}>{(paroisse.stats && paroisse.stats.memberCount) || 0}</div>
               <div style={{ fontSize: 9, color: OR, fontWeight: 700 }}>Fideles</div>
             </div>
             <div onClick={isOwner ? function() { navigate('/parish-admin/messages'); } : undefined} style={{ textAlign: "center", flex: 1, cursor: isOwner ? 'pointer' : 'default' }}>
