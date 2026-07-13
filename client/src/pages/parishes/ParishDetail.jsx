@@ -482,50 +482,45 @@ export default function ParishDetail() {
             <div style={{ fontSize: 15, fontWeight: 800, color: "#fff", lineHeight: 1.3 }}>{paroisse.name}</div>
           </div>
 
-          <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
-            <div onClick={hasCoords ? ouvrirItineraire : undefined} style={{ background: "rgba(200,168,75,0.18)", border: "1px solid rgba(200,168,75,0.4)", borderRadius: 8, padding: "6px 12px", display: "flex", alignItems: "center", gap: 6, cursor: hasCoords ? 'pointer' : 'default' }}>
-              <i className="ti ti-map-pin" style={{ fontSize: 13, color: OR }} />
-              <span style={{ fontSize: 12, color: OR, fontWeight: 700 }}>{isOwner ? 'Localisation' : 'Itineraire'}</span>
+          <div style={{ display: "flex", gap: 6, marginBottom: 16, justifyContent: "space-around" }}>
+            <div onClick={hasCoords ? ouvrirItineraire : undefined} style={{ textAlign: "center", flex: 1, cursor: hasCoords ? 'pointer' : 'default' }}>
+              <div style={{ width: 44, height: 44, borderRadius: "50%", background: "linear-gradient(135deg, rgba(200,168,75,0.28), rgba(200,168,75,0.08))", boxShadow: "inset 0 0 0 1.5px rgba(200,168,75,0.4)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 5px" }}>
+                <i className="ti ti-map-pin" style={{ fontSize: 18, color: OR }} />
+              </div>
+              <div style={{ fontSize: 9, color: "rgba(255,255,255,0.7)", fontWeight: 600 }}>{isOwner ? 'Localisation' : 'Itineraire'}</div>
             </div>
             {isOwner && (
-              <div onClick={function() { navigate('/parish-admin/branches'); }} style={{ background: OR, borderRadius: 8, padding: "6px 12px", display: "flex", alignItems: "center", gap: 6, cursor: 'pointer' }}>
-                <i className="ti ti-affiliate" style={{ fontSize: 13, color: VERT }} />
-                <span style={{ fontSize: 12, color: VERT, fontWeight: 700 }}>Branches & Groupes</span>
+              <div onClick={function() { navigate('/parish-admin/branches'); }} style={{ textAlign: "center", flex: 1, cursor: "pointer" }}>
+                <div style={{ position: "relative", width: 44, height: 44, margin: "0 auto 5px" }}>
+                  <span style={{ position: "absolute", top: -3, right: -3, background: OR, color: VERT, fontSize: 11, fontWeight: 800, width: 15, height: 15, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", border: "2px solid " + VERT, zIndex: 2 }}>+</span>
+                  <div style={{ width: 44, height: 44, borderRadius: "50%", background: "linear-gradient(135deg, rgba(200,168,75,0.28), rgba(200,168,75,0.08))", boxShadow: "inset 0 0 0 1.5px rgba(200,168,75,0.4)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <i className="ti ti-affiliate" style={{ fontSize: 18, color: OR }} />
+                  </div>
+                </div>
+                <div style={{ fontSize: 9, color: "rgba(255,255,255,0.7)", fontWeight: 600 }}>Groupes</div>
               </div>
             )}
-          </div>
-
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 6, marginBottom: 16 }}>
-            <div style={{ textAlign: "center" }}>
-              <div style={{ width: 44, height: 44, borderRadius: "50%", background: "linear-gradient(135deg, rgba(200,168,75,0.22), rgba(200,168,75,0.06))", boxShadow: "inset 0 0 0 1.5px rgba(200,168,75,0.3)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 6px" }}>
-                <i className="ti ti-file-text" style={{ fontSize: 20, color: OR }} />
-              </div>
-              <div style={{ fontSize: 14, fontWeight: 700, color: "#fff" }}>{posts.length}</div>
-              <div style={{ fontSize: 8, color: "rgba(255,255,255,0.5)" }}>Publications</div>
-            </div>
-            <div onClick={isOwner ? function() { navigate('/parish-admin/fideles'); } : undefined} style={{ textAlign: "center", cursor: isOwner ? 'pointer' : 'default' }}>
-              <div style={{ position: "relative", width: 44, height: 44, margin: "0 auto 6px" }}>
+            <div onClick={isOwner ? function() { navigate('/parish-admin/fideles'); } : undefined} style={{ textAlign: "center", flex: 1, cursor: isOwner ? 'pointer' : 'default' }}>
+              <div style={{ position: "relative", width: 44, height: 44, margin: "0 auto 5px" }}>
                 {isOwner && notifCount.nouveauxFideles > 0 && (
                   <span style={{ position: "absolute", top: -3, right: -3, background: "#E24B4A", color: "#fff", fontSize: 9, fontWeight: 700, minWidth: 16, height: 16, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 4px", border: "2px solid " + VERT, zIndex: 2 }}>{notifCount.nouveauxFideles}</span>
                 )}
-                <div style={{ width: 44, height: 44, borderRadius: "50%", background: "linear-gradient(135deg, rgba(200,168,75,0.3), rgba(200,168,75,0.08))", boxShadow: "inset 0 0 0 1.5px rgba(200,168,75,0.45)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <i className="ti ti-users" style={{ fontSize: 20, color: OR }} />
+                <div style={{ width: 44, height: 44, borderRadius: "50%", background: "linear-gradient(135deg, rgba(200,168,75,0.32), rgba(200,168,75,0.1))", boxShadow: "inset 0 0 0 1.5px rgba(200,168,75,0.5)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <i className="ti ti-users" style={{ fontSize: 19, color: OR }} />
                 </div>
               </div>
-              <div style={{ fontSize: 14, fontWeight: 700, color: OR }}>{(paroisse.stats && paroisse.stats.memberCount) || 0}</div>
-              <div style={{ fontSize: 8, color: OR, fontWeight: 700 }}>Fideles {isOwner ? '\u203a' : ''}</div>
+              <div style={{ fontSize: 9, color: OR, fontWeight: 700 }}>Fideles</div>
             </div>
-            <div onClick={isOwner ? function() { navigate('/parish-admin/messages'); } : undefined} style={{ textAlign: "center", cursor: isOwner ? 'pointer' : 'default' }}>
-              <div style={{ position: "relative", width: 44, height: 44, margin: "0 auto 6px" }}>
+            <div onClick={isOwner ? function() { navigate('/parish-admin/messages'); } : undefined} style={{ textAlign: "center", flex: 1, cursor: isOwner ? 'pointer' : 'default' }}>
+              <div style={{ position: "relative", width: 44, height: 44, margin: "0 auto 5px" }}>
                 {isOwner && notifCount.messagesNonRepondus > 0 && (
                   <span style={{ position: "absolute", top: -3, right: -3, background: "#E24B4A", color: "#fff", fontSize: 9, fontWeight: 700, minWidth: 16, height: 16, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 4px", border: "2px solid " + VERT, zIndex: 2 }}>{notifCount.messagesNonRepondus}</span>
                 )}
                 <div style={{ width: 44, height: 44, borderRadius: "50%", background: "linear-gradient(135deg, rgba(200,168,75,0.22), rgba(200,168,75,0.06))", boxShadow: "inset 0 0 0 1.5px rgba(200,168,75,0.3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <i className="ti ti-message-circle" style={{ fontSize: 20, color: OR }} />
+                  <i className="ti ti-message-circle" style={{ fontSize: 19, color: OR }} />
                 </div>
               </div>
-              <div style={{ fontSize: 14, fontWeight: 700, color: "#fff" }}>{posts.reduce(function(acc, p) { return acc + (p.likes ? p.likes.length : 0) + (p.comments ? p.comments.length : 0); }, 0)}</div>
-              <div style={{ fontSize: 8, color: "rgba(255,255,255,0.5)" }}>Interactions</div>
+              <div style={{ fontSize: 9, color: "rgba(255,255,255,0.7)", fontWeight: 600 }}>Interactions</div>
             </div>
           </div>
 
