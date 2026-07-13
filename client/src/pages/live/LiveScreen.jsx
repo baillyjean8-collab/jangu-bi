@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { Room, RoomEvent } from 'livekit-client';
 import { contientMotInterdit, sauvegarderAvertissement, compteRestreint, messageRestriction } from '../../utils/jb-filtre';
 
 const CADEAUX = [
@@ -118,6 +119,49 @@ export default function LiveScreen() {
   const navigate = useNavigate();
   const { id } = useParams();
   const live = LIVE_MOCK;
+
+  const [sessionReelle, setSessionReelle] = useState(null);
+  const [connexionVideo, setConnexionVideo] = useState('chargement');
+  const videoRef = useRef(null);
+  const roomRef = useRef(null);
+
+  useEffect(function() {
+    let annule = false;
+    async function connecter() {
+      try {
+        const { liveApi } = await import('../../services/api');
+        const dataSession = await liveApi.getOne(id);
+        if (annule) return;
+        const session = dataSession && dataSession.data && dataSession.data.session;
+        if (session) setSessionReelle(session);
+
+        const dataToken = await liveApi.getToken(id);
+        if (annule) return;
+        const room = new Room();
+        room.on(RoomEvent.TrackSubscribed, function(track) {
+          if (track.kind === 'video' && videoRef.current) track.attach(videoRef.current);
+        });
+        await room.connect(dataToken.data.url, dataToken.data.token);
+        roomRef.current = room;
+
+        room.remoteParticipants.forEach(function(participant) {
+          participant.videoTrackPublications.forEach(function(pub) {
+            if (pub.track && videoRef.current) pub.track.attach(videoRef.current);
+          });
+        });
+
+        setConnexionVideo('connecte');
+      } catch (e) {
+        console.log('Connexion live:', e.message);
+        if (!annule) setConnexionVideo('erreur');
+      }
+    }
+    connecter();
+    return function() {
+      annule = true;
+      if (roomRef.current) { roomRef.current.disconnect(); roomRef.current = null; }
+    };
+  }, [id]);
 
   const [likeCount,  setLikeCount]  = useState(live.likes);
   const [commentaire, setCommentaire] = useState('');
@@ -355,22 +399,25 @@ export default function LiveScreen() {
         }}
       >
         {/* Photo profil ou caméra */}
-        <div style={{
-          width: 100, height: 100, borderRadius: '50%',
-          background: 'linear-gradient(135deg,#1e2d14,#0C0A06)',
-          border: speakingId === 'host' ? `3px solid ${OR}` : `2.5px solid ${OR}80`,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          animation: speakingId === 'host' ? 'jb-speaking 1.5s ease-in-out infinite' : 'none',
-          transition: 'all 0.3s',
-        }}>
-          {cameraOn ? (
-            <div style={{ width: '100%', height: '100%', borderRadius: '50%', background: '#222', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <i className="ti ti-video" style={{ fontSize: 28, color: OR }} />
-            </div>
-          ) : (
+        {connexionVideo === 'connecte' && (
+          <video ref={videoRef} autoPlay playsInline style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+        )}
+        {connexionVideo !== 'connecte' && (
+          <div style={{
+            width: 100, height: 100, borderRadius: '50%',
+            background: 'linear-gradient(135deg,#1e2d14,#0C0A06)',
+            border: `2.5px solid ${OR}80`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
             <i className="ti ti-building-church" style={{ fontSize: 42, color: 'rgba(200,168,75,0.5)' }} />
-          )}
-        </div>
+          </div>
+        )}
+        {connexionVideo === 'chargement' && (
+          <div style={{ position: 'absolute', bottom: 6, left: 0, right: 0, textAlign: 'center', fontSize: 9, color: 'rgba(200,168,75,0.6)' }}>Connexion au direct...</div>
+        )}
+        {connexionVideo === 'erreur' && (
+          <div style={{ position: 'absolute', bottom: 6, left: 0, right: 0, textAlign: 'center', fontSize: 9, color: '#e57373' }}>Le direct n'a pas pu se charger</div>
+        )}
 
       </div>
 
@@ -435,7 +482,7 @@ export default function LiveScreen() {
             <div style={{ width: 26, height: 26, borderRadius: '50%', background: 'linear-gradient(135deg,#1e2d14,#0C0A06)', border: `1.5px solid ${OR}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700, color: OR, flexShrink: 0 }}>
               {live.initiales}
             </div>
-            <span style={{ fontSize: 11, fontWeight: 700, color: 'white', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 130 }}>{live.paroisse}</span>
+            <span style={{ fontSize: 11, fontWeight: 700, color: 'white', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 130 }}>{(sessionReelle && sessionReelle.parishId && sessionReelle.parishId.name) || live.paroisse}</span>
           </div>
           <button style={{ background: 'linear-gradient(135deg,#C8A84B,#8B6020)', border: 'none', borderRadius: 20, padding: '3px 10px', fontSize: 9, color: '#1e2d14', fontWeight: 700, cursor: 'pointer', flexShrink: 0, whiteSpace: 'nowrap' }}>+ Suivre</button>
           <div style={{ background: '#e53935', borderRadius: 6, padding: '2px 7px', fontSize: 8, fontWeight: 700, color: 'white', flexShrink: 0 }}>● LIVE</div>
