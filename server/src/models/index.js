@@ -15,6 +15,7 @@ const Message      = require('./Message');
 const Conversation = require('./Conversation');
 const Announcement = require('./Announcement');
 const Group        = require('./Group');
+const GroupMessage = require('./GroupMessage');
 
 module.exports = {
   User,
@@ -30,4 +31,5 @@ module.exports = {
   Conversation,
   Announcement,
   Group,
+  GroupMessage,
 };

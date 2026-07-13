@@ -107,6 +107,8 @@ export const groupApi = {
   getPosts: function(id) { return apiFetch('/groups/' + id + '/posts'); },
   createPost: function(id, data) { return apiFetch('/groups/' + id + '/posts', { method: 'POST', body: JSON.stringify(data) }); },
   updatePost: function(id, postId, data) { return apiFetch('/groups/' + id + '/posts/' + postId, { method: 'PATCH', body: JSON.stringify(data) }); },
+  getMessages: function(id) { return apiFetch('/groups/' + id + '/messages'); },
+  sendMessage: function(id, data) { return apiFetch('/groups/' + id + '/messages', { method: 'POST', body: JSON.stringify(data) }); },
 };
 
 export const messagesApi = {

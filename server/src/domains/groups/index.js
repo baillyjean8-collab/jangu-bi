@@ -1,6 +1,6 @@
 'use strict';
 const router = require('express').Router();
-const { Group, Post } = require('../../models');
+const { Group, Post, GroupMessage } = require('../../models');
 const { authenticate, requireVerified } = require('../../middlewares/authenticate');
 const { asyncHandler } = require('../../middlewares/errorHandler');
 const { sendSuccess } = require('../../shared/utils/response');
@@ -17,6 +17,11 @@ function peutGerer(req, group) {
     String(req.user.parishId) === String(group.parishId);
   const isModerateur = group.moderatorId && String(group.moderatorId) === String(req.user.userId);
   return isAdmin || isModerateur;
+}
+
+function estMembreDuGroupe(req, group) {
+  if (peutGerer(req, group)) return true;
+  return (group.members || []).some(function(m) { return String(m) === String(req.user.userId); });
 }
 
 // GET /groups/:id - infos du groupe + droits de l'utilisateur courant
@@ -94,6 +99,43 @@ router.patch('/:id/posts/:postId', authenticate, requireVerified, asyncHandler(a
   if (!post) throw new NotFoundError('Publication');
 
   return sendSuccess(res, { post }, 'Publication mise a jour');
+}));
+
+// ── Messagerie interne du groupe (reservee aux membres) ──────────
+router.get('/:id/messages', authenticate, requireVerified, asyncHandler(async (req, res) => {
+  const group = await chargerGroupeOuErreur(req.params.id);
+  if (!estMembreDuGroupe(req, group)) throw new AuthorizationError('Reserve aux membres du groupe');
+
+  const messages = await GroupMessage.find({ groupId: group._id })
+    .sort({ createdAt: 1 })
+    .populate('senderId', 'firstName lastName')
+    .lean();
+
+  return sendSuccess(res, messages);
+}));
+
+router.post('/:id/messages', authenticate, requireVerified, asyncHandler(async (req, res) => {
+  const group = await chargerGroupeOuErreur(req.params.id);
+  if (!estMembreDuGroupe(req, group)) throw new AuthorizationError('Reserve aux membres du groupe');
+
+  const text = (req.body.text || '').trim();
+  const fileUrl = req.body.fileUrl || null;
+  const fileType = ['image', 'video', 'document'].includes(req.body.fileType) ? req.body.fileType : null;
+  const fileName = req.body.fileName || null;
+
+  if (!text && !fileUrl) throw new ValidationError('Message vide');
+
+  const message = await GroupMessage.create({
+    groupId: group._id,
+    senderId: req.user.userId,
+    text,
+    fileUrl,
+    fileType,
+    fileName,
+  });
+
+  const populated = await GroupMessage.findById(message._id).populate('senderId', 'firstName lastName').lean();
+  return sendSuccess(res, { message: populated }, 'Message envoye');
 }));
 
 module.exports = { router };
