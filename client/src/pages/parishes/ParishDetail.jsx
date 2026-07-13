@@ -512,7 +512,7 @@ export default function ParishDetail() {
               <div style={{ fontSize: 12, fontWeight: 700, color: OR, marginBottom: 1 }}>{(paroisse.stats && paroisse.stats.memberCount) || 0}</div>
               <div style={{ fontSize: 9, color: OR, fontWeight: 700 }}>Fideles</div>
             </div>
-            <div onClick={isOwner ? function() { navigate('/parish-admin/messages'); } : undefined} style={{ textAlign: "center", flex: 1, cursor: isOwner ? 'pointer' : 'default' }}>
+            <div onClick={isOwner ? function() { navigate('/parish-admin/messages'); } : envoyerMessageParoisse} style={{ textAlign: "center", flex: 1, cursor: 'pointer' }}>
               <div style={{ position: "relative", width: 44, height: 44, margin: "0 auto 5px" }}>
                 {isOwner && notifCount.messagesNonRepondus > 0 && (
                   <span style={{ position: "absolute", top: -3, right: -3, background: "#E24B4A", color: "#fff", fontSize: 9, fontWeight: 700, minWidth: 16, height: 16, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 4px", border: "2px solid " + VERT, zIndex: 2 }}>{notifCount.messagesNonRepondus}</span>
@@ -521,8 +521,16 @@ export default function ParishDetail() {
                   <i className="ti ti-message-circle" style={{ fontSize: 19, color: OR }} />
                 </div>
               </div>
-              <div style={{ fontSize: 9, color: "rgba(255,255,255,0.7)", fontWeight: 600 }}>Interactions</div>
+              <div style={{ fontSize: 9, color: "rgba(255,255,255,0.7)", fontWeight: 600 }}>{isOwner ? 'Interactions' : 'Message'}</div>
             </div>
+            {!isOwner && (
+              <div onClick={function() { navigate('/donate'); }} style={{ textAlign: "center", flex: 1, cursor: "pointer" }}>
+                <div style={{ width: 44, height: 44, borderRadius: "50%", background: "linear-gradient(135deg, rgba(200,168,75,0.22), rgba(200,168,75,0.06))", boxShadow: "inset 0 0 0 1.5px rgba(200,168,75,0.3)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 5px" }}>
+                  <i className="ti ti-heart-handshake" style={{ fontSize: 19, color: OR }} />
+                </div>
+                <div style={{ fontSize: 9, color: "rgba(255,255,255,0.7)", fontWeight: 600 }}>Faire un don</div>
+              </div>
+            )}
           </div>
 
           <div style={{ display: "flex", gap: 6, marginBottom: 16, justifyContent: "space-around" }}>
@@ -553,16 +561,7 @@ export default function ParishDetail() {
                   <div style={{ fontSize: 9, color: "rgba(255,255,255,0.7)", fontWeight: 600 }}>Live</div>
                 </div>
               </>
-            ) : (
-              <>
-                <button onClick={function() { navigate('/donate'); }} style={{ flex: 1, padding: "11px 0", borderRadius: 12, border: "none", background: OR, color: VERT, fontWeight: 700, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
-                  <i className="ti ti-hand-finger" style={{ fontSize: 16 }} /> Faire un don
-                </button>
-                <button onClick={envoyerMessageParoisse} style={{ flex: 1, padding: "11px 0", borderRadius: 12, border: "none", background: VERT, color: "#fff", fontWeight: 700, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
-                  <i className="ti ti-message-circle" style={{ fontSize: 16 }} /> Message
-                </button>
-              </>
-            )}
+            ) : null}
           </div>
 
           <div style={{ display: "flex", gap: 0 }}>
