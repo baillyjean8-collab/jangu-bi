@@ -139,15 +139,25 @@ export default function HomePage() {
   useEffect(() => {
     async function loadUnreadMessages() {
       try {
-        const { messagesApi } = await import('../../services/api');
-        const data = await messagesApi.unreadCount();
-        if (data && data.data) setUnreadMessages(data.data.total || 0);
+        const estAdmin = user && (user.role === 'parish_admin' || user.role === 'super_admin');
+        if (estAdmin) {
+          const token = localStorage.getItem('jb_admin_token');
+          if (!token) return;
+          const BASE = import.meta.env.VITE_API_URL || '/api';
+          const res = await fetch(BASE + '/parish-admin/notifications-count', { headers: { Authorization: 'Bearer ' + token } });
+          const data = await res.json();
+          if (data && data.data) setUnreadMessages(data.data.messagesNonRepondus || 0);
+        } else {
+          const { messagesApi } = await import('../../services/api');
+          const data = await messagesApi.unreadCount();
+          if (data && data.data) setUnreadMessages(data.data.total || 0);
+        }
       } catch (e) {
         console.log('Unread messages:', e.message);
       }
     }
     loadUnreadMessages();
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     async function loadParishLogo() {
@@ -408,7 +418,7 @@ export default function HomePage() {
               <div onClick={() => setSearchOpen(o => !o)} style={{ width: 32, height: 32, borderRadius: '50%', background: searchOpen ? '#1e2d14' : 'rgba(0,0,0,.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
                 <i className="ti ti-search" style={{ fontSize: 16, color: searchOpen ? '#C8A84B' : '#666' }} />
               </div>
-              <div onClick={() => navigate('/messages')} style={{ position: 'relative', width: 32, height: 32, borderRadius: '50%', background: 'rgba(0,0,0,.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+              <div onClick={() => navigate(isAdmin ? '/parish-admin/messages' : '/messages')} style={{ position: 'relative', width: 32, height: 32, borderRadius: '50%', background: 'rgba(0,0,0,.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
                 <i className="ti ti-message-circle" style={{ fontSize: 16, color: '#666' }} />
                 {unreadMessages > 0 && (
                   <div style={{ position: 'absolute', top: -3, right: -3, minWidth: 15, height: 15, borderRadius: 8, background: '#e53935', border: '1.5px solid #F5F0E8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8, fontWeight: 700, color: 'white', padding: '0 3px' }}>{unreadMessages}</div>
