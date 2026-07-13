@@ -265,7 +265,9 @@ router.post('/groups', ...guard, asyncHandler(async (req, res) => {
   const name = (req.body.name || '').trim();
   if (!name) throw new ValidationError('Nom du groupe requis');
   const type = req.body.type === 'prive' ? 'prive' : 'public';
-  const group = await Group.create({ name, type, parishId: new mongoose.Types.ObjectId(parishId) });
+  const description = (req.body.description || '').trim() || null;
+  const photoUrl = req.body.photoUrl || null;
+  const group = await Group.create({ name, type, description, photoUrl, parishId: new mongoose.Types.ObjectId(parishId) });
   return sendSuccess(res, { group }, 'Groupe cree');
 }));
 
@@ -284,6 +286,8 @@ router.patch('/groups/:id', ...guard, asyncHandler(async (req, res) => {
   if (req.body.type === 'public' || req.body.type === 'prive') updates.type = req.body.type;
   if (typeof req.body.isActive === 'boolean') updates.isActive = req.body.isActive;
   if (req.body.moderatorId !== undefined) updates.moderatorId = req.body.moderatorId || null;
+  if (typeof req.body.description === 'string') updates.description = req.body.description.trim() || null;
+  if (req.body.photoUrl !== undefined) updates.photoUrl = req.body.photoUrl || null;
   const group = await Group.findByIdAndUpdate(req.params.id, { $set: updates }, { new: true });
   if (!group) throw new NotFoundError('Groupe');
   return sendSuccess(res, { group }, 'Groupe mis a jour');

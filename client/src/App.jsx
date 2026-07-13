@@ -33,6 +33,7 @@ import AdminDons         from './pages/parish-admin/dons';
 import AdminFideles      from './pages/parish-admin/fideles';
 import AdminModeration   from './pages/parish-admin/moderation';
 import AdminBranches     from './pages/parish-admin/branches';
+import CreerBranche      from './pages/parish-admin/branches/creer';
 import AdminLive         from './pages/parish-admin/live';
 import AdminParoisse     from './pages/parish-admin/paroisse';
 import AdminMessages     from './pages/parish-admin/messages';
@@ -83,6 +84,7 @@ export default function App() {
             <Route path="/parish-admin/fideles"      element={<AdminFideles />} />
             <Route path="/parish-admin/moderation"   element={<AdminModeration />} />
             <Route path="/parish-admin/branches"     element={<AdminBranches />} />
+            <Route path="/parish-admin/branches/nouveau" element={<CreerBranche />} />
             <Route path="/parish-admin/live"         element={<AdminLive />} />
             <Route path="/parish-admin/paroisse"     element={<AdminParoisse />} />
             <Route path="/parish-admin/messages"     element={<AdminMessages />} />
