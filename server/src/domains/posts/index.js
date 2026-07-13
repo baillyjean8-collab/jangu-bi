@@ -16,7 +16,7 @@ const postRepo = {
   },
 
   async findAll({ page = 1, limit = 10, parishId } = {}) {
-    const filter = { isActive: true };
+    const filter = { isActive: true, $or: [{ groupId: null }, { visibility: 'public' }] };
     if (parishId) filter.parishId = parishId;
     const [data, total] = await Promise.all([
       Post.find(filter)

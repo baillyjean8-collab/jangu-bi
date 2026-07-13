@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import AdminShell from '../AdminShell';
 
 const OR      = '#C8A84B';
@@ -8,6 +9,7 @@ const BOGOLAN      = 'repeating-linear-gradient(0deg,transparent,transparent 8px
 const BOGOLAN_DARK = 'repeating-linear-gradient(0deg,transparent,transparent 8px,rgba(200,168,75,0.07) 8px,rgba(200,168,75,0.07) 9px),repeating-linear-gradient(90deg,transparent,transparent 8px,rgba(200,168,75,0.07) 8px,rgba(200,168,75,0.07) 9px)';
 
 export default function AdminBranches() {
+  const navigate = useNavigate();
   const token = localStorage.getItem('jb_admin_token');
   const BASE = import.meta.env.VITE_API_URL || '/api';
 
@@ -169,7 +171,7 @@ export default function AdminBranches() {
                   <i className={g.type === 'prive' ? 'ti ti-lock' : 'ti ti-world'} style={{ fontSize: 19, color: g.type === 'prive' ? OR : '#8B6020' }} />
                 </div>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: VERT, fontFamily: 'Georgia,serif' }}>{g.name}</div>
+                  <div onClick={function() { navigate('/groupes/' + g._id); }} style={{ fontSize: 13, fontWeight: 700, color: VERT, fontFamily: 'Georgia,serif', cursor: 'pointer', textDecoration: 'underline' }}>{g.name}</div>
                   <div style={{ fontSize: 9, color: '#7A6E5E', marginTop: 2 }}>{g.memberCount || 0} membres - Moderateur : {g.moderatorId ? (g.moderatorId.firstName + ' ' + g.moderatorId.lastName) : 'a definir'}</div>
                 </div>
                 <span style={{ padding: '3px 9px', borderRadius: 20, fontSize: 8, fontWeight: 700, background: g.type === 'prive' ? 'rgba(30,45,20,0.08)' : 'rgba(200,168,75,0.12)', color: g.type === 'prive' ? VERT : '#8B6020' }}>

@@ -102,6 +102,13 @@ export const liveApi = {
   getActifs: function() { return apiFetch('/live?status=active&limit=10'); },
 };
 
+export const groupApi = {
+  getOne: function(id) { return apiFetch('/groups/' + id); },
+  getPosts: function(id) { return apiFetch('/groups/' + id + '/posts'); },
+  createPost: function(id, data) { return apiFetch('/groups/' + id + '/posts', { method: 'POST', body: JSON.stringify(data) }); },
+  updatePost: function(id, postId, data) { return apiFetch('/groups/' + id + '/posts/' + postId, { method: 'PATCH', body: JSON.stringify(data) }); },
+};
+
 export const messagesApi = {
   getAll: function() { return apiFetch('/messages'); },
   getOne: function(id) { return apiFetch('/messages/' + id); },

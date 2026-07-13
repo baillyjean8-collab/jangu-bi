@@ -49,6 +49,7 @@ const { router: storyRoutes }  = require('./domains/stories');
 const { router: chatRoutes }   = require('./domains/chat');
 const { router: announcementRoutes } = require('./domains/announcements');
 const bibleRoutes = require('./domains/bible/bible.routes');
+const { router: groupRoutes } = require('./domains/groups');
 // Middleware
 const { apiRateLimiter }              = require('./middlewares/rateLimiter');
 const { errorHandler, notFoundHandler } = require('./middlewares/errorHandler');
@@ -185,6 +186,7 @@ app.use('/api/stories',   storyRoutes);
 app.use('/api/chat',      chatRoutes);
 app.use('/api/announcements', announcementRoutes);
 app.use('/api/bible', bibleRoutes);
+app.use('/api/groups', groupRoutes);
 
   // ── 11. 404 handler ───────────────────────────────────────────────────────
   app.use(notFoundHandler);

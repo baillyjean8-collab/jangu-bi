@@ -7,6 +7,8 @@ const commentSchema = new mongoose.Schema({
 });
 const postSchema = new mongoose.Schema({
   parishId:  { type: mongoose.Schema.Types.ObjectId, ref: 'Parish', required: true },
+  groupId:   { type: mongoose.Schema.Types.ObjectId, ref: 'Group', default: null },
+  visibility:{ type: String, enum: ['public', 'prive'], default: 'public' },
   content:   { type: String, required: true, maxlength: 2000 },
   imageUrl:  { type: String, default: null },
   type:      { type: String, enum: ['NORMAL', 'ANNONCE', 'INSCRIPTION', 'COLLECTE', 'EVENEMENT', 'MEDIA'], default: 'NORMAL' },
