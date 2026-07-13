@@ -101,6 +101,7 @@ export default function HomePage() {
               type: 'normal',
               initiales: p.parishId && p.parishId.name ? p.parishId.name.substring(0,2).toUpperCase() : 'SC',
               logo: p.parishId && p.parishId.logoUrl ? p.parishId.logoUrl : null,
+              parishId: p.parishId && p.parishId._id ? p.parishId._id : null,
               bg: '#2E5C3E',
               paroisse: p.parishId && p.parishId.name ? p.parishId.name : 'Paroisse',
               temps: formatTempsPost(p.createdAt),
@@ -593,7 +594,7 @@ export default function HomePage() {
               border: post.urgent ? '1.5px solid #C8A84B' : '1px solid #e4e4e7',
             }}>
               {/* Header post */}
-              <div style={{ padding: '12px 12px 8px', display: 'flex', alignItems: 'center', gap: 9 }}>
+              <div onClick={function() { if (post.parishId) navigate('/parishes/' + post.parishId); }} style={{ padding: '12px 12px 8px', display: 'flex', alignItems: 'center', gap: 9, cursor: post.parishId ? 'pointer' : 'default' }}>
                 {post.type === 'don' ? (
                   <div style={{ width: 32, height: 32, borderRadius: '50%', border: '1.5px solid #C8A84B', background: '#1e2d14', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C8A84B" strokeWidth="1.5"><path d="M12 2L4 8v13h16V8l-8-6z" /><path d="M9 21v-7h6v7" /></svg>
