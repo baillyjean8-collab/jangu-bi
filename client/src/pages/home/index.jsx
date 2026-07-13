@@ -546,7 +546,6 @@ export default function HomePage() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16 }}>
             <div onClick={() => navigate('/donate')} style={{ background: 'white', borderRadius: 14, padding: 12, display: 'flex', alignItems: 'center', gap: 10, boxShadow: '0 2px 8px rgba(26,20,16,.06)', cursor: 'pointer' }}>
               <div style={{ width: 38, height: 38, borderRadius: 12, background: '#FFF0F0', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 18 }}><i className="ti ti-heart-handshake" style={{ fontSize: 18, color: '#C8574A' }} /></div>
-              <div style={{ fontSize: 12, fontWeight: 700, color: '#1e2d14' }}>Faire un don</div></div>
               <div style={{ fontSize: 12, fontWeight: 700, color: '#1e2d14' }}>Faire un don</div>
             </div>
             <div onClick={() => navigate('/catechese?tab=prieres&office=auto')} style={{ background: 'white', borderRadius: 14, padding: 12, display: 'flex', alignItems: 'center', gap: 10, boxShadow: '0 2px 8px rgba(26,20,16,.06)', cursor: 'pointer' }}>
