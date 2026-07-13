@@ -14,6 +14,7 @@ const Story        = require('./Story');
 const Message      = require('./Message');
 const Conversation = require('./Conversation');
 const Announcement = require('./Announcement');
+const Group        = require('./Group');
 
 module.exports = {
   User,
@@ -28,4 +29,5 @@ module.exports = {
   Message,
   Conversation,
   Announcement,
+  Group,
 };

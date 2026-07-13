@@ -1,7 +1,7 @@
 'use strict';
 const router = require('express').Router();
 const mongoose = require('mongoose');
-const { User, Post, Donation, Conversation, Message } = require('../../models');
+const { User, Post, Donation, Conversation, Message, Group } = require('../../models');
 const { authenticate, requireVerified } = require('../../middlewares/authenticate');
 const { authorize } = require('../../middlewares/authorize');
 const { asyncHandler } = require('../../middlewares/errorHandler');
@@ -242,6 +242,65 @@ router.post('/conversations/:id/messages', ...guard, asyncHandler(async (req, re
 }));
 router.post('/messages', ...guard, asyncHandler(async (req, res) => {
   return sendSuccess(res, null, 'Message envoyé');
+}));
+
+// ── Groupes (Branches) ──────────────────────────────────
+router.get('/groups', ...guard, asyncHandler(async (req, res) => {
+  const parishId = await getParishId(req);
+  if (!parishId) return sendSuccess(res, []);
+  const oid = new mongoose.Types.ObjectId(parishId);
+  const groups = await Group.find({ parishId: oid })
+    .sort({ createdAt: -1 })
+    .populate('moderatorId', 'firstName lastName')
+    .lean();
+  const withCounts = groups.map(function(g) {
+    return Object.assign({}, g, { memberCount: (g.members || []).length });
+  });
+  return sendSuccess(res, withCounts);
+}));
+
+router.post('/groups', ...guard, asyncHandler(async (req, res) => {
+  const parishId = await getParishId(req);
+  if (!parishId) throw new ValidationError('Aucune paroisse associee a ce compte admin');
+  const name = (req.body.name || '').trim();
+  if (!name) throw new ValidationError('Nom du groupe requis');
+  const type = req.body.type === 'prive' ? 'prive' : 'public';
+  const group = await Group.create({ name, type, parishId: new mongoose.Types.ObjectId(parishId) });
+  return sendSuccess(res, { group }, 'Groupe cree');
+}));
+
+router.get('/groups/:id', ...guard, asyncHandler(async (req, res) => {
+  const group = await Group.findById(req.params.id)
+    .populate('moderatorId', 'firstName lastName phone')
+    .populate('members', 'firstName lastName phone')
+    .lean();
+  if (!group) throw new NotFoundError('Groupe');
+  return sendSuccess(res, { group });
+}));
+
+router.patch('/groups/:id', ...guard, asyncHandler(async (req, res) => {
+  const updates = {};
+  if (typeof req.body.name === 'string') updates.name = req.body.name.trim();
+  if (req.body.type === 'public' || req.body.type === 'prive') updates.type = req.body.type;
+  if (typeof req.body.isActive === 'boolean') updates.isActive = req.body.isActive;
+  if (req.body.moderatorId !== undefined) updates.moderatorId = req.body.moderatorId || null;
+  const group = await Group.findByIdAndUpdate(req.params.id, { $set: updates }, { new: true });
+  if (!group) throw new NotFoundError('Groupe');
+  return sendSuccess(res, { group }, 'Groupe mis a jour');
+}));
+
+router.post('/groups/:id/members', ...guard, asyncHandler(async (req, res) => {
+  const userId = req.body.userId;
+  if (!userId) throw new ValidationError('userId requis');
+  const group = await Group.findByIdAndUpdate(req.params.id, { $addToSet: { members: userId } }, { new: true });
+  if (!group) throw new NotFoundError('Groupe');
+  return sendSuccess(res, { group }, 'Membre ajoute');
+}));
+
+router.delete('/groups/:id/members/:userId', ...guard, asyncHandler(async (req, res) => {
+  const group = await Group.findByIdAndUpdate(req.params.id, { $pull: { members: req.params.userId } }, { new: true });
+  if (!group) throw new NotFoundError('Groupe');
+  return sendSuccess(res, { group }, 'Membre retire');
 }));
 
 module.exports = router;
