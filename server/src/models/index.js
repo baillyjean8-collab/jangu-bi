@@ -16,6 +16,8 @@ const Conversation = require('./Conversation');
 const Announcement = require('./Announcement');
 const Group        = require('./Group');
 const GroupMessage = require('./GroupMessage');
+const Invitation   = require('./Invitation');
+const ParishApplication = require('./ParishApplication');
 
 module.exports = {
   User,
@@ -32,4 +34,6 @@ module.exports = {
   Announcement,
   Group,
   GroupMessage,
+  Invitation,
+  ParishApplication,
 };

@@ -102,6 +102,12 @@ export const liveApi = {
   getActifs: function() { return apiFetch('/live?status=active&limit=10'); },
 };
 
+export const invitationApi = {
+  create: function() { return apiFetch('/invitations', { method: 'POST', body: JSON.stringify({}) }); },
+  check: function(token) { return apiFetch('/invitations/' + token); },
+  complete: function(token, data) { return apiFetch('/invitations/' + token + '/complete', { method: 'POST', body: JSON.stringify(data) }); },
+};
+
 export const groupApi = {
   getOne: function(id) { return apiFetch('/groups/' + id); },
   getPosts: function(id) { return apiFetch('/groups/' + id + '/posts'); },

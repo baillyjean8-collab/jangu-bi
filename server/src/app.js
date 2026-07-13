@@ -50,6 +50,7 @@ const { router: chatRoutes }   = require('./domains/chat');
 const { router: announcementRoutes } = require('./domains/announcements');
 const bibleRoutes = require('./domains/bible/bible.routes');
 const { router: groupRoutes } = require('./domains/groups');
+const { router: invitationRoutes } = require('./domains/invitations');
 // Middleware
 const { apiRateLimiter }              = require('./middlewares/rateLimiter');
 const { errorHandler, notFoundHandler } = require('./middlewares/errorHandler');
@@ -128,7 +129,7 @@ if (!origin || allowed.includes(origin)) {
   // ── 6c. Request size guard (secondary defense before body parse)
   // Skip avatar uploads — multer's own 3MB limit governs that route instead.
   app.use((req, res, next) => {
-    if (req.path.includes('/avatar') || req.path.includes('/posts') || req.path.includes('/stories') || req.path.includes('/parishes') || req.path.includes('/users') || req.path.includes('/groups')) return next(); // ces routes acceptent des photos en base64, plus volumineuses
+    if (req.path.includes('/avatar') || req.path.includes('/posts') || req.path.includes('/stories') || req.path.includes('/parishes') || req.path.includes('/users') || req.path.includes('/groups') || req.path.includes('/invitations')) return next(); // ces routes acceptent des photos en base64, plus volumineuses
     return requestSizeGuard(51_200)(req, res, next);
   });
 
@@ -187,6 +188,7 @@ app.use('/api/chat',      chatRoutes);
 app.use('/api/announcements', announcementRoutes);
 app.use('/api/bible', bibleRoutes);
 app.use('/api/groups', groupRoutes);
+app.use('/api/invitations', invitationRoutes);
 
   // ── 11. 404 handler ───────────────────────────────────────────────────────
   app.use(notFoundHandler);

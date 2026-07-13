@@ -2,7 +2,7 @@
 
 const router = require('express').Router();
 const Joi = require('joi');
-const { User, Parish, Donation, AuditLog, Live } = require('../../models');
+const { User, Parish, Donation, AuditLog, Live, ParishApplication } = require('../../models');
 const { validate, JoiFields } = require('../../middlewares/validate');
 const { authenticate, requireVerified } = require('../../middlewares/authenticate');
 const { authorize } = require('../../middlewares/authorize');
@@ -239,6 +239,56 @@ router.get('/audit-logs',
     await audit.admin(AuditLog.ACTIONS.ADMIN_DATA_EXPORTED, req.user.userId, null, null, { type: 'audit_logs', filter }, req);
 
     return sendPaginated(res, data, { page, limit, total });
+  })
+);
+
+// ── Parish Applications (demandes d'inscription paroisse) ──────────
+router.get('/parish-applications',
+  ...adminGuard,
+  asyncHandler(async (req, res) => {
+    const applications = await ParishApplication.find({ status: 'pending' })
+      .sort({ createdAt: -1 })
+      .populate('userId', 'firstName lastName phone email')
+      .populate('parishId', 'name diocese location isVerified')
+      .lean();
+    return sendSuccess(res, applications);
+  })
+);
+
+router.post('/parish-applications/:id/approve',
+  ...adminGuard,
+  asyncHandler(async (req, res) => {
+    const application = await ParishApplication.findById(req.params.id);
+    if (!application) throw new NotFoundError('Demande');
+
+    await Parish.findByIdAndUpdate(application.parishId, { $set: { isVerified: true } });
+    application.status = 'approved';
+    application.reviewedBy = req.user.userId;
+    application.reviewedAt = new Date();
+    await application.save();
+
+    await audit.admin(AuditLog.ACTIONS.ADMIN_PARISH_VERIFIED, req.user.userId, application.parishId, 'Parish', {}, req);
+
+    return sendSuccess(res, {}, 'Paroisse validee');
+  })
+);
+
+router.post('/parish-applications/:id/reject',
+  ...adminGuard,
+  asyncHandler(async (req, res) => {
+    const application = await ParishApplication.findById(req.params.id);
+    if (!application) throw new NotFoundError('Demande');
+
+    application.status = 'rejected';
+    application.rejectionReason = req.body.reason || null;
+    application.reviewedBy = req.user.userId;
+    application.reviewedAt = new Date();
+    await application.save();
+
+    await User.findByIdAndUpdate(application.userId, { $set: { isActive: false } });
+    await Parish.findByIdAndUpdate(application.parishId, { $set: { isActive: false } });
+
+    return sendSuccess(res, {}, 'Demande rejetee');
   })
 );
 

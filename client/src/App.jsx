@@ -12,6 +12,7 @@ import DemandesPage from './pages/demandes';
 import LiveListPage from './pages/live';
 import LiveScreen from './pages/live/LiveScreen';
 import { LoginPage, RegisterPage, VerifyOtpPage } from './pages/auth';
+import InscriptionParoissePage from './pages/inscription-paroisse';
 import DonatePage from './pages/donate';
 import ProfilePage from './pages/profile';
 import BiblePage from './pages/bible';
@@ -34,6 +35,8 @@ import AdminFideles      from './pages/parish-admin/fideles';
 import AdminModeration   from './pages/parish-admin/moderation';
 import AdminBranches     from './pages/parish-admin/branches';
 import CreerBranche      from './pages/parish-admin/branches/creer';
+import AdminInvitations  from './pages/parish-admin/invitations';
+import AdminValidations  from './pages/parish-admin/validations';
 import AdminLive         from './pages/parish-admin/live';
 import AdminParoisse     from './pages/parish-admin/paroisse';
 import AdminMessages     from './pages/parish-admin/messages';
@@ -49,6 +52,7 @@ export default function App() {
             <Route path="/login"        element={<LoginPage />} />
             <Route path="/register"     element={<RegisterPage />} />
             <Route path="/verify-otp"   element={<VerifyOtpPage />} />
+            <Route path="/inscription-paroisse" element={<InscriptionParoissePage />} />
 
             {/* Pages protégées */}
             <Route path="/"             element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
@@ -85,6 +89,8 @@ export default function App() {
             <Route path="/parish-admin/moderation"   element={<AdminModeration />} />
             <Route path="/parish-admin/branches"     element={<AdminBranches />} />
             <Route path="/parish-admin/branches/nouveau" element={<CreerBranche />} />
+            <Route path="/parish-admin/invitations" element={<AdminInvitations />} />
+            <Route path="/parish-admin/validations" element={<AdminValidations />} />
             <Route path="/parish-admin/live"         element={<AdminLive />} />
             <Route path="/parish-admin/paroisse"     element={<AdminParoisse />} />
             <Route path="/parish-admin/messages"     element={<AdminMessages />} />
