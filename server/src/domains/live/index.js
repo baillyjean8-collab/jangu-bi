@@ -32,6 +32,8 @@ const liveSchemas = {
 
 // ── Repository ─────────────────────────────────────────────────────────────────
 const { Live, Parish } = require('../../models');
+const { AccessToken } = require('livekit-server-sdk');
+const config = require('../../config/env');
 
 const liveRepo = {
   async create(data) {
@@ -40,6 +42,10 @@ const liveRepo = {
 
   async findById(id) {
     return Live.findById(id).exec();
+  },
+
+  async findByIdPopulated(id) {
+    return Live.findById(id).populate('parishId', 'name logoUrl').lean().exec();
   },
 
   async findActiveByParish(parishId) {
@@ -148,6 +154,36 @@ const liveService = {
     return liveRepo.findAllActive();
   },
 
+  async getById(liveId) {
+    const session = await liveRepo.findByIdPopulated(liveId);
+    if (!session) throw new NotFoundError('Live session');
+    return session;
+  },
+
+  async generateToken(liveId, userId, userRole) {
+    const session = await liveRepo.findById(liveId);
+    if (!session) throw new NotFoundError('Live session');
+    if (!session.isActive) throw new AppError('Cette session est terminee', 400, 'SESSION_ENDED');
+
+    const isBroadcaster = (userRole === 'parish_admin' || userRole === 'super_admin') &&
+      String(session.startedBy) === String(userId);
+
+    const at = new AccessToken(config.livekit.apiKey, config.livekit.apiSecret, {
+      identity: String(userId),
+      ttl: '4h',
+    });
+    at.addGrant({
+      room: String(session._id),
+      roomJoin: true,
+      canPublish: isBroadcaster,
+      canSubscribe: true,
+      canPublishData: true,
+    });
+
+    const token = await at.toJwt();
+    return { token, url: config.livekit.url, isBroadcaster };
+  },
+
   async getHistory(query) {
     return liveRepo.history(query);
   },
@@ -212,6 +248,16 @@ const liveController = {
     return sendSuccess(res, { sessions, count: sessions.length });
   },
 
+  async getById(req, res) {
+    const session = await liveService.getById(req.params.id);
+    return sendSuccess(res, { session });
+  },
+
+  async getToken(req, res) {
+    const result = await liveService.generateToken(req.params.id, req.user.userId, req.user.role);
+    return sendSuccess(res, result);
+  },
+
   async getHistory(req, res) {
     const { data, total } = await liveService.getHistory(req.query);
     return sendPaginated(res, data, { ...req.query, total });
@@ -231,6 +277,13 @@ router.get('/parish/:parishId/active', asyncHandler(liveController.getActive));
 router.get('/history',
   validate(liveSchemas.historyQuery, 'query'),
   asyncHandler(liveController.getHistory)
+);
+
+router.get('/:id', asyncHandler(liveController.getById));
+
+router.post('/:id/token',
+  authenticate, requireVerified,
+  asyncHandler(liveController.getToken)
 );
 
 // Parish admin or super_admin — manage sessions

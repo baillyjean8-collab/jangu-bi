@@ -99,7 +99,9 @@ export const storiesApi = {
 };
 
 export const liveApi = {
-  getActifs: function() { return apiFetch('/live?status=active&limit=10'); },
+  getActifs: function() { return apiFetch('/live/active'); },
+  getOne: function(id) { return apiFetch('/live/' + id); },
+  getToken: function(id) { return apiFetch('/live/' + id + '/token', { method: 'POST' }); },
 };
 
 export const invitationApi = {

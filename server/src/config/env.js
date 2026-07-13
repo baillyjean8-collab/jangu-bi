@@ -42,6 +42,11 @@ const config = {
     password: process.env.EMAIL_PASSWORD || '',
     from:     process.env.EMAIL_FROM     || 'noreply@jangu-bi.sn',
   },
+  livekit: {
+    url:       process.env.LIVEKIT_URL || '',
+    apiKey:    process.env.LIVEKIT_API_KEY || '',
+    apiSecret: process.env.LIVEKIT_API_SECRET || '',
+  },
   cloudinary: {
     cloudName: process.env.CLOUDINARY_CLOUD_NAME || '',
     apiKey:    process.env.CLOUDINARY_API_KEY    || '',
