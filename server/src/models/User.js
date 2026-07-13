@@ -124,7 +124,17 @@ message: 'Phone must be in E.164 format (e.g. +221771234567)',
       type: String,
       default: null,
       trim: true,
-      maxlength: [500, 'Avatar URL too long'],
+      validate: {
+        validator: function(v) {
+          if (!v) return true;
+          // Autorise precisement les images encodees en base64 (photo de profil fidele),
+          // meme principe de securite que Parish.logoUrl/coverUrl.
+          if (/^data:image\/(jpeg|jpg|png|webp|gif);base64,/i.test(v)) return true;
+          if (/^(javascript:|data:|vbscript:)/i.test(v)) return false;
+          return validator.isURL(v, { protocols: ['https', 'http'], require_protocol: true });
+        },
+        message: 'Avatar URL must be a valid HTTPS URL or base64-encoded image',
+      },
     },
     followedParishes: [{
       type: mongoose.Schema.Types.ObjectId,
