@@ -536,7 +536,7 @@ export default function ParishDetail() {
                 </div>
                 <div onClick={function() { navigate('/parish-admin/dons'); }} style={{ textAlign: "center", flex: 1, cursor: "pointer" }}>
                   <div style={{ width: 46, height: 46, borderRadius: "50%", background: "linear-gradient(135deg,#C8A84B,#8B6020)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 5px", boxShadow: "0 3px 8px rgba(200,168,75,0.35)" }}>
-                    <i className="ti ti-currency-dollar" style={{ fontSize: 19, color: VERT }} />
+                    <i className="ti ti-heart-handshake" style={{ fontSize: 19, color: VERT }} />
                   </div>
                   <div style={{ fontSize: 9, color: "rgba(255,255,255,0.7)", fontWeight: 600 }}>Dons</div>
                 </div>

@@ -26,7 +26,7 @@ const BOGOLAN_DARK = 'repeating-linear-gradient(0deg,transparent,transparent 8px
 const MENU_ITEMS = [
   { path: '/parish-admin/publications', icon: 'ti-news',      label: 'Publications & Stories', sub: 'Gérer vos posts et stories', color: OR },
   { path: '/parish-admin/demandes',     icon: 'ti-file-text', label: 'Demandes des fidèles',   sub: 'Valider ou rejeter',          color: '#e53935', badge: true },
-  { path: '/parish-admin/dons',         icon: 'ti-coin',      label: 'Dons & Campagnes',        sub: 'Campagnes et historique',     color: OR },
+  { path: '/parish-admin/dons',         icon: 'ti-heart-handshake',      label: 'Dons & Campagnes',        sub: 'Campagnes et historique',     color: OR },
   { path: '/parish-admin/fideles',      icon: 'ti-users',     label: 'Fidèles & Paroissiens',   sub: 'Communauté et contacts',      color: '#81C784' },
   { path: '/parish-admin/moderation',   icon: 'ti-shield',    label: 'Modération',              sub: 'Commentaires signalés',       color: '#e53935', badge: true },
   { path: '/parish-admin/branches',     icon: 'ti-sitemap',   label: 'Branches & Groupes',      sub: 'Chorale, Jeunes, Pastoral...', color: OR },
@@ -79,7 +79,7 @@ export default function AdminDashboard() {
   const STATS_DISPLAY = [
     { label: 'Paroissiens', value: stats ? stats.paroissiens : '...', sub: 'membres inscrits', icon: 'ti-cross',   color: OR },
     { label: 'Abonnés',     value: stats ? stats.abonnes : '...',     sub: 'suivent la page',  icon: 'ti-heart',   color: '#81C784' },
-    { label: 'Dons FCFA',   value: stats ? formatMontant(stats.dons && stats.dons.total) : '...', sub: 'reçus au total', icon: 'ti-coin', color: OR },
+    { label: 'Dons FCFA',   value: stats ? formatMontant(stats.dons && stats.dons.total) : '...', sub: 'reçus au total', icon: 'ti-heart-handshake', color: OR },
     { label: 'En attente',  value: stats ? stats.demandesEnAttente : '...', sub: 'demandes', icon: 'ti-clock', color: '#e53935' },
   ];
 
