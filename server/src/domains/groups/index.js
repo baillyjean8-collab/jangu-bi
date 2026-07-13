@@ -120,7 +120,7 @@ router.post('/:id/messages', authenticate, requireVerified, asyncHandler(async (
 
   const text = (req.body.text || '').trim();
   const fileUrl = req.body.fileUrl || null;
-  const fileType = ['image', 'video', 'document'].includes(req.body.fileType) ? req.body.fileType : null;
+  const fileType = ['image', 'video', 'document', 'audio'].includes(req.body.fileType) ? req.body.fileType : null;
   const fileName = req.body.fileName || null;
 
   if (!text && !fileUrl) throw new ValidationError('Message vide');

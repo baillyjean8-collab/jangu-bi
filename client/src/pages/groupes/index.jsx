@@ -32,6 +32,35 @@ export default function GroupDetailPage() {
   const [texteMessage, setTexteMessage] = useState('');
   const [fichierEnAttente, setFichierEnAttente] = useState(null);
   const [envoiMessage, setEnvoiMessage] = useState(false);
+  const [enregistrementVocal, setEnregistrementVocal] = useState(false);
+  const mediaRecorderRef = useRef(null);
+  const chunksVocalRef = useRef([]);
+
+  async function demarrerVocal() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      chunksVocalRef.current = [];
+      recorder.ondataavailable = function(e) { if (e.data.size > 0) chunksVocalRef.current.push(e.data); };
+      recorder.onstop = function() {
+        const blob = new Blob(chunksVocalRef.current, { type: 'audio/webm' });
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+          setFichierEnAttente({ dataUrl: ev.target.result, type: 'audio', name: 'Message vocal' });
+        };
+        reader.readAsDataURL(blob);
+        stream.getTracks().forEach(function(t) { t.stop(); });
+      };
+      recorder.start();
+      mediaRecorderRef.current = recorder;
+      setEnregistrementVocal(true);
+    } catch (e) { console.log('Micro:', e.message); }
+  }
+
+  function arreterVocal() {
+    if (mediaRecorderRef.current) mediaRecorderRef.current.stop();
+    setEnregistrementVocal(false);
+  }
 
   async function charger() {
     try {
@@ -208,6 +237,9 @@ export default function GroupDetailPage() {
                   {m.fileUrl && m.fileType === 'video' && (
                     <video src={m.fileUrl} controls style={{ maxWidth: '100%', borderRadius: 8, marginTop: 6, display: 'block' }} />
                   )}
+                  {m.fileUrl && m.fileType === 'audio' && (
+                    <audio src={m.fileUrl} controls style={{ marginTop: 6, width: '100%', maxWidth: 220 }} />
+                  )}
                   {m.fileUrl && m.fileType === 'document' && (
                     <a href={m.fileUrl} download={m.fileName || 'fichier'} style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6, fontSize: 11, color: VERT, textDecoration: 'none' }}>
                       <i className="ti ti-file" style={{ fontSize: 14 }} /> {m.fileName || 'Telecharger le fichier'}
@@ -230,6 +262,9 @@ export default function GroupDetailPage() {
               <input ref={fileRef} type="file" accept="image/*,video/*,.pdf,.doc,.docx" style={{ display: 'none' }} onChange={choisirFichier} />
               <button onClick={function() { fileRef.current && fileRef.current.click(); }} style={{ width: 38, height: 38, borderRadius: '50%', background: 'white', border: '1.5px solid rgba(200,168,75,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
                 <i className="ti ti-paperclip" style={{ fontSize: 16, color: OR }} />
+              </button>
+              <button onClick={enregistrementVocal ? arreterVocal : demarrerVocal} style={{ width: 38, height: 38, borderRadius: '50%', background: enregistrementVocal ? '#e53935' : 'white', border: '1.5px solid ' + (enregistrementVocal ? '#e53935' : 'rgba(200,168,75,0.3)'), display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
+                <i className={enregistrementVocal ? 'ti ti-player-stop' : 'ti ti-microphone'} style={{ fontSize: 16, color: enregistrementVocal ? 'white' : OR }} />
               </button>
               <input value={texteMessage} onChange={function(e) { setTexteMessage(e.target.value); }} onKeyDown={function(e) { if (e.key === 'Enter') envoyerMessage(); }} placeholder="Ecrire un message..." style={{ flex: 1, border: '1.5px solid rgba(200,168,75,0.3)', borderRadius: 20, padding: '10px 14px', fontSize: 12, color: VERT, fontFamily: 'Georgia,serif', outline: 'none', background: 'white' }} />
               <button onClick={envoyerMessage} disabled={envoiMessage || (!texteMessage.trim() && !fichierEnAttente)} style={{ width: 40, height: 40, borderRadius: '50%', background: 'linear-gradient(135deg,#1e2d14,#0a140a)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
