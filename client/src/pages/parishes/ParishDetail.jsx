@@ -633,8 +633,8 @@ export default function ParishDetail() {
                   <div key={pub._id} style={{ background: "#fff", borderRadius: 16, marginBottom: 12, border: "1px solid #e8e4dc", overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.05)", opacity: masquee ? 0.6 : 1 }}>
                     <div style={{ padding: "14px 14px 10px" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-                        <div style={{ width: 40, height: 40, borderRadius: "50%", background: VERT, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                          <span style={{ fontSize: 13, fontWeight: 800, color: OR }}>{initiales2}</span>
+                        <div style={{ width: 40, height: 40, borderRadius: "50%", background: VERT, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, overflow: "hidden" }}>
+                          {paroisse.logoUrl ? <img src={paroisse.logoUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ fontSize: 13, fontWeight: 800, color: OR }}>{initiales2}</span>}
                         </div>
                         <div style={{ flex: 1 }}>
                           <div style={{ fontSize: 13, fontWeight: 700, color: VERT }}>{paroisse.name}</div>

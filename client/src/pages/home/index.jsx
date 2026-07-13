@@ -100,6 +100,7 @@ export default function HomePage() {
             const formatted = items.map(p => ({
               type: 'normal',
               initiales: p.parishId && p.parishId.name ? p.parishId.name.substring(0,2).toUpperCase() : 'SC',
+              logo: p.parishId && p.parishId.logoUrl ? p.parishId.logoUrl : null,
               bg: '#2E5C3E',
               paroisse: p.parishId && p.parishId.name ? p.parishId.name : 'Paroisse',
               temps: formatTempsPost(p.createdAt),
@@ -572,8 +573,8 @@ export default function HomePage() {
               background: 'white', border: '1.5px solid #C8A84B', borderRadius: 12, padding: '10px 12px',
               display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer',
             }}>
-              <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#C8A84B', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, color: '#1e2d14', fontWeight: 700, flexShrink: 0 }}>
-                {initiales}
+              <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#C8A84B', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, color: '#1e2d14', fontWeight: 700, flexShrink: 0, overflow: 'hidden' }}>
+                {photo ? <img src={photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : initiales}
               </div>
               <div style={{ flex: 1, fontSize: 11, color: '#8a8a7c' }}>
                 Publier une actualite{user?.parish?.name ? ' pour ' + user.parish.name : ''}...
@@ -595,6 +596,10 @@ export default function HomePage() {
                 {post.type === 'don' ? (
                   <div style={{ width: 32, height: 32, borderRadius: '50%', border: '1.5px solid #C8A84B', background: '#1e2d14', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C8A84B" strokeWidth="1.5"><path d="M12 2L4 8v13h16V8l-8-6z" /><path d="M9 21v-7h6v7" /></svg>
+                  </div>
+                ) : post.logo ? (
+                  <div style={{ width: 32, height: 32, borderRadius: '50%', overflow: 'hidden', flexShrink: 0 }}>
+                    <img src={post.logo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   </div>
                 ) : (
                   <div style={{ width: 32, height: 32, borderRadius: '50%', background: post.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 10, fontWeight: 700 }}>{post.initiales}</div>

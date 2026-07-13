@@ -195,7 +195,12 @@ export default function GroupDetailPage() {
               const auteur = m.senderId;
               return (
                 <div key={m._id} style={{ background: 'white', borderRadius: 12, padding: '8px 12px', border: '1px solid #e8e4dc', maxWidth: '85%' }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: OR, marginBottom: 3 }}>{auteur ? (auteur.firstName + ' ' + auteur.lastName) : 'Membre'}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
+                    <div style={{ width: 18, height: 18, borderRadius: '50%', background: VERT, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
+                      {auteur && auteur.avatarUrl ? <img src={auteur.avatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: 8, color: OR, fontWeight: 700 }}>{auteur ? (auteur.firstName[0] + auteur.lastName[0]) : '?'}</span>}
+                    </div>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: OR }}>{auteur ? (auteur.firstName + ' ' + auteur.lastName) : 'Membre'}</div>
+                  </div>
                   {m.text && <div style={{ fontSize: 12, color: '#2a2a2a', lineHeight: 1.4 }}>{m.text}</div>}
                   {m.fileUrl && m.fileType === 'image' && (
                     <img src={m.fileUrl} alt={m.fileName || 'image'} style={{ maxWidth: '100%', borderRadius: 8, marginTop: 6, display: 'block' }} />

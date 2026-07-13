@@ -108,7 +108,7 @@ router.get('/:id/messages', authenticate, requireVerified, asyncHandler(async (r
 
   const messages = await GroupMessage.find({ groupId: group._id })
     .sort({ createdAt: 1 })
-    .populate('senderId', 'firstName lastName')
+    .populate('senderId', 'firstName lastName avatarUrl')
     .lean();
 
   return sendSuccess(res, messages);
@@ -134,7 +134,7 @@ router.post('/:id/messages', authenticate, requireVerified, asyncHandler(async (
     fileName,
   });
 
-  const populated = await GroupMessage.findById(message._id).populate('senderId', 'firstName lastName').lean();
+  const populated = await GroupMessage.findById(message._id).populate('senderId', 'firstName lastName avatarUrl').lean();
   return sendSuccess(res, { message: populated }, 'Message envoye');
 }));
 
