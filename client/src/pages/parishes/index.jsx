@@ -48,7 +48,7 @@ function Chip({ label, active, onClick }) {
   );
 }
 
-function ParoisseCard({ p, suivi, onToggleSuivi, onClick }) {
+function ParoisseCard({ p, suivi, onToggleSuivi, onClick, enDirect }) {
   const initiales = getInitiales(p.nom);
   const avatarBg  = p.photo ? 'none' : getAvatarColor(p.nom);
   const hasCoords = !!(p.coords && p.coords.lat && p.coords.lng);
@@ -60,16 +60,21 @@ function ParoisseCard({ p, suivi, onToggleSuivi, onClick }) {
       cursor: 'pointer',
     }}>
       <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-        <div style={{
-          width: 46, height: 46, borderRadius: '50%', flexShrink: 0,
-          background: avatarBg, border: `2px solid ${OR}`,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 13, fontWeight: 700, color: 'white', overflow: 'hidden',
-        }}>
-          {p.photo
-            ? <img src={p.photo} alt={p.nom} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            : initiales || <i className="ti ti-building-church" style={{ fontSize: 19, color: OR }} />
-          }
+        <div style={{ position: 'relative', width: 46, height: 46, flexShrink: 0 }}>
+          <div style={{
+            width: 46, height: 46, borderRadius: '50%',
+            background: avatarBg, border: enDirect ? '2.5px solid #e53935' : `2px solid ${OR}`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 13, fontWeight: 700, color: 'white', overflow: 'hidden',
+          }}>
+            {p.photo
+              ? <img src={p.photo} alt={p.nom} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              : initiales || <i className="ti ti-building-church" style={{ fontSize: 19, color: OR }} />
+            }
+          </div>
+          {enDirect && (
+            <div style={{ position: 'absolute', bottom: -4, left: '50%', transform: 'translateX(-50%)', background: '#e53935', color: '#fff', fontSize: 6, fontWeight: 800, padding: '1px 5px', borderRadius: 5, whiteSpace: 'nowrap' }}>LIVE</div>
+          )}
         </div>
 
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -124,6 +129,22 @@ export function ParishesPage() {
   const [suivis,       setSuivis]       = useState(new Set());
   const [paroisses,    setParoisses]    = useState([]);
   const [loading,      setLoading]      = useState(true);
+  const [liveParishIds, setLiveParishIds] = useState(new Set());
+
+  useEffect(function() {
+    async function chargerLives() {
+      try {
+        const { liveApi } = await import('../../services/api');
+        const data = await liveApi.getActifs();
+        const sessions = data && data.data && data.data.sessions ? data.data.sessions : [];
+        const ids = new Set(sessions.map(function(s) { return s.parishId && s.parishId._id ? String(s.parishId._id) : null; }).filter(Boolean));
+        setLiveParishIds(ids);
+      } catch (e) { console.log('Live actifs:', e.message); }
+    }
+    chargerLives();
+    const intervalle = setInterval(chargerLives, 20000);
+    return function() { clearInterval(intervalle); };
+  }, []);
 
   useEffect(function() {
     async function charger() {
@@ -259,7 +280,7 @@ export function ParishesPage() {
                 <i className="ti ti-bell" style={{ fontSize: 11, color: OR }} /> Paroisse{paroisseSuivie.length > 1 ? 's' : ''} suivie{paroisseSuivie.length > 1 ? 's' : ''}
               </div>
               {paroisseSuivie.map(function(p) {
-                return <ParoisseCard key={p.id} p={p} suivi onToggleSuivi={toggleSuivi} onClick={function() { navigate('/parishes/' + p.id); }} />;
+                return <ParoisseCard key={p.id} p={p} suivi onToggleSuivi={toggleSuivi} onClick={function() { navigate('/parishes/' + p.id); }} enDirect={liveParishIds.has(p.id)} />;
               })}
             </>
           )}
@@ -270,7 +291,7 @@ export function ParishesPage() {
                 {paroisseSuivie.length > 0 ? 'Paroisses suivantes' : 'Toutes les paroisses'}
               </div>
               {autresParoisses.map(function(p) {
-                return <ParoisseCard key={p.id} p={p} suivi={false} onToggleSuivi={toggleSuivi} onClick={function() { navigate('/parishes/' + p.id); }} />;
+                return <ParoisseCard key={p.id} p={p} suivi={false} onToggleSuivi={toggleSuivi} onClick={function() { navigate('/parishes/' + p.id); }} enDirect={liveParishIds.has(p.id)} />;
               })}
             </>
           )}

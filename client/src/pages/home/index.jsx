@@ -180,6 +180,7 @@ export default function HomePage() {
   const [liked, setLiked] = useState({});
   const [avertissement, setAvertissement] = useState('');
   const [unreadMessages, setUnreadMessages] = useState(0);
+  const [liveParishIds, setLiveParishIds] = useState(new Set());
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [storyGroupIndex, setStoryGroupIndex] = useState(null); // index du groupe (paroisse) en cours
@@ -299,6 +300,21 @@ export default function HomePage() {
     const haystack = [post.paroisse, post.texte, post.titre, post.mediaTitle].filter(Boolean).join(' ').toLowerCase();
     return haystack.includes(q);
   }
+
+  useEffect(function() {
+    async function chargerLives() {
+      try {
+        const { liveApi } = await import('../../services/api');
+        const data = await liveApi.getActifs();
+        const sessions = data && data.data && data.data.sessions ? data.data.sessions : [];
+        const ids = new Set(sessions.map(function(s) { return s.parishId && s.parishId._id ? String(s.parishId._id) : null; }).filter(Boolean));
+        setLiveParishIds(ids);
+      } catch (e) { console.log('Live actifs:', e.message); }
+    }
+    chargerLives();
+    const intervalle = setInterval(chargerLives, 20000);
+    return function() { clearInterval(intervalle); };
+  }, []);
 
   const storyGroups = (function() {
     const map = {};
@@ -598,12 +614,19 @@ export default function HomePage() {
                   <div style={{ width: 32, height: 32, borderRadius: '50%', border: '1.5px solid #C8A84B', background: '#1e2d14', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C8A84B" strokeWidth="1.5"><path d="M12 2L4 8v13h16V8l-8-6z" /><path d="M9 21v-7h6v7" /></svg>
                   </div>
-                ) : post.logo ? (
-                  <div style={{ width: 32, height: 32, borderRadius: '50%', overflow: 'hidden', flexShrink: 0 }}>
-                    <img src={post.logo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  </div>
                 ) : (
-                  <div style={{ width: 32, height: 32, borderRadius: '50%', background: post.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 10, fontWeight: 700 }}>{post.initiales}</div>
+                  <div style={{ position: 'relative', width: 32, height: 32, flexShrink: 0 }}>
+                    {post.logo ? (
+                      <div style={{ width: 32, height: 32, borderRadius: '50%', overflow: 'hidden', border: (post.parishId && liveParishIds.has(post.parishId)) ? '2px solid #e53935' : 'none' }}>
+                        <img src={post.logo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      </div>
+                    ) : (
+                      <div style={{ width: 32, height: 32, borderRadius: '50%', background: post.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 10, fontWeight: 700, border: (post.parishId && liveParishIds.has(post.parishId)) ? '2px solid #e53935' : 'none' }}>{post.initiales}</div>
+                    )}
+                    {post.parishId && liveParishIds.has(post.parishId) && (
+                      <div style={{ position: 'absolute', bottom: -4, left: '50%', transform: 'translateX(-50%)', background: '#e53935', color: '#fff', fontSize: 5, fontWeight: 800, padding: '1px 4px', borderRadius: 5, whiteSpace: 'nowrap' }}>LIVE</div>
+                    )}
+                  </div>
                 )}
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 12, fontWeight: 700, color: '#1e2d14' }}>{post.paroisse}</div>

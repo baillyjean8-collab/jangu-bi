@@ -71,6 +71,8 @@ export default function ParishDetail() {
   const [photoCouverture, setPhotoCouverture] = useState(null);
   const [photoProfil, setPhotoProfil] = useState(null);
   const [notifCount, setNotifCount] = useState({ nouveauxFideles: 0, messagesNonRepondus: 0 });
+  const [estEnDirect, setEstEnDirect] = useState(false);
+  const [liveSessionId, setLiveSessionId] = useState(null);
 
   const [showCreate, setShowCreate] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -142,6 +144,25 @@ export default function ParishDetail() {
       .then(function(d) { if (d && d.data) setNotifCount(d.data); })
       .catch(function(e) { console.log('Notifications count:', e.message); });
   }, [isOwner]);
+
+  useEffect(function() {
+    if (!paroisse || !paroisse._id) return;
+    async function verifierDirect() {
+      try {
+        const { liveApi } = await import('../../services/api');
+        const data = await liveApi.getActiveForParish(paroisse._id);
+        const session = data && data.data && data.data.session;
+        if (session) { setEstEnDirect(true); setLiveSessionId(session._id); }
+        else { setEstEnDirect(false); setLiveSessionId(null); }
+      } catch (e) {
+        setEstEnDirect(false);
+        setLiveSessionId(null);
+      }
+    }
+    verifierDirect();
+    const intervalle = setInterval(verifierDirect, 20000);
+    return function() { clearInterval(intervalle); };
+  }, [paroisse && paroisse._id]);
 
   function rafraichirPosts() {
     postsApi.getAll({ parishId: id, limit: 30 }).then(function(res) {
@@ -459,12 +480,15 @@ export default function ParishDetail() {
 
           <div style={{ position: "absolute", bottom: -40, left: 16 }}>
             <div style={{ position: "relative", width: 80, height: 80 }}>
-              <div style={{ width: 80, height: 80, borderRadius: "50%", border: "3px solid #fff", overflow: "hidden", background: VERT, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 8px rgba(0,0,0,0.2)", fontSize: 28, fontWeight: 700, color: OR }}>
+              <div onClick={estEnDirect ? function() { navigate('/live/' + liveSessionId); } : undefined} style={{ width: 80, height: 80, borderRadius: "50%", border: estEnDirect ? "3px solid #e53935" : "3px solid #fff", overflow: "hidden", background: VERT, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 8px rgba(0,0,0,0.2)", fontSize: 28, fontWeight: 700, color: OR, cursor: estEnDirect ? "pointer" : "default" }}>
                 {(photoProfil || paroisse.logoUrl)
                   ? <img src={photoProfil || paroisse.logoUrl} alt="profil" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   : initiales2
                 }
               </div>
+              {estEnDirect && (
+                <div style={{ position: "absolute", bottom: -6, left: "50%", transform: "translateX(-50%)", background: "#e53935", color: "#fff", fontSize: 8, fontWeight: 800, padding: "1px 6px", borderRadius: 6, whiteSpace: "nowrap", boxShadow: "0 1px 3px rgba(0,0,0,0.3)", zIndex: 2 }}>LIVE</div>
+              )}
               {isOwner && (
                 <label style={{ position: "absolute", bottom: 0, right: 0, background: OR, border: "2px solid #fff", borderRadius: "50%", width: 26, height: 26, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
                   <i className="ti ti-camera" style={{ fontSize: 13, color: VERT }} />

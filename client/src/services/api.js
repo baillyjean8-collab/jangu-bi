@@ -102,6 +102,7 @@ export const liveApi = {
   getActifs: function() { return apiFetch('/live/active'); },
   getOne: function(id) { return apiFetch('/live/' + id); },
   getToken: function(id) { return apiFetch('/live/' + id + '/token', { method: 'POST' }); },
+  getActiveForParish: function(parishId) { return apiFetch('/live/parish/' + parishId + '/active'); },
 };
 
 export const invitationApi = {
