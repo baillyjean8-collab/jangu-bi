@@ -54,6 +54,9 @@ const EVENTS = Object.freeze({
   INVITE_RECEIVED:  'live:invite:received',
   INVITE_ACCEPT:    'live:invite:accept',
   GUEST_JOINED:     'live:guest:joined',
+  GUEST_CONTROL_SEND:     'live:guest:control:send',
+  GUEST_CONTROL_RECEIVED: 'live:guest:control:received',
+  GUEST_REMOVED:          'live:guest:removed',
 });
 
 // ── Rate Limiter (per socket) ──────────────────────────────────────────────────
@@ -403,6 +406,29 @@ function handleConnection(io, socket) {
       userId: socket.user.userId,
       nom: nomAffichage(socket.user),
     });
+  });
+
+  // --- Controle a distance de l'invite par l'admin (couper micro/camera, faire descendre) ---
+  socket.on(EVENTS.GUEST_CONTROL_SEND, ({ parishId, liveId, targetUserId, action }) => {
+    if (!socket.isAuthenticated) return;
+    if (!parishId || !/^[a-f0-9]{24}$/i.test(String(parishId))) return;
+    if (!socket.rooms.has('admin:' + liveId)) return; // seul l'admin du direct peut envoyer cet ordre
+    if (['mute', 'camera-off', 'kick'].indexOf(action) === -1) return;
+
+    const room = parishRoom(parishId);
+    const map = roster.get(room);
+    if (!map) return;
+
+    for (const [sockId, info] of map.entries()) {
+      if (String(info.userId) === String(targetUserId)) {
+        io.to(sockId).emit(EVENTS.GUEST_CONTROL_RECEIVED, { liveId, action });
+        if (action === 'kick') {
+          guestRegistry.revoke(String(liveId), targetUserId);
+          io.to(room).emit(EVENTS.GUEST_REMOVED, { liveId, userId: targetUserId });
+        }
+        break;
+      }
+    }
   });
 
   socket.on('disconnect', async () => {
