@@ -6,6 +6,7 @@ import { io } from 'socket.io-client';
 const OR      = '#C8A84B';
 const VERT    = '#1e2d14';
 const IVOIRE  = '#F5F0E8';
+const BOGOLAN_DARK = 'repeating-linear-gradient(0deg,transparent,transparent 8px,rgba(200,168,75,0.07) 8px,rgba(200,168,75,0.07) 9px),repeating-linear-gradient(90deg,transparent,transparent 8px,rgba(200,168,75,0.07) 8px,rgba(200,168,75,0.07) 9px)';
 
 const FILTRES_CSS = {
   aucun: 'none',
@@ -370,6 +371,15 @@ export default function AdminLive() {
     }
   }
 
+  function partagerLive() {
+    const url = window.location.origin + '/live/' + liveId;
+    if (navigator.share) {
+      navigator.share({ title: titre || 'Direct en cours', url: url }).catch(function() {});
+    } else if (navigator.clipboard) {
+      navigator.clipboard.writeText(url);
+    }
+  }
+
   function formatDuree(s) {
     const m = Math.floor(s / 60);
     const sec = s % 60;
@@ -475,14 +485,14 @@ export default function AdminLive() {
 
       {etat === 'direct' && (
         <>
-          <div style={{ position: 'absolute', top: 10, left: 10, right: 10, background: 'rgba(0,0,0,0.55)', borderRadius: 22, padding: '12px 12px 14px', zIndex: 5 }}>
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, background: 'rgba(12,10,6,0.6)', backgroundImage: BOGOLAN_DARK, borderRadius: '0 0 24px 24px', padding: '14px 12px 14px', zIndex: 5 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-              <div style={{ width: 34, height: 34, borderRadius: '50%', background: VERT, border: '2px solid ' + OR, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <i className="ti ti-user" style={{ fontSize: 16, color: OR }} />
+              <div style={{ width: 42, height: 42, borderRadius: '50%', background: VERT, border: '2px solid ' + OR, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <i className="ti ti-user" style={{ fontSize: 19, color: OR }} />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ color: '#fff', fontSize: 13, fontWeight: 700 }}>Vous</div>
-                <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10 }}>En direct - {formatDuree(duree)}</div>
+                <div style={{ color: '#fff', fontSize: 14, fontWeight: 700 }}>Vous</div>
+                <div style={{ color: 'rgba(255,255,255,0.55)', fontSize: 10 }}>En direct - {formatDuree(duree)}</div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'rgba(200,168,75,0.18)', border: '1px solid rgba(200,168,75,0.4)', borderRadius: 20, padding: '5px 10px', flexShrink: 0 }}>
                 <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#e53935' }} />
@@ -494,21 +504,24 @@ export default function AdminLive() {
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
-              <button onClick={toggleMic} style={{ width: 36, height: 36, borderRadius: '50%', background: micOn ? 'rgba(129,199,132,0.18)' : 'rgba(229,57,53,0.18)', border: '1.5px solid ' + (micOn ? 'rgba(129,199,132,0.4)' : 'rgba(229,57,53,0.4)'), display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                <i className={micOn ? 'ti ti-microphone' : 'ti ti-microphone-off'} style={{ color: micOn ? '#81C784' : '#e57373', fontSize: 16 }} />
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <button onClick={partagerLive} style={{ width: 34, height: 34, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', border: '1.5px solid rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                <i className="ti ti-share" style={{ color: '#fff', fontSize: 15 }} />
               </button>
-              <button onClick={toggleCamera} style={{ width: 36, height: 36, borderRadius: '50%', background: cameraOn ? 'rgba(129,199,132,0.18)' : 'rgba(229,57,53,0.18)', border: '1.5px solid ' + (cameraOn ? 'rgba(129,199,132,0.4)' : 'rgba(229,57,53,0.4)'), display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                <i className={cameraOn ? 'ti ti-video' : 'ti ti-video-off'} style={{ color: cameraOn ? '#81C784' : '#e57373', fontSize: 16 }} />
+              <button onClick={toggleMic} style={{ width: 34, height: 34, borderRadius: '50%', background: micOn ? 'rgba(129,199,132,0.18)' : 'rgba(229,57,53,0.18)', border: '1.5px solid ' + (micOn ? 'rgba(129,199,132,0.4)' : 'rgba(229,57,53,0.4)'), display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                <i className={micOn ? 'ti ti-microphone' : 'ti ti-microphone-off'} style={{ color: micOn ? '#81C784' : '#e57373', fontSize: 15 }} />
               </button>
-              <button onClick={retournerCamera} style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', border: '1.5px solid rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                <i className="ti ti-camera-rotate" style={{ color: '#fff', fontSize: 16 }} />
+              <button onClick={toggleCamera} style={{ width: 34, height: 34, borderRadius: '50%', background: cameraOn ? 'rgba(129,199,132,0.18)' : 'rgba(229,57,53,0.18)', border: '1.5px solid ' + (cameraOn ? 'rgba(129,199,132,0.4)' : 'rgba(229,57,53,0.4)'), display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                <i className={cameraOn ? 'ti ti-video' : 'ti ti-video-off'} style={{ color: cameraOn ? '#81C784' : '#e57373', fontSize: 15 }} />
               </button>
-              <button onClick={mettreEnPause} style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(200,168,75,0.22)', border: '1.5px solid rgba(200,168,75,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                <i className="ti ti-player-pause" style={{ color: OR, fontSize: 16 }} />
+              <button onClick={retournerCamera} style={{ width: 34, height: 34, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', border: '1.5px solid rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                <i className="ti ti-camera-rotate" style={{ color: '#fff', fontSize: 15 }} />
               </button>
-              <button onClick={terminerLive} style={{ width: 36, height: 36, borderRadius: '50%', background: '#e53935', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                <i className="ti ti-power" style={{ color: '#fff', fontSize: 16 }} />
+              <button onClick={mettreEnPause} style={{ width: 34, height: 34, borderRadius: '50%', background: 'rgba(200,168,75,0.22)', border: '1.5px solid rgba(200,168,75,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                <i className="ti ti-player-pause" style={{ color: OR, fontSize: 15 }} />
+              </button>
+              <button onClick={terminerLive} style={{ width: 34, height: 34, borderRadius: '50%', background: '#e53935', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                <i className="ti ti-power" style={{ color: '#fff', fontSize: 15 }} />
               </button>
             </div>
           </div>
