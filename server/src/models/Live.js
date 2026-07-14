@@ -73,6 +73,10 @@ const liveSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    isPaused: {
+      type: Boolean,
+      default: false,
+    },
     startedAt: {
       type: Date,
       default: Date.now,

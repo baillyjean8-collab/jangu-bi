@@ -157,8 +157,19 @@ export default function LiveScreen() {
       }
     }
     connecter();
+
+    const intervalleEtat = setInterval(function() {
+      import('../../services/api').then(function(mod) {
+        mod.liveApi.getOne(id).then(function(dataSession) {
+          const session = dataSession && dataSession.data && dataSession.data.session;
+          if (session) setSessionReelle(session);
+        }).catch(function() {});
+      });
+    }, 8000);
+
     return function() {
       annule = true;
+      clearInterval(intervalleEtat);
       if (roomRef.current) { roomRef.current.disconnect(); roomRef.current = null; }
     };
   }, [id]);
@@ -417,6 +428,13 @@ export default function LiveScreen() {
         )}
         {connexionVideo === 'erreur' && (
           <div style={{ position: 'absolute', bottom: 6, left: 0, right: 0, textAlign: 'center', fontSize: 9, color: '#e57373' }}>Le direct n'a pas pu se charger</div>
+        )}
+        {sessionReelle && sessionReelle.isPaused && (
+          <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.75)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, zIndex: 4 }}>
+            <i className="ti ti-player-pause" style={{ fontSize: 30, color: OR }} />
+            <div style={{ color: '#F5F0E8', fontSize: 12, fontWeight: 700 }}>Direct en pause</div>
+            <div style={{ color: 'rgba(245,240,232,0.6)', fontSize: 10 }}>La reprise arrive bientot</div>
+          </div>
         )}
 
       </div>

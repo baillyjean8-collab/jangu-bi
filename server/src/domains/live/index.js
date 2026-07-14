@@ -160,6 +160,18 @@ const liveService = {
     return session;
   },
 
+  async setPaused(liveId, userId, userRole, valeur) {
+    const session = await liveRepo.findById(liveId);
+    if (!session) throw new NotFoundError('Live session');
+    if (!session.isActive) throw new AppError('Cette session est terminee', 400, 'SESSION_ENDED');
+    if (userRole !== 'super_admin' && String(session.startedBy) !== String(userId)) {
+      throw new AuthorizationError('Seul l administrateur qui a lance ce direct peut le mettre en pause');
+    }
+    session.isPaused = valeur;
+    await session.save();
+    return session;
+  },
+
   async generateToken(liveId, userId, userRole) {
     const session = await liveRepo.findById(liveId);
     if (!session) throw new NotFoundError('Live session');
@@ -258,6 +270,16 @@ const liveController = {
     return sendSuccess(res, result);
   },
 
+  async pause(req, res) {
+    const session = await liveService.setPaused(req.params.id, req.user.userId, req.user.role, true);
+    return sendSuccess(res, { session }, 'Live mis en pause');
+  },
+
+  async resume(req, res) {
+    const session = await liveService.setPaused(req.params.id, req.user.userId, req.user.role, false);
+    return sendSuccess(res, { session }, 'Live repris');
+  },
+
   async getHistory(req, res) {
     const { data, total } = await liveService.getHistory(req.query);
     return sendPaginated(res, data, { ...req.query, total });
@@ -284,6 +306,18 @@ router.get('/:id', asyncHandler(liveController.getById));
 router.post('/:id/token',
   authenticate, requireVerified,
   asyncHandler(liveController.getToken)
+);
+
+router.post('/:id/pause',
+  authenticate, requireVerified,
+  authorize('parish_admin', 'super_admin'),
+  asyncHandler(liveController.pause)
+);
+
+router.post('/:id/resume',
+  authenticate, requireVerified,
+  authorize('parish_admin', 'super_admin'),
+  asyncHandler(liveController.resume)
 );
 
 // Parish admin or super_admin — manage sessions

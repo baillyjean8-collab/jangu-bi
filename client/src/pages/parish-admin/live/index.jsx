@@ -13,20 +13,84 @@ export default function AdminLive() {
   const token = localStorage.getItem('jb_admin_token');
   const BASE = import.meta.env.VITE_API_URL || '/api';
 
-  const [enLive, setEnLive]     = useState(false);
-  const [demarrage, setDemarrage] = useState(false);
+  const [etat, setEtat]         = useState('verification'); // verification | config | direct | pause
   const [titre, setTitre]       = useState('');
   const [cameraOn, setCameraOn] = useState(true);
   const [confirm, setConfirm]   = useState(false);
   const [erreur, setErreur]     = useState('');
   const [liveId, setLiveId]     = useState(null);
   const [duree, setDuree]       = useState(0);
+  const [demarrage, setDemarrage] = useState(false);
 
   const roomRef = useRef(null);
   const videoRef = useRef(null);
   const dureeIntervalRef = useRef(null);
+  const liveIdRef = useRef(null);
+  const enDirectRef = useRef(false);
 
-  const [verificationInitiale, setVerificationInitiale] = useState(true);
+  async function recupererParishId() {
+    const res = await fetch(BASE + '/users/me', { headers: { Authorization: 'Bearer ' + token } });
+    const data = await res.json();
+    const u = data && data.data && (data.data.user || data.data);
+    return u && u.parishId && (u.parishId._id || u.parishId);
+  }
+
+  // Verification au chargement : un direct est-il deja actif (ou en pause) pour cette paroisse ?
+  useEffect(function() {
+    async function verifier() {
+      try {
+        const parishId = await recupererParishId();
+        if (!parishId) { setEtat('config'); return; }
+
+        const res = await fetch(BASE + '/live/parish/' + parishId + '/active', { headers: { Authorization: 'Bearer ' + token } });
+        if (res.status === 404) { setEtat('config'); return; }
+        const data = await res.json();
+        const session = data && data.data && data.data.session;
+        if (!session) { setEtat('config'); return; }
+
+        setLiveId(session._id);
+        liveIdRef.current = session._id;
+        setTitre(session.title || '');
+        const secondesEcoulees = Math.floor((Date.now() - new Date(session.startedAt).getTime()) / 1000);
+        setDuree(Math.max(0, secondesEcoulees));
+
+        if (session.isPaused) {
+          setEtat('pause');
+        } else {
+          await reconnecter(session._id);
+          setEtat('direct');
+        }
+      } catch (e) {
+        console.log('Verification live:', e.message);
+        setEtat('config');
+      }
+    }
+    verifier();
+  }, []);
+
+  // Pause automatique si l'onglet passe en arriere-plan ou si la page se ferme,
+  // pendant qu'un direct est en cours (pas deja en pause).
+  useEffect(function() {
+    function gererVisibilite() {
+      if (document.hidden && enDirectRef.current && liveIdRef.current) {
+        mettreEnPauseAutomatique();
+      }
+    }
+    function gererFermeture() {
+      if (enDirectRef.current && liveIdRef.current) {
+        navigator.sendBeacon && navigator.sendBeacon(
+          BASE + '/live/' + liveIdRef.current + '/pause',
+          new Blob([JSON.stringify({})], { type: 'application/json' })
+        );
+      }
+    }
+    document.addEventListener('visibilitychange', gererVisibilite);
+    window.addEventListener('pagehide', gererFermeture);
+    return function() {
+      document.removeEventListener('visibilitychange', gererVisibilite);
+      window.removeEventListener('pagehide', gererFermeture);
+    };
+  }, []);
 
   useEffect(function() {
     return function() {
@@ -35,57 +99,21 @@ export default function AdminLive() {
     };
   }, []);
 
-  // Au chargement de la page, verifie si un direct est deja actif pour cette
-  // paroisse (ex: la page a ete rafraichie ou fermee sans cliquer "Terminer").
-  // Si oui, on reprend l'etat "en direct" au lieu de reafficher la config.
-  useEffect(function() {
-    async function reprendreSiActif() {
-      try {
-        const parishId = await recupererParishId();
-        if (!parishId) { setVerificationInitiale(false); return; }
-
-        const resActif = await fetch(BASE + '/live/parish/' + parishId + '/active', { headers: { Authorization: 'Bearer ' + token } });
-        if (resActif.status === 404) { setVerificationInitiale(false); return; }
-        const dataActif = await resActif.json();
-        const session = dataActif && dataActif.data && dataActif.data.session;
-        if (!session) { setVerificationInitiale(false); return; }
-
-        const resToken = await fetch(BASE + '/live/' + session._id + '/token', {
-          method: 'POST',
-          headers: { Authorization: 'Bearer ' + token },
-        });
-        const dataToken = await resToken.json();
-        if (!resToken.ok) { setVerificationInitiale(false); return; }
-
-        const room = new Room();
-        await room.connect(dataToken.data.url, dataToken.data.token);
-        await room.localParticipant.setCameraEnabled(true);
-        await room.localParticipant.setMicrophoneEnabled(true);
-        const camPub = room.localParticipant.videoTrackPublications.values().next().value;
-        if (camPub && camPub.track && videoRef.current) camPub.track.attach(videoRef.current);
-
-        roomRef.current = room;
-        setLiveId(session._id);
-        setTitre(session.title || '');
-        setEnLive(true);
-
-        const secondesEcoulees = Math.floor((Date.now() - new Date(session.startedAt).getTime()) / 1000);
-        setDuree(Math.max(0, secondesEcoulees));
-        dureeIntervalRef.current = setInterval(function() { setDuree(function(d) { return d + 1; }); }, 1000);
-      } catch (e) {
-        console.log('Reprise live:', e.message);
-      } finally {
-        setVerificationInitiale(false);
-      }
-    }
-    reprendreSiActif();
-  }, []);
-
-  async function recupererParishId() {
-    const res = await fetch(BASE + '/users/me', { headers: { Authorization: 'Bearer ' + token } });
-    const data = await res.json();
-    const u = data && data.data && (data.data.user || data.data);
-    return u && u.parishId && (u.parishId._id || u.parishId);
+  async function reconnecter(sessionId) {
+    const resToken = await fetch(BASE + '/live/' + sessionId + '/token', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + token },
+    });
+    const dataToken = await resToken.json();
+    const room = new Room();
+    await room.connect(dataToken.data.url, dataToken.data.token);
+    await room.localParticipant.setCameraEnabled(true);
+    await room.localParticipant.setMicrophoneEnabled(true);
+    const camPub = room.localParticipant.videoTrackPublications.values().next().value;
+    if (camPub && camPub.track && videoRef.current) camPub.track.attach(videoRef.current);
+    roomRef.current = room;
+    enDirectRef.current = true;
+    dureeIntervalRef.current = setInterval(function() { setDuree(function(d) { return d + 1; }); }, 1000);
   }
 
   async function lancerLive() {
@@ -104,29 +132,12 @@ export default function AdminLive() {
       if (!resStart.ok) { setErreur((dataStart && dataStart.message) || 'Impossible de demarrer le live.'); setDemarrage(false); return; }
       const session = dataStart.data.session;
 
-      const resToken = await fetch(BASE + '/live/' + session._id + '/token', {
-        method: 'POST',
-        headers: { Authorization: 'Bearer ' + token },
-      });
-      const dataToken = await resToken.json();
-      if (!resToken.ok) { setErreur('Impossible de rejoindre le live.'); setDemarrage(false); return; }
-
-      const room = new Room();
-      await room.connect(dataToken.data.url, dataToken.data.token);
-      await room.localParticipant.setCameraEnabled(true);
-      await room.localParticipant.setMicrophoneEnabled(true);
-
-      const camPub = room.localParticipant.videoTrackPublications.values().next().value;
-      if (camPub && camPub.track && videoRef.current) {
-        camPub.track.attach(videoRef.current);
-      }
-
-      roomRef.current = room;
+      await reconnecter(session._id);
       setLiveId(session._id);
-      setEnLive(true);
+      liveIdRef.current = session._id;
+      setEtat('direct');
       setDemarrage(false);
       setDuree(0);
-      dureeIntervalRef.current = setInterval(function() { setDuree(function(d) { return d + 1; }); }, 1000);
     } catch (e) {
       console.log('Lancer live:', e.message);
       setErreur('Une erreur est survenue. Verifiez l autorisation de la camera.');
@@ -134,20 +145,45 @@ export default function AdminLive() {
     }
   }
 
+  async function mettreEnPauseAutomatique() {
+    enDirectRef.current = false;
+    if (roomRef.current) { roomRef.current.disconnect(); roomRef.current = null; }
+    clearInterval(dureeIntervalRef.current);
+    try {
+      await fetch(BASE + '/live/' + liveIdRef.current + '/pause', { method: 'POST', headers: { Authorization: 'Bearer ' + token } });
+    } catch (e) { console.log('Pause auto:', e.message); }
+    setEtat('pause');
+  }
+
+  async function mettreEnPause() {
+    await mettreEnPauseAutomatique();
+  }
+
+  async function reprendreLive() {
+    try {
+      await fetch(BASE + '/live/' + liveId + '/resume', { method: 'POST', headers: { Authorization: 'Bearer ' + token } });
+      await reconnecter(liveId);
+      setEtat('direct');
+    } catch (e) {
+      console.log('Reprendre live:', e.message);
+      setErreur('Impossible de reprendre le direct.');
+    }
+  }
+
   async function terminerLive() {
     try {
+      enDirectRef.current = false;
       if (roomRef.current) { roomRef.current.disconnect(); roomRef.current = null; }
       clearInterval(dureeIntervalRef.current);
       if (liveId) {
-        await fetch(BASE + '/live/' + liveId + '/end', {
-          method: 'POST',
-          headers: { Authorization: 'Bearer ' + token },
-        });
+        await fetch(BASE + '/live/' + liveId + '/end', { method: 'POST', headers: { Authorization: 'Bearer ' + token } });
       }
     } catch (e) { console.log('Terminer live:', e.message); }
     finally {
-      setEnLive(false);
+      setEtat('config');
       setLiveId(null);
+      liveIdRef.current = null;
+      setTitre('');
     }
   }
 
@@ -177,21 +213,22 @@ export default function AdminLive() {
             <i className="ti ti-arrow-left" style={{ fontSize: 20, color: OR }} />
           </button>
           <div style={{ fontFamily: 'Georgia,serif', fontSize: 18, fontWeight: 900, color: IVOIRE }}>Gestion Live</div>
-          {enLive && <div style={{ background: '#e53935', borderRadius: 6, padding: '2px 8px', fontSize: 9, fontWeight: 700, color: 'white' }}>EN DIRECT - {formatDuree(duree)}</div>}
+          {etat === 'direct' && <div style={{ background: '#e53935', borderRadius: 6, padding: '2px 8px', fontSize: 9, fontWeight: 700, color: 'white' }}>EN DIRECT - {formatDuree(duree)}</div>}
+          {etat === 'pause' && <div style={{ background: '#8B6020', borderRadius: 6, padding: '2px 8px', fontSize: 9, fontWeight: 700, color: 'white' }}>EN PAUSE</div>}
         </div>
       </div>
 
       <div style={{ padding: '0 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
 
-        {verificationInitiale && (
+        {etat === 'verification' && (
           <div style={{ textAlign: 'center', padding: 30, color: '#9A8E7E', fontFamily: 'Georgia,serif' }}>Verification...</div>
         )}
 
-        {!verificationInitiale && erreur && (
+        {erreur && (
           <div style={{ background: 'rgba(229,57,53,0.08)', border: '1px solid rgba(229,57,53,0.2)', borderRadius: 10, padding: 10, fontSize: 11, color: '#e53935' }}>{erreur}</div>
         )}
 
-        {!verificationInitiale && !enLive ? (
+        {etat === 'config' && (
           <>
             <div style={{ background: 'white', borderRadius: 16, padding: 14, border: '1px solid rgba(0,0,0,0.06)' }}>
               <div style={{ fontFamily: 'Georgia,serif', fontSize: 11, fontWeight: 700, color: VERT, marginBottom: 12 }}>Configuration du live</div>
@@ -208,7 +245,7 @@ export default function AdminLive() {
 
             <div style={{ background: 'rgba(200,168,75,0.06)', border: '1px solid rgba(200,168,75,0.15)', borderRadius: 12, padding: '10px 14px' }}>
               <div style={{ fontSize: 10, color: '#8B6020', lineHeight: 1.6, fontFamily: 'Georgia,serif' }}>
-                Une fois le live lance, votre camera et votre micro seront actives et vos fideles pourront regarder en direct.
+                Une fois le live lance, votre camera et votre micro seront actives et vos fideles pourront regarder en direct. Si vous quittez la page, le direct se met automatiquement en pause.
               </div>
             </div>
 
@@ -221,7 +258,28 @@ export default function AdminLive() {
               {demarrage ? 'Demarrage...' : 'Lancer le live'}
             </button>
           </>
-        ) : !verificationInitiale ? (
+        )}
+
+        {etat === 'pause' && (
+          <>
+            <div style={{ background: 'linear-gradient(135deg,#1e2d14,#0a140a)', borderRadius: 16, padding: 24, textAlign: 'center' }}>
+              <i className="ti ti-player-pause" style={{ fontSize: 32, color: OR, marginBottom: 10, display: 'block' }} />
+              <div style={{ fontFamily: 'Georgia,serif', fontSize: 14, fontWeight: 700, color: IVOIRE, marginBottom: 4 }}>"{titre}"</div>
+              <div style={{ fontSize: 11, color: 'rgba(245,239,228,0.6)' }}>Direct en pause - vos fideles voient un message d'attente</div>
+            </div>
+
+            <button onClick={reprendreLive} style={{ width: '100%', padding: 14, background: 'linear-gradient(135deg,#2E5C3E,#0D3B2E)', border: 'none', borderRadius: 14, color: '#fff', fontWeight: 700, fontSize: 14, fontFamily: 'Georgia,serif', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+              <i className="ti ti-player-play" style={{ fontSize: 18 }} />
+              Reprendre le direct
+            </button>
+
+            <button onClick={terminerLive} style={{ width: '100%', padding: 13, background: 'rgba(229,57,53,0.08)', border: '1.5px solid rgba(229,57,53,0.3)', borderRadius: 14, color: '#e53935', fontWeight: 700, fontSize: 13, fontFamily: 'Georgia,serif', cursor: 'pointer' }}>
+              Terminer le direct
+            </button>
+          </>
+        )}
+
+        {etat === 'direct' && (
           <>
             <div style={{ background: '#000', borderRadius: 16, overflow: 'hidden', aspectRatio: '9 / 12', position: 'relative' }}>
               <video ref={videoRef} autoPlay muted playsInline style={{ width: '100%', height: '100%', objectFit: 'cover', display: cameraOn ? 'block' : 'none' }} />
@@ -239,17 +297,15 @@ export default function AdminLive() {
               </button>
             </div>
 
-            <div style={{ background: 'rgba(200,168,75,0.06)', border: '1px solid rgba(200,168,75,0.15)', borderRadius: 12, padding: '10px 14px' }}>
-              <div style={{ fontSize: 10, color: '#8B6020', lineHeight: 1.6, fontFamily: 'Georgia,serif' }}>
-                Les commentaires, reactions et demandes de montee en direct arrivent dans une prochaine mise a jour. Pour l'instant, vous diffusez la video en direct a vos fideles.
-              </div>
-            </div>
+            <button onClick={mettreEnPause} style={{ width: '100%', padding: 13, background: 'rgba(200,168,75,0.1)', border: '1.5px solid rgba(200,168,75,0.3)', borderRadius: 14, color: '#8B6020', fontWeight: 700, fontSize: 13, fontFamily: 'Georgia,serif', cursor: 'pointer' }}>
+              <i className="ti ti-player-pause" style={{ fontSize: 14, verticalAlign: -2 }} /> Mettre en pause
+            </button>
 
             <button onClick={terminerLive} style={{ width: '100%', padding: 13, background: 'rgba(229,57,53,0.08)', border: '1.5px solid rgba(229,57,53,0.3)', borderRadius: 14, color: '#e53935', fontWeight: 700, fontSize: 13, fontFamily: 'Georgia,serif', cursor: 'pointer' }}>
               Terminer le live
             </button>
           </>
-        ) : null}
+        )}
       </div>
 
       {confirm && (
