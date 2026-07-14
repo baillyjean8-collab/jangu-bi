@@ -14,6 +14,7 @@
 
 const { verifyAccessToken } = require('../shared/utils/jwt');
 const { liveService } = require('../domains/live');
+const { User } = require('../models');
 const { attachHealthMonitors, enforceRoomLimit } = require('./health');
 
 // ── Constants ──────────────────────────────────────────────────────────────────
@@ -38,6 +39,10 @@ const EVENTS = Object.freeze({
   JOIN_ROOM:       'room:join',
   LEAVE_ROOM:      'room:leave',
   SEND_REACTION:   'reaction:send',
+  SEND_CHAT:       'chat:send',
+  SEND_GIFT:       'gift:send',
+  CHAT_MESSAGE:    'chat:message',
+  LIVE_GIFT:       'live:gift',
 });
 
 // ── Rate Limiter (per socket) ──────────────────────────────────────────────────
@@ -92,6 +97,12 @@ const reactionLimiter = new SocketRateLimiter(
   REACTION_RATE_LIMIT.WINDOW_MS
 ).startCleanup();
 
+const CHAT_RATE_LIMIT = { MAX: 20, WINDOW_MS: 60_000 };
+const chatLimiter = new SocketRateLimiter(CHAT_RATE_LIMIT.MAX, CHAT_RATE_LIMIT.WINDOW_MS).startCleanup();
+
+const GIFT_RATE_LIMIT = { MAX: 15, WINDOW_MS: 60_000 };
+const giftLimiter = new SocketRateLimiter(GIFT_RATE_LIMIT.MAX, GIFT_RATE_LIMIT.WINDOW_MS).startCleanup();
+
 // ── Auth Middleware ────────────────────────────────────────────────────────────
 
 /**
@@ -99,11 +110,10 @@ const reactionLimiter = new SocketRateLimiter(
  * Token passed as: socket.handshake.auth.token (Bearer token from client memory).
  * Anonymous viewers are allowed with reduced capabilities (no reactions).
  */
-function socketAuthMiddleware(socket, next) {
+async function socketAuthMiddleware(socket, next) {
   const token = socket.handshake.auth?.token;
 
   if (!token) {
-    // Allow anonymous connections — they can watch but not react
     socket.user = null;
     socket.isAuthenticated = false;
     return next();
@@ -111,17 +121,28 @@ function socketAuthMiddleware(socket, next) {
 
   try {
     const decoded = verifyAccessToken(token);
+    let firstName = null;
+    let lastName = null;
+    try {
+      const userDoc = await User.findById(decoded.sub).select('firstName lastName').lean();
+      if (userDoc) {
+        firstName = userDoc.firstName;
+        lastName = userDoc.lastName;
+      }
+    } catch (lookupErr) {
+      // Nom indisponible : le chat retombera sur un nom generique
+    }
     socket.user = {
       userId:      decoded.sub,
       role:        decoded.role,
       isVerified:  decoded.isVerified,
       parishId:    decoded.parishId,
+      firstName,
+      lastName,
     };
     socket.isAuthenticated = true;
     next();
   } catch (err) {
-    // Invalid token — treat as anonymous (not hard reject)
-    // This prevents service disruption from expired tokens mid-stream
     socket.user = null;
     socket.isAuthenticated = false;
     next();
@@ -227,6 +248,62 @@ function handleConnection(io, socket) {
   });
 
   // ── Disconnect ───────────────────────────────────────────────────────────────
+  // --- Chat (texte libre, requiert une authentification) ---
+  socket.on(EVENTS.SEND_CHAT, ({ parishId, liveId, texte }) => {
+    try {
+      if (!socket.isAuthenticated) {
+        return socket.emit(EVENTS.ERROR, { code: 'AUTH_REQUIRED', message: 'Connectez-vous pour commenter' });
+      }
+      if (!parishId || !/^[a-f0-9]{24}$/i.test(String(parishId))) return;
+      if (!liveId || !/^[a-f0-9]{24}$/i.test(String(liveId))) return;
+      if (!joinedSessions.has(parishId)) return;
+
+      const propre = (texte || '').toString().trim().slice(0, 300);
+      if (!propre) return;
+
+      if (!chatLimiter.isAllowed(socket.id)) {
+        return socket.emit(EVENTS.ERROR, { code: 'RATE_LIMITED', message: 'Trop de messages, patientez un peu.' });
+      }
+
+      const prenom = socket.user.firstName || 'Fidele';
+      const initialeNom = socket.user.lastName ? (socket.user.lastName[0].toUpperCase() + '.') : '';
+      const nomAffiche = (prenom + ' ' + initialeNom).trim();
+
+      const room = parishRoom(parishId);
+      io.to(room).emit(EVENTS.CHAT_MESSAGE, {
+        liveId,
+        id: Date.now() + '-' + Math.random().toString(36).slice(2, 8),
+        nom: nomAffiche,
+        texte: propre,
+      });
+    } catch (err) {
+      console.error('[Socket] chat error:', err.message);
+    }
+  });
+
+  // --- Cadeau (geste spirituel gratuit, requiert une authentification) ---
+  socket.on(EVENTS.SEND_GIFT, ({ parishId, liveId, emoji, nom }) => {
+    try {
+      if (!socket.isAuthenticated) return;
+      if (!parishId || !/^[a-f0-9]{24}$/i.test(String(parishId))) return;
+      if (!liveId || !/^[a-f0-9]{24}$/i.test(String(liveId))) return;
+      if (!joinedSessions.has(parishId)) return;
+
+      if (!giftLimiter.isAllowed(socket.id)) {
+        return socket.emit(EVENTS.ERROR, { code: 'RATE_LIMITED', message: 'Trop de cadeaux envoyes, patientez.' });
+      }
+
+      const room = parishRoom(parishId);
+      io.to(room).emit(EVENTS.LIVE_GIFT, {
+        liveId,
+        emoji: (emoji || '').toString().slice(0, 8),
+        nom: (nom || 'Cadeau').toString().slice(0, 40),
+      });
+    } catch (err) {
+      console.error('[Socket] gift error:', err.message);
+    }
+  });
+
   socket.on('disconnect', async () => {
     // Leave all joined sessions and decrement viewer counts
     for (const [parishId] of joinedSessions.entries()) {

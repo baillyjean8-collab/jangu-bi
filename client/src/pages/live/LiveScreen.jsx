@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Room, RoomEvent } from 'livekit-client';
+import { io } from 'socket.io-client';
+import { tokenStore } from '../../api/client';
 import { contientMotInterdit, sauvegarderAvertissement, compteRestreint, messageRestriction } from '../../utils/jb-filtre';
 
 const CADEAUX = [
@@ -122,8 +124,11 @@ export default function LiveScreen() {
 
   const [sessionReelle, setSessionReelle] = useState(null);
   const [connexionVideo, setConnexionVideo] = useState('chargement');
+  const [viewerCountReel, setViewerCountReel] = useState(0);
+  const [likeTotal, setLikeTotal] = useState(0);
   const videoRef = useRef(null);
   const roomRef = useRef(null);
+  const socketRef = useRef(null);
 
   useEffect(function() {
     let annule = false;
@@ -134,6 +139,53 @@ export default function LiveScreen() {
         if (annule) return;
         const session = dataSession && dataSession.data && dataSession.data.session;
         if (session) setSessionReelle(session);
+
+        const parishIdReel = session && session.parishId && session.parishId._id;
+        if (parishIdReel && !annule) {
+          setViewerCountReel((session && session.currentViewerCount) || 0);
+          const totalReactions = session && session.reactionCounts
+            ? Object.values(session.reactionCounts).reduce(function(a, b) { return a + b; }, 0)
+            : 0;
+          setLikeTotal(totalReactions);
+
+          const apiUrl = import.meta.env.VITE_API_URL || '';
+          const socketUrl = apiUrl ? apiUrl.replace(/\/api\/?$/, '') : window.location.origin;
+          const socket = io(socketUrl, { auth: { token: tokenStore.get() } });
+          socketRef.current = socket;
+
+          socket.on('connect', function() {
+            socket.emit('room:join', { parishId: parishIdReel, liveId: id });
+          });
+          socket.on('live:viewerCount', function(data) {
+            if (data.liveId === id) setViewerCountReel(data.count);
+          });
+          socket.on('live:reaction', function(data) {
+            if (data.liveId !== id) return;
+            setLikeTotal(function(c) { return c + 1; });
+            if (data.type === 'heart') {
+              const hid = ++heartIdRef.current;
+              const x = 40 + Math.random() * 200;
+              const y = 300 + Math.random() * 100;
+              setHearts(function(prev) { return prev.concat([{ id: hid, x: x, y: y }]); });
+            }
+            afficherBanniere(data.display, 2500);
+          });
+          socket.on('chat:message', function(data) {
+            if (data.liveId !== id) return;
+            const mots = (data.nom || '').split(' ');
+            const init = mots.map(function(w) { return w[0] || ''; }).join('').slice(0, 2).toUpperCase();
+            const idxCouleur = (data.nom || '').length % PROFILS_COULEURS.length;
+            setCommentaires(function(prev) {
+              return prev.slice(-30).concat([{ id: data.id, profil: PROFILS_COULEURS[idxCouleur], initiales: init, nom: data.nom, texte: data.texte }]);
+            });
+          });
+          socket.on('live:gift', function(data) {
+            lancerCadeau(data.emoji, data.nom);
+          });
+          socket.on('live:ended', function(data) {
+            if (data.liveId === id) afficherBanniere('Le direct est termine', 4000);
+          });
+        }
 
         const dataToken = await liveApi.getToken(id);
         if (annule) return;
@@ -171,6 +223,7 @@ export default function LiveScreen() {
       annule = true;
       clearInterval(intervalleEtat);
       if (roomRef.current) { roomRef.current.disconnect(); roomRef.current = null; }
+      if (socketRef.current) { socketRef.current.disconnect(); socketRef.current = null; }
     };
   }, [id]);
 
@@ -221,40 +274,15 @@ export default function LiveScreen() {
     setTimeout(() => setBanniereMsg(null), duree);
   }
 
-  // Commentaires automatiques
-  useEffect(() => {
-    const iv = setInterval(() => {
-      // Parfois afficher "a rejoint"
-      if (Math.random() > 0.7) {
-        const nomRejoint = NOMS_AUTO[Math.floor(Math.random() * NOMS_AUTO.length)];
-        setCommentaires(prev => [...prev.slice(-30), {
-          id: Date.now() + 'join',
-          profil: { bg: 'rgba(200,168,75,0.1)', col: 'rgba(200,168,75,0.6)', tc: '#1e2d14' },
-          initiales: '👤',
-          nom: '',
-          texte: nomRejoint + ' a rejoint le live',
-          isJoin: true,
-        }]);
-      }
-      const idx = autoRef.current % NOMS_AUTO.length;
-      const profil = PROFILS_COULEURS[idx % PROFILS_COULEURS.length];
-      const nom    = NOMS_AUTO[idx];
-      const texte  = MSG_AUTO[idx % MSG_AUTO.length];
-      const init   = nom.split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase();
-      setCommentaires(prev => [...prev.slice(-30), { id: Date.now() + Math.random(), profil, initiales: init, nom, texte }]);
-      if (Math.random() > 0.5) setLikeCount(c => c + 1);
-      if (Math.random() > 0.7) {
-        const cadeau = CADEAUX[Math.floor(Math.random() * 5)];
-        const envoyeur = NOMS_AUTO[Math.floor(Math.random() * NOMS_AUTO.length)];
-        lancerCadeau(cadeau.emoji, 'Un fidèle');
-      }
-      autoRef.current++;
-    }, 2800);
-    return () => clearInterval(iv);
-  }, []);
+  // La simulation automatique de commentaires/cadeaux a ete retiree :
+  // tout arrive desormais reellement via Socket.io (voir useEffect de connexion plus haut).
 
   // ── Likes ──────────────────────────────────────────────────────────────────
-  const incLike = useCallback(() => setLikeCount(c => c + 1), []);
+  const incLike = useCallback(function() {
+    if (socketRef.current && sessionReelle && sessionReelle.parishId) {
+      socketRef.current.emit('reaction:send', { parishId: sessionReelle.parishId._id, liveId: id, type: 'heart' });
+    }
+  }, [sessionReelle, id]);
 
   function handleEcranClick(e) {
     incLike();
@@ -287,6 +315,12 @@ export default function LiveScreen() {
     afficherBanniere(`${emoji} Un fidèle a offert ${nomCadeau}`, 3500);
   }
   function removeCadeau(id) { setCadeaux(prev => prev.filter(c => c.id !== id)); }
+
+  function envoyerCadeau(emoji, nom) {
+    if (socketRef.current && sessionReelle && sessionReelle.parishId) {
+      socketRef.current.emit('gift:send', { parishId: sessionReelle.parishId._id, liveId: id, emoji: emoji, nom: nom });
+    }
+  }
 
   // ── Commentaire ────────────────────────────────────────────────────────────
   function limitWords(val) {
@@ -508,11 +542,11 @@ export default function LiveScreen() {
         <div style={{ display: 'flex', gap: 8, marginTop: 7 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'rgba(200,168,75,0.18)', border: '1px solid rgba(200,168,75,0.45)', borderRadius: 20, padding: '4px 12px' }}>
             <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#e53935', boxShadow: '0 0 6px #e53935' }} />
-            <span style={{ fontSize: 10, color: '#F5F0E8', fontWeight: 700 }}>{live.enLigne} en ligne</span>
+            <span style={{ fontSize: 10, color: '#F5F0E8', fontWeight: 700 }}>{viewerCountReel} en ligne</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 3, background: 'rgba(255,255,255,0.06)', borderRadius: 20, padding: '2px 9px' }}>
             <i className="ti ti-heart" style={{ fontSize: 11, color: '#ef9a9a', filter: 'drop-shadow(0 0 4px rgba(239,154,154,0.8))' }} />
-            <span style={{ fontSize: 10, color: '#F5F0E8', fontWeight: 700 }}>{likeCount}</span>
+            <span style={{ fontSize: 10, color: '#F5F0E8', fontWeight: 700 }}>{likeTotal}</span>
           </div>
         </div>
       </div>
@@ -563,7 +597,7 @@ export default function LiveScreen() {
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 10, maxHeight: 260, overflowY: 'auto' }}>
               {CADEAUX.map(cadeau => (
-                <div key={cadeau.id} onClick={() => { lancerCadeau(cadeau.emoji); closeDrawer(); }} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, cursor: 'pointer', padding: '8px 4px', borderRadius: 12, background: 'rgba(200,168,75,0.06)', border: '1px solid rgba(200,168,75,0.1)' }}>
+                <div key={cadeau.id} onClick={() => { envoyerCadeau(cadeau.emoji, cadeau.nom); closeDrawer(); }} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, cursor: 'pointer', padding: '8px 4px', borderRadius: 12, background: 'rgba(200,168,75,0.06)', border: '1px solid rgba(200,168,75,0.1)' }}>
                   <div style={{ fontSize: 24 }}>{cadeau.emoji}</div>
                   <div style={{ fontSize: 8, color: 'rgba(245,240,232,0.7)', textAlign: 'center' }}>{cadeau.nom}</div>
                   <div style={{ fontSize: 8, color: OR, fontWeight: 700 }}>{cadeau.prix} F</div>

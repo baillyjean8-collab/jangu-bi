@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Room, RoomEvent } from 'livekit-client';
+import { io } from 'socket.io-client';
 import AdminShell from '../AdminShell';
 
 const OR      = '#C8A84B';
@@ -22,11 +23,44 @@ export default function AdminLive() {
   const [duree, setDuree]       = useState(0);
   const [demarrage, setDemarrage] = useState(false);
 
+  const [viewerCountReel, setViewerCountReel] = useState(0);
+  const [likeTotal, setLikeTotal] = useState(0);
+  const [messagesChat, setMessagesChat] = useState([]);
+
   const roomRef = useRef(null);
   const videoRef = useRef(null);
   const dureeIntervalRef = useRef(null);
   const liveIdRef = useRef(null);
   const enDirectRef = useRef(false);
+  const socketRef = useRef(null);
+
+  function connecterSocket(parishId, sessionId) {
+    if (socketRef.current) return;
+    const apiUrl = import.meta.env.VITE_API_URL || '';
+    const socketUrl = apiUrl ? apiUrl.replace(/\/api\/?$/, '') : window.location.origin;
+    const socket = io(socketUrl, { auth: { token: token } });
+    socketRef.current = socket;
+
+    socket.on('connect', function() {
+      socket.emit('room:join', { parishId: parishId, liveId: sessionId });
+    });
+    socket.on('live:viewerCount', function(data) {
+      if (data.liveId === sessionId) setViewerCountReel(data.count);
+    });
+    socket.on('live:reaction', function(data) {
+      if (data.liveId === sessionId) setLikeTotal(function(c) { return c + 1; });
+    });
+    socket.on('chat:message', function(data) {
+      if (data.liveId === sessionId) setMessagesChat(function(prev) { return prev.slice(-20).concat([data]); });
+    });
+  }
+
+  function deconnecterSocket() {
+    if (socketRef.current) { socketRef.current.disconnect(); socketRef.current = null; }
+    setViewerCountReel(0);
+    setLikeTotal(0);
+    setMessagesChat([]);
+  }
 
   async function recupererParishId() {
     const res = await fetch(BASE + '/users/me', { headers: { Authorization: 'Bearer ' + token } });
@@ -53,6 +87,7 @@ export default function AdminLive() {
         setTitre(session.title || '');
         const secondesEcoulees = Math.floor((Date.now() - new Date(session.startedAt).getTime()) / 1000);
         setDuree(Math.max(0, secondesEcoulees));
+        connecterSocket(parishId, session._id);
 
         if (session.isPaused) {
           setEtat('pause');
@@ -133,6 +168,7 @@ export default function AdminLive() {
       const session = dataStart.data.session;
 
       await reconnecter(session._id);
+      connecterSocket(parishId, session._id);
       setLiveId(session._id);
       liveIdRef.current = session._id;
       setEtat('direct');
@@ -180,6 +216,7 @@ export default function AdminLive() {
       }
     } catch (e) { console.log('Terminer live:', e.message); }
     finally {
+      deconnecterSocket();
       setEtat('config');
       setLiveId(null);
       liveIdRef.current = null;
@@ -288,6 +325,29 @@ export default function AdminLive() {
                   <i className="ti ti-video-off" style={{ fontSize: 32, color: 'rgba(200,168,75,0.4)' }} />
                 </div>
               )}
+            </div>
+
+            <div style={{ display: 'flex', gap: 8 }}>
+              <div style={{ flex: 1, background: 'white', borderRadius: 12, padding: '10px 8px', textAlign: 'center', border: '1px solid rgba(0,0,0,0.06)' }}>
+                <div style={{ fontSize: 16, fontWeight: 700, color: VERT }}>{viewerCountReel}</div>
+                <div style={{ fontSize: 8, color: '#7A6E5E' }}>Spectateurs</div>
+              </div>
+              <div style={{ flex: 1, background: 'white', borderRadius: 12, padding: '10px 8px', textAlign: 'center', border: '1px solid rgba(0,0,0,0.06)' }}>
+                <div style={{ fontSize: 16, fontWeight: 700, color: '#e53935' }}>{likeTotal}</div>
+                <div style={{ fontSize: 8, color: '#7A6E5E' }}>Reactions</div>
+              </div>
+            </div>
+
+            <div style={{ background: 'white', borderRadius: 16, padding: 12, border: '1px solid rgba(0,0,0,0.06)', maxHeight: 160, overflowY: 'auto' }}>
+              <div style={{ fontFamily: 'Georgia,serif', fontSize: 11, fontWeight: 700, color: VERT, marginBottom: 8 }}>Commentaires en direct</div>
+              {messagesChat.length === 0 && <div style={{ fontSize: 10, color: '#9A8E7E' }}>Aucun commentaire pour le moment</div>}
+              {messagesChat.map(function(m) {
+                return (
+                  <div key={m.id} style={{ fontSize: 10, color: VERT, marginBottom: 4 }}>
+                    <span style={{ fontWeight: 700, color: OR }}>{m.nom}</span> {m.texte}
+                  </div>
+                );
+              })}
             </div>
 
             <div style={{ background: 'white', borderRadius: 16, padding: 14, border: '1px solid rgba(0,0,0,0.06)' }}>
