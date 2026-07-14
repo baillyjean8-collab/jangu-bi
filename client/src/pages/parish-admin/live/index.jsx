@@ -32,6 +32,7 @@ export default function AdminLive() {
   const [duree, setDuree] = useState(0);
   const [demarrage, setDemarrage] = useState(false);
   const [resume, setResume] = useState(null);
+  const [parishLogoUrl, setParishLogoUrl] = useState(null);
 
   const [viewerCountReel, setViewerCountReel] = useState(0);
   const [likeTotal, setLikeTotal] = useState(0);
@@ -50,6 +51,14 @@ export default function AdminLive() {
   const rafRef = useRef(null);
   const cameraStreamRef = useRef(null);
   const videoPubRef = useRef(null);
+  const parishLogoImgRef = useRef(null);
+  const cameraOnRef = useRef(true);
+  const audioCtxRef = useRef(null);
+  const analyserRef = useRef(null);
+  const audioDataRef = useRef(null);
+  const micAnalysisStreamRef = useRef(null);
+
+  useEffect(function() { cameraOnRef.current = cameraOn; }, [cameraOn]);
 
   useEffect(function() { filtreActifRef.current = filtreActif; }, [filtreActif]);
 
@@ -62,10 +71,58 @@ export default function AdminLive() {
 
   // ---- Apercu camera (allume avant meme de lancer le direct) ----
   function dessinerBoucle() {
-    if (hiddenVideoRef.current && canvasRef.current && hiddenVideoRef.current.readyState >= 2) {
+    if (canvasRef.current) {
       const ctx = canvasRef.current.getContext('2d');
-      ctx.filter = FILTRES_CSS[filtreActifRef.current] || 'none';
-      ctx.drawImage(hiddenVideoRef.current, 0, 0, canvasRef.current.width, canvasRef.current.height);
+      const w = canvasRef.current.width;
+      const h = canvasRef.current.height;
+
+      if (cameraOnRef.current) {
+        if (hiddenVideoRef.current && hiddenVideoRef.current.readyState >= 2) {
+          ctx.filter = FILTRES_CSS[filtreActifRef.current] || 'none';
+          ctx.drawImage(hiddenVideoRef.current, 0, 0, w, h);
+        }
+      } else {
+        ctx.filter = 'none';
+        ctx.fillStyle = '#0C0A06';
+        ctx.fillRect(0, 0, w, h);
+
+        let niveau = 0;
+        if (analyserRef.current && audioDataRef.current) {
+          analyserRef.current.getByteFrequencyData(audioDataRef.current);
+          let somme = 0;
+          for (let i = 0; i < audioDataRef.current.length; i++) somme += audioDataRef.current[i];
+          niveau = somme / audioDataRef.current.length / 255;
+        }
+
+        const cx = w / 2;
+        const cy = h / 2;
+        const rayonBase = Math.min(w, h) * 0.14;
+
+        for (let i = 0; i < 3; i++) {
+          const rayon = rayonBase + i * 22 + niveau * 40;
+          ctx.beginPath();
+          ctx.arc(cx, cy, rayon, 0, Math.PI * 2);
+          ctx.strokeStyle = 'rgba(200,168,75,' + Math.max(0, 0.5 - i * 0.15 - niveau * 0.1) + ')';
+          ctx.lineWidth = 3;
+          ctx.stroke();
+        }
+
+        if (parishLogoImgRef.current && parishLogoImgRef.current.complete && parishLogoImgRef.current.naturalWidth > 0) {
+          const taille = rayonBase * 1.6;
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(cx, cy, rayonBase, 0, Math.PI * 2);
+          ctx.clip();
+          ctx.drawImage(parishLogoImgRef.current, cx - taille / 2, cy - taille / 2, taille, taille);
+          ctx.restore();
+        } else {
+          ctx.fillStyle = 'rgba(200,168,75,0.5)';
+          ctx.font = (rayonBase) + 'px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('+', cx, cy);
+        }
+      }
     }
     rafRef.current = requestAnimationFrame(dessinerBoucle);
   }
@@ -99,6 +156,34 @@ export default function AdminLive() {
     }
   }
 
+  async function demarrerAnalyseAudio() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      micAnalysisStreamRef.current = stream;
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      const audioCtx = new AudioCtx();
+      const source = audioCtx.createMediaStreamSource(stream);
+      const analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 256;
+      source.connect(analyser);
+      audioCtxRef.current = audioCtx;
+      analyserRef.current = analyser;
+      audioDataRef.current = new Uint8Array(analyser.frequencyBinCount);
+    } catch (e) { console.log('Analyse audio:', e.message); }
+  }
+
+  function arreterAnalyseAudio() {
+    if (micAnalysisStreamRef.current) {
+      micAnalysisStreamRef.current.getTracks().forEach(function(t) { t.stop(); });
+      micAnalysisStreamRef.current = null;
+    }
+    if (audioCtxRef.current) {
+      audioCtxRef.current.close().catch(function() {});
+      audioCtxRef.current = null;
+    }
+    analyserRef.current = null;
+  }
+
   async function retournerCamera() {
     facingRef.current = facingRef.current === 'user' ? 'environment' : 'user';
     try {
@@ -114,8 +199,26 @@ export default function AdminLive() {
     } catch (e) { console.log('Retourner camera:', e.message); }
   }
 
+  async function chargerLogoParoisse() {
+    try {
+      const parishId = await recupererParishId();
+      if (!parishId) return;
+      const res = await fetch(BASE + '/parishes/' + parishId);
+      const data = await res.json();
+      const p = data && data.data && data.data.parish;
+      if (p && p.logoUrl) {
+        setParishLogoUrl(p.logoUrl);
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.src = p.logoUrl;
+        parishLogoImgRef.current = img;
+      }
+    } catch (e) { console.log('Logo paroisse:', e.message); }
+  }
+
   useEffect(function() {
     demarrerCameraPreview();
+    chargerLogoParoisse();
     return function() { arreterCameraPreview(); };
   }, []);
 
@@ -257,6 +360,7 @@ export default function AdminLive() {
       echoCancellation: true,
       autoGainControl: true,
     });
+    demarrerAnalyseAudio();
 
     roomRef.current = room;
     enDirectRef.current = true;
@@ -296,6 +400,7 @@ export default function AdminLive() {
   async function mettreEnPauseAutomatique() {
     enDirectRef.current = false;
     if (roomRef.current) { roomRef.current.disconnect(); roomRef.current = null; }
+    arreterAnalyseAudio();
     clearInterval(dureeIntervalRef.current);
     try {
       await fetch(BASE + '/live/' + liveIdRef.current + '/pause', { method: 'POST', headers: { Authorization: 'Bearer ' + token } });
@@ -321,6 +426,7 @@ export default function AdminLive() {
     try {
       enDirectRef.current = false;
       if (roomRef.current) { roomRef.current.disconnect(); roomRef.current = null; }
+      arreterAnalyseAudio();
       clearInterval(dureeIntervalRef.current);
       if (liveId) {
         const res = await fetch(BASE + '/live/' + liveId + '/end', { method: 'POST', headers: { Authorization: 'Bearer ' + token } });
@@ -339,11 +445,7 @@ export default function AdminLive() {
   }
 
   function toggleCamera() {
-    const nouvelEtat = !cameraOn;
-    setCameraOn(nouvelEtat);
-    if (videoPubRef.current) {
-      if (nouvelEtat) videoPubRef.current.unmute(); else videoPubRef.current.mute();
-    }
+    setCameraOn(function(v) { return !v; });
   }
 
   async function toggleMic() {
@@ -485,10 +587,13 @@ export default function AdminLive() {
 
       {etat === 'direct' && (
         <>
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, background: 'rgba(12,10,6,0.6)', backgroundImage: BOGOLAN_DARK, borderRadius: '0 0 24px 24px', padding: '14px 12px 14px', zIndex: 5 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-              <div style={{ width: 42, height: 42, borderRadius: '50%', background: VERT, border: '2px solid ' + OR, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <i className="ti ti-user" style={{ fontSize: 19, color: OR }} />
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, background: 'rgba(12,10,6,0.6)', backgroundImage: BOGOLAN_DARK, borderRadius: '0 0 20px 20px', padding: '10px 12px 9px', zIndex: 5 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 8 }}>
+              <div style={{ width: 36, height: 36, borderRadius: '50%', background: VERT, border: '2px solid ' + OR, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden' }}>
+                {parishLogoUrl
+                  ? <img src={parishLogoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  : <i className="ti ti-user" style={{ fontSize: 16, color: OR }} />
+                }
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ color: '#fff', fontSize: 14, fontWeight: 700 }}>Vous</div>
