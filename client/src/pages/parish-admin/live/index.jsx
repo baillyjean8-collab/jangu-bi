@@ -26,11 +26,59 @@ export default function AdminLive() {
   const videoRef = useRef(null);
   const dureeIntervalRef = useRef(null);
 
+  const [verificationInitiale, setVerificationInitiale] = useState(true);
+
   useEffect(function() {
     return function() {
       if (roomRef.current) roomRef.current.disconnect();
       clearInterval(dureeIntervalRef.current);
     };
+  }, []);
+
+  // Au chargement de la page, verifie si un direct est deja actif pour cette
+  // paroisse (ex: la page a ete rafraichie ou fermee sans cliquer "Terminer").
+  // Si oui, on reprend l'etat "en direct" au lieu de reafficher la config.
+  useEffect(function() {
+    async function reprendreSiActif() {
+      try {
+        const parishId = await recupererParishId();
+        if (!parishId) { setVerificationInitiale(false); return; }
+
+        const resActif = await fetch(BASE + '/live/parish/' + parishId + '/active', { headers: { Authorization: 'Bearer ' + token } });
+        if (resActif.status === 404) { setVerificationInitiale(false); return; }
+        const dataActif = await resActif.json();
+        const session = dataActif && dataActif.data && dataActif.data.session;
+        if (!session) { setVerificationInitiale(false); return; }
+
+        const resToken = await fetch(BASE + '/live/' + session._id + '/token', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer ' + token },
+        });
+        const dataToken = await resToken.json();
+        if (!resToken.ok) { setVerificationInitiale(false); return; }
+
+        const room = new Room();
+        await room.connect(dataToken.data.url, dataToken.data.token);
+        await room.localParticipant.setCameraEnabled(true);
+        await room.localParticipant.setMicrophoneEnabled(true);
+        const camPub = room.localParticipant.videoTrackPublications.values().next().value;
+        if (camPub && camPub.track && videoRef.current) camPub.track.attach(videoRef.current);
+
+        roomRef.current = room;
+        setLiveId(session._id);
+        setTitre(session.title || '');
+        setEnLive(true);
+
+        const secondesEcoulees = Math.floor((Date.now() - new Date(session.startedAt).getTime()) / 1000);
+        setDuree(Math.max(0, secondesEcoulees));
+        dureeIntervalRef.current = setInterval(function() { setDuree(function(d) { return d + 1; }); }, 1000);
+      } catch (e) {
+        console.log('Reprise live:', e.message);
+      } finally {
+        setVerificationInitiale(false);
+      }
+    }
+    reprendreSiActif();
   }, []);
 
   async function recupererParishId() {
@@ -135,11 +183,15 @@ export default function AdminLive() {
 
       <div style={{ padding: '0 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
 
-        {erreur && (
+        {verificationInitiale && (
+          <div style={{ textAlign: 'center', padding: 30, color: '#9A8E7E', fontFamily: 'Georgia,serif' }}>Verification...</div>
+        )}
+
+        {!verificationInitiale && erreur && (
           <div style={{ background: 'rgba(229,57,53,0.08)', border: '1px solid rgba(229,57,53,0.2)', borderRadius: 10, padding: 10, fontSize: 11, color: '#e53935' }}>{erreur}</div>
         )}
 
-        {!enLive ? (
+        {!verificationInitiale && !enLive ? (
           <>
             <div style={{ background: 'white', borderRadius: 16, padding: 14, border: '1px solid rgba(0,0,0,0.06)' }}>
               <div style={{ fontFamily: 'Georgia,serif', fontSize: 11, fontWeight: 700, color: VERT, marginBottom: 12 }}>Configuration du live</div>
@@ -169,7 +221,7 @@ export default function AdminLive() {
               {demarrage ? 'Demarrage...' : 'Lancer le live'}
             </button>
           </>
-        ) : (
+        ) : !verificationInitiale ? (
           <>
             <div style={{ background: '#000', borderRadius: 16, overflow: 'hidden', aspectRatio: '9 / 12', position: 'relative' }}>
               <video ref={videoRef} autoPlay muted playsInline style={{ width: '100%', height: '100%', objectFit: 'cover', display: cameraOn ? 'block' : 'none' }} />
@@ -197,7 +249,7 @@ export default function AdminLive() {
               Terminer le live
             </button>
           </>
-        )}
+        ) : null}
       </div>
 
       {confirm && (
