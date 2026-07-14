@@ -13,7 +13,7 @@
  */
 
 const { verifyAccessToken } = require('../shared/utils/jwt');
-const { liveService } = require('../domains/live');
+const { liveService, liveRepo } = require('../domains/live');
 const { User } = require('../models');
 const { attachHealthMonitors, enforceRoomLimit } = require('./health');
 
@@ -43,6 +43,9 @@ const EVENTS = Object.freeze({
   SEND_GIFT:       'gift:send',
   CHAT_MESSAGE:    'chat:message',
   LIVE_GIFT:       'live:gift',
+  CHAT_MESSAGE_ADMIN:  'chat:message:admin',
+  LIVE_REACTION_ADMIN: 'live:reaction:admin',
+  LIVE_GIFT_ADMIN:     'live:gift:admin',
 });
 
 // ── Rate Limiter (per socket) ──────────────────────────────────────────────────
@@ -188,6 +191,16 @@ function handleConnection(io, socket) {
       await socket.join(room);
       joinedSessions.set(parishId, liveId);
 
+      // Si ce socket est l'administrateur qui a lance ce direct, il rejoint
+      // aussi une salle privee reservee : c'est la seule a recevoir les
+      // evenements avec l'identite reelle des fideles (chat, reactions, cadeaux).
+      try {
+        const session = await liveRepo.findById(liveId);
+        if (session && socket.user && String(session.startedBy) === String(socket.user.userId)) {
+          await socket.join('admin:' + liveId);
+        }
+      } catch (lookupErr) { /* pas grave si echec, l'admin restera anonyme */ }
+
       // Atomic viewer count increment
       const updatedSession = await liveService.viewerJoined(liveId);
 
@@ -239,8 +252,18 @@ function handleConnection(io, socket) {
       io.to(room).emit(EVENTS.LIVE_REACTION, {
         liveId,
         type:    reaction.type,
-        display: reaction.display, // e.g. "A faithful sent Amen 🙏"
+        display: reaction.display,
       });
+
+      if (socket.user) {
+        const prenomReel = socket.user.firstName || 'Fidele';
+        const initialeReelle = socket.user.lastName ? (socket.user.lastName[0].toUpperCase() + '.') : '';
+        io.to('admin:' + liveId).emit(EVENTS.LIVE_REACTION_ADMIN, {
+          liveId,
+          type: reaction.type,
+          nom: (prenomReel + ' ' + initialeReelle).trim(),
+        });
+      }
     } catch (err) {
       socket.emit(EVENTS.ERROR, { code: 'REACTION_FAILED', message: 'Reaction not sent' });
       console.error('[Socket] reaction error:', err.message);
@@ -267,13 +290,23 @@ function handleConnection(io, socket) {
 
       const prenom = socket.user.firstName || 'Fidele';
       const initialeNom = socket.user.lastName ? (socket.user.lastName[0].toUpperCase() + '.') : '';
-      const nomAffiche = (prenom + ' ' + initialeNom).trim();
+      const nomReel = (prenom + ' ' + initialeNom).trim();
+      const idMessage = Date.now() + '-' + Math.random().toString(36).slice(2, 8);
 
+      // Les autres fideles voient un envoyeur anonyme, par discretion
       const room = parishRoom(parishId);
       io.to(room).emit(EVENTS.CHAT_MESSAGE, {
         liveId,
-        id: Date.now() + '-' + Math.random().toString(36).slice(2, 8),
-        nom: nomAffiche,
+        id: idMessage,
+        nom: 'Un fidele',
+        texte: propre,
+      });
+
+      // Seul l'admin (diffuseur) voit l'identite reelle de l'envoyeur
+      io.to('admin:' + liveId).emit(EVENTS.CHAT_MESSAGE_ADMIN, {
+        liveId,
+        id: idMessage,
+        nom: nomReel,
         texte: propre,
       });
     } catch (err) {
@@ -294,11 +327,25 @@ function handleConnection(io, socket) {
       }
 
       const room = parishRoom(parishId);
+      const nomCadeau = (nom || 'Cadeau').toString().slice(0, 40);
+      const emojiSur = (emoji || '').toString().slice(0, 8);
+
       io.to(room).emit(EVENTS.LIVE_GIFT, {
         liveId,
-        emoji: (emoji || '').toString().slice(0, 8),
-        nom: (nom || 'Cadeau').toString().slice(0, 40),
+        emoji: emojiSur,
+        nom: nomCadeau,
       });
+
+      if (socket.user) {
+        const prenomReel = socket.user.firstName || 'Fidele';
+        const initialeReelle = socket.user.lastName ? (socket.user.lastName[0].toUpperCase() + '.') : '';
+        io.to('admin:' + liveId).emit(EVENTS.LIVE_GIFT_ADMIN, {
+          liveId,
+          emoji: emojiSur,
+          cadeau: nomCadeau,
+          expediteur: (prenomReel + ' ' + initialeReelle).trim(),
+        });
+      }
     } catch (err) {
       console.error('[Socket] gift error:', err.message);
     }

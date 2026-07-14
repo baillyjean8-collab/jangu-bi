@@ -50,8 +50,20 @@ export default function AdminLive() {
     socket.on('live:reaction', function(data) {
       if (data.liveId === sessionId) setLikeTotal(function(c) { return c + 1; });
     });
-    socket.on('chat:message', function(data) {
-      if (data.liveId === sessionId) setMessagesChat(function(prev) { return prev.slice(-20).concat([data]); });
+    socket.on('chat:message:admin', function(data) {
+      if (data.liveId === sessionId) {
+        setMessagesChat(function(prev) { return prev.slice(-20).concat([{ id: data.id, type: 'chat', nom: data.nom, texte: data.texte }]); });
+      }
+    });
+    socket.on('live:reaction:admin', function(data) {
+      if (data.liveId === sessionId) {
+        setMessagesChat(function(prev) { return prev.slice(-20).concat([{ id: 'r-' + Date.now() + Math.random(), type: 'reaction', nom: data.nom, reactionType: data.type }]); });
+      }
+    });
+    socket.on('live:gift:admin', function(data) {
+      if (data.liveId === sessionId) {
+        setMessagesChat(function(prev) { return prev.slice(-20).concat([{ id: 'g-' + Date.now() + Math.random(), type: 'gift', nom: data.expediteur, cadeau: data.cadeau, emoji: data.emoji }]); });
+      }
     });
   }
 
@@ -342,6 +354,20 @@ export default function AdminLive() {
               <div style={{ fontFamily: 'Georgia,serif', fontSize: 11, fontWeight: 700, color: VERT, marginBottom: 8 }}>Commentaires en direct</div>
               {messagesChat.length === 0 && <div style={{ fontSize: 10, color: '#9A8E7E' }}>Aucun commentaire pour le moment</div>}
               {messagesChat.map(function(m) {
+                if (m.type === 'reaction') {
+                  return (
+                    <div key={m.id} style={{ fontSize: 10, color: '#7A6E5E', marginBottom: 4, fontStyle: 'italic' }}>
+                      <span style={{ fontWeight: 700, color: OR }}>{m.nom}</span> a envoye une reaction ({m.reactionType})
+                    </div>
+                  );
+                }
+                if (m.type === 'gift') {
+                  return (
+                    <div key={m.id} style={{ fontSize: 10, color: '#8B6020', marginBottom: 4, fontWeight: 700 }}>
+                      {m.emoji} <span style={{ fontWeight: 700 }}>{m.nom}</span> a envoye {m.cadeau}
+                    </div>
+                  );
+                }
                 return (
                   <div key={m.id} style={{ fontSize: 10, color: VERT, marginBottom: 4 }}>
                     <span style={{ fontWeight: 700, color: OR }}>{m.nom}</span> {m.texte}
