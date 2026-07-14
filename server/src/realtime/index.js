@@ -14,6 +14,7 @@
 
 const { verifyAccessToken } = require('../shared/utils/jwt');
 const { liveService, liveRepo } = require('../domains/live');
+const guestRegistry = require('./guestRegistry');
 const { User } = require('../models');
 const { attachHealthMonitors, enforceRoomLimit } = require('./health');
 
@@ -46,6 +47,13 @@ const EVENTS = Object.freeze({
   CHAT_MESSAGE_ADMIN:  'chat:message:admin',
   LIVE_REACTION_ADMIN: 'live:reaction:admin',
   LIVE_GIFT_ADMIN:     'live:gift:admin',
+
+  // Invitation d'un fidele a monter en direct (co-diffuseur)
+  ROSTER_UPDATE:    'live:roster',
+  INVITE_SEND:      'live:invite:send',
+  INVITE_RECEIVED:  'live:invite:received',
+  INVITE_ACCEPT:    'live:invite:accept',
+  GUEST_JOINED:     'live:guest:joined',
 });
 
 // ── Rate Limiter (per socket) ──────────────────────────────────────────────────
@@ -164,6 +172,14 @@ function parishRoom(parishId) {
 
 // ── Connection Handler ─────────────────────────────────────────────────────────
 
+const roster = new Map();
+
+function nomAffichage(user) {
+  const prenom = (user && user.firstName) || 'Fidele';
+  const initiale = (user && user.lastName) ? (user.lastName[0].toUpperCase() + '.') : '';
+  return (prenom + ' ' + initiale).trim();
+}
+
 function handleConnection(io, socket) {
   // Track which live sessions this socket has joined
   const joinedSessions = new Map(); // parishId → liveId
@@ -202,10 +218,18 @@ function handleConnection(io, socket) {
       } catch (lookupErr) { /* pas grave si echec, l'admin restera anonyme */ }
 
       // Atomic viewer count increment
+      if (socket.isAuthenticated) {
+        if (!roster.has(room)) roster.set(room, new Map());
+        roster.get(room).set(socket.id, { userId: socket.user.userId, nom: nomAffichage(socket.user) });
+        io.to('admin:' + liveId).emit(EVENTS.ROSTER_UPDATE, {
+          liveId,
+          roster: Array.from(roster.get(room).values()),
+        });
+      }
+
       const updatedSession = await liveService.viewerJoined(liveId);
 
       if (updatedSession) {
-        // Broadcast updated count to entire room — no personal data included
         io.to(room).emit(EVENTS.LIVE_VIEWERS, {
           liveId,
           count: updatedSession.currentViewerCount,
@@ -351,10 +375,41 @@ function handleConnection(io, socket) {
     }
   });
 
+  // --- Invitation a monter en direct ---
+  socket.on(EVENTS.INVITE_SEND, ({ parishId, liveId, targetUserId }) => {
+    if (!socket.isAuthenticated) return;
+    if (!parishId || !/^[a-f0-9]{24}$/i.test(String(parishId))) return;
+    const room = parishRoom(parishId);
+    const map = roster.get(room);
+    if (!map) return;
+    for (const [sockId, info] of map.entries()) {
+      if (String(info.userId) === String(targetUserId)) {
+        io.to(sockId).emit(EVENTS.INVITE_RECEIVED, { liveId, parishId });
+        break;
+      }
+    }
+  });
+
+  socket.on(EVENTS.INVITE_ACCEPT, ({ parishId, liveId }) => {
+    if (!socket.isAuthenticated) return;
+    if (!liveId) return;
+    guestRegistry.approve(String(liveId), socket.user.userId);
+    const room = parishRoom(parishId);
+    io.to(room).emit(EVENTS.GUEST_JOINED, {
+      liveId,
+      userId: socket.user.userId,
+      nom: nomAffichage(socket.user),
+    });
+  });
+
   socket.on('disconnect', async () => {
     // Leave all joined sessions and decrement viewer counts
     for (const [parishId] of joinedSessions.entries()) {
       await handleLeave(io, socket, parishId, joinedSessions);
+      const room = parishRoom(parishId);
+      if (roster.has(room)) {
+        roster.get(room).delete(socket.id);
+      }
     }
     reactionLimiter.remove(socket.id);
   });

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Room, Track } from 'livekit-client';
+import { Room, Track, RoomEvent } from 'livekit-client';
 import { io } from 'socket.io-client';
 
 const OR      = '#C8A84B';
@@ -33,6 +33,10 @@ export default function AdminLive() {
   const [demarrage, setDemarrage] = useState(false);
   const [resume, setResume] = useState(null);
   const [parishLogoUrl, setParishLogoUrl] = useState(null);
+  const [rosterListe, setRosterListe] = useState([]);
+  const [showInviter, setShowInviter] = useState(false);
+  const [invitesEnvoyes, setInvitesEnvoyes] = useState([]);
+  const [guestConnecte, setGuestConnecte] = useState(null);
 
   const [viewerCountReel, setViewerCountReel] = useState(0);
   const [likeTotal, setLikeTotal] = useState(0);
@@ -51,6 +55,7 @@ export default function AdminLive() {
   const rafRef = useRef(null);
   const cameraStreamRef = useRef(null);
   const videoPubRef = useRef(null);
+  const guestVideoRef = useRef(null);
   const parishLogoImgRef = useRef(null);
   const cameraOnRef = useRef(true);
   const audioCtxRef = useRef(null);
@@ -108,7 +113,7 @@ export default function AdminLive() {
         }
 
         if (parishLogoImgRef.current && parishLogoImgRef.current.complete && parishLogoImgRef.current.naturalWidth > 0) {
-          const taille = rayonBase * 1.6;
+          const taille = rayonBase * 2.4;
           ctx.save();
           ctx.beginPath();
           ctx.arc(cx, cy, rayonBase, 0, Math.PI * 2);
@@ -318,6 +323,22 @@ export default function AdminLive() {
         setMessagesChat(function(prev) { return prev.slice(-30).concat([{ id: 'g-' + Date.now() + Math.random(), type: 'gift', nom: data.expediteur, cadeau: data.cadeau, emoji: data.emoji }]); });
       }
     });
+    socket.on('live:roster', function(data) {
+      if (data.liveId === sessionId) setRosterListe(data.roster || []);
+    });
+    socket.on('live:guest:joined', function(data) {
+      if (data.liveId === sessionId) {
+        setGuestConnecte({ nom: data.nom });
+        setMessagesChat(function(prev) { return prev.slice(-30).concat([{ id: 'j-' + Date.now(), type: 'gift', nom: data.nom, cadeau: 'a rejoint le direct', emoji: '' }]); });
+      }
+    });
+  }
+
+  function inviterFidele(targetUserId) {
+    recupererParishId().then(function(parishId) {
+      socketRef.current.emit('live:invite:send', { parishId: parishId, liveId: liveIdRef.current, targetUserId: targetUserId });
+    });
+    setInvitesEnvoyes(function(prev) { return prev.concat([targetUserId]); });
   }
 
   function deconnecterSocket() {
@@ -345,6 +366,11 @@ export default function AdminLive() {
     const dataToken = await resToken.json();
 
     const room = new Room();
+    room.on(RoomEvent.TrackSubscribed, function(track) {
+      if (track.kind === 'video' && guestVideoRef.current) {
+        track.attach(guestVideoRef.current);
+      }
+    });
     await room.connect(dataToken.data.url, dataToken.data.token);
 
     if (!canvasRef.current.captureStream) {
@@ -610,6 +636,9 @@ export default function AdminLive() {
             </div>
 
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <button onClick={function() { setShowInviter(true); }} style={{ width: 34, height: 34, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', border: '1.5px solid rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                <i className="ti ti-users" style={{ color: '#fff', fontSize: 15 }} />
+              </button>
               <button onClick={partagerLive} style={{ width: 34, height: 34, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', border: '1.5px solid rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
                 <i className="ti ti-share" style={{ color: '#fff', fontSize: 15 }} />
               </button>
@@ -669,6 +698,37 @@ export default function AdminLive() {
             </button>
           </div>
         </>
+      )}
+
+      {guestConnecte && (
+        <div style={{ position: 'absolute', right: 8, bottom: 100, width: 70, height: 96, borderRadius: 12, overflow: 'hidden', border: '2px solid ' + OR, zIndex: 6, background: '#000' }}>
+          <video ref={guestVideoRef} autoPlay playsInline style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,0.6)', padding: '2px 4px' }}>
+            <span style={{ color: '#fff', fontSize: 6 }}>{guestConnecte.nom}</span>
+          </div>
+        </div>
+      )}
+
+      {showInviter && (
+        <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 20 }} onClick={function() { setShowInviter(false); }}>
+          <div onClick={function(e) { e.stopPropagation(); }} style={{ background: IVOIRE, borderRadius: '20px 20px 0 0', padding: 18, width: '100%', maxHeight: '60%', overflowY: 'auto' }}>
+            <div style={{ fontFamily: 'Georgia,serif', fontSize: 14, fontWeight: 700, color: VERT, marginBottom: 12 }}>Inviter a monter en direct</div>
+            {rosterListe.length === 0 && (
+              <div style={{ fontSize: 12, color: '#7A6E5E', textAlign: 'center', padding: 20 }}>Aucun fidele connecte pour le moment</div>
+            )}
+            {rosterListe.map(function(p) {
+              const dejaInvite = invitesEnvoyes.indexOf(p.userId) !== -1;
+              return (
+                <div key={p.userId} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 4px', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+                  <span style={{ fontSize: 12, color: VERT, fontFamily: 'Georgia,serif' }}>{p.nom}</span>
+                  <button onClick={function() { inviterFidele(p.userId); }} disabled={dejaInvite} style={{ padding: '6px 14px', background: dejaInvite ? 'rgba(0,0,0,0.06)' : 'linear-gradient(135deg,#1e2d14,#0a140a)', border: 'none', borderRadius: 16, color: dejaInvite ? '#9A8E7E' : OR, fontSize: 10, fontWeight: 700, cursor: dejaInvite ? 'default' : 'pointer' }}>
+                    {dejaInvite ? 'Invite' : 'Inviter'}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       )}
 
       {confirm && (

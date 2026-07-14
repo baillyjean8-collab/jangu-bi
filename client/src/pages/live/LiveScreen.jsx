@@ -126,6 +126,9 @@ export default function LiveScreen() {
   const [connexionVideo, setConnexionVideo] = useState('chargement');
   const [viewerCountReel, setViewerCountReel] = useState(0);
   const [likeTotal, setLikeTotal] = useState(0);
+  const [inviteRecue, setInviteRecue] = useState(false);
+  const [estInvite, setEstInvite] = useState(false);
+  const monVideoRef = useRef(null);
   const videoRef = useRef(null);
   const roomRef = useRef(null);
   const socketRef = useRef(null);
@@ -191,6 +194,9 @@ export default function LiveScreen() {
                 isJoin: true,
               }]);
             });
+          });
+          socket.on('live:invite:received', function(data) {
+            if (data.liveId === id) setInviteRecue(true);
           });
           socket.on('live:ended', function(data) {
             if (data.liveId === id) afficherBanniere('Le direct est termine', 4000);
@@ -330,6 +336,38 @@ export default function LiveScreen() {
     if (socketRef.current && sessionReelle && sessionReelle.parishId) {
       socketRef.current.emit('gift:send', { parishId: sessionReelle.parishId._id, liveId: id, emoji: emoji, nom: nom });
     }
+  }
+
+  async function accepterInvitation() {
+    setInviteRecue(false);
+    if (socketRef.current && sessionReelle && sessionReelle.parishId) {
+      socketRef.current.emit('live:invite:accept', { parishId: sessionReelle.parishId._id, liveId: id });
+    }
+    try {
+      if (roomRef.current) { roomRef.current.disconnect(); roomRef.current = null; }
+      const { liveApi } = await import('../../services/api');
+      const dataToken = await liveApi.getToken(id);
+      const room = new Room();
+      room.on(RoomEvent.TrackSubscribed, function(track) {
+        if (track.kind === 'video' && videoRef.current) track.attach(videoRef.current);
+      });
+      await room.connect(dataToken.data.url, dataToken.data.token);
+      room.remoteParticipants.forEach(function(participant) {
+        participant.videoTrackPublications.forEach(function(pub) {
+          if (pub.track && videoRef.current) pub.track.attach(videoRef.current);
+        });
+      });
+      await room.localParticipant.setCameraEnabled(true);
+      await room.localParticipant.setMicrophoneEnabled(true);
+      const camPub = room.localParticipant.videoTrackPublications.values().next().value;
+      if (camPub && camPub.track && monVideoRef.current) camPub.track.attach(monVideoRef.current);
+      roomRef.current = room;
+      setEstInvite(true);
+    } catch (e) { console.log('Accepter invitation:', e.message); }
+  }
+
+  function refuserInvitation() {
+    setInviteRecue(false);
   }
 
   // ── Commentaire ────────────────────────────────────────────────────────────
@@ -637,6 +675,27 @@ export default function LiveScreen() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+    <div style={{ position: 'absolute', bottom: 100, right: 8, width: 70, height: 96, borderRadius: 12, overflow: 'hidden', border: '2px solid ' + OR, zIndex: 30, background: '#000', display: estInvite ? 'block' : 'none' }}>
+        <video ref={monVideoRef} autoPlay muted playsInline style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,0.6)', padding: '2px 4px' }}>
+          <span style={{ color: '#fff', fontSize: 6 }}>Vous</span>
+        </div>
+      </div>
+
+      {inviteRecue && (
+        <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 40, padding: 24 }}>
+          <div style={{ background: '#0C0A06', border: '1px solid rgba(200,168,75,0.3)', borderRadius: 20, padding: 24, width: '100%', maxWidth: 300, textAlign: 'center' }}>
+            <i className="ti ti-users" style={{ fontSize: 28, color: OR }} />
+            <div style={{ color: '#fff', fontSize: 13, fontWeight: 700, marginTop: 10, marginBottom: 4 }}>Vous etes invite</div>
+            <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 11, marginBottom: 18 }}>L'administrateur vous invite a monter en direct avec lui</div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button onClick={refuserInvitation} style={{ flex: 1, padding: 11, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 14, color: 'rgba(255,255,255,0.7)', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>Refuser</button>
+              <button onClick={accepterInvitation} style={{ flex: 1, padding: 11, background: 'linear-gradient(135deg,#C8A84B,#8B6020)', border: 'none', borderRadius: 14, color: '#1e2d14', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>Accepter</button>
+            </div>
+          </div>
         </div>
       )}
 
