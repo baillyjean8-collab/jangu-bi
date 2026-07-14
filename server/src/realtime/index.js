@@ -223,7 +223,9 @@ function handleConnection(io, socket) {
         roster.get(room).set(socket.id, { userId: socket.user.userId, nom: nomAffichage(socket.user) });
         io.to('admin:' + liveId).emit(EVENTS.ROSTER_UPDATE, {
           liveId,
-          roster: Array.from(roster.get(room).values()),
+          roster: Array.from(roster.get(room).values()).filter(function(p) {
+            return !session || String(p.userId) !== String(session.startedBy);
+          }),
         });
       }
 
