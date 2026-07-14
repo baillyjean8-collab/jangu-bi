@@ -475,40 +475,42 @@ export default function AdminLive() {
 
       {etat === 'direct' && (
         <>
-          <div style={{ position: 'absolute', top: 8, left: 8, right: 8, display: 'flex', alignItems: 'center', gap: 6, zIndex: 5 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'rgba(0,0,0,0.4)', borderRadius: 20, padding: '3px 7px 3px 3px', flex: 1, minWidth: 0 }}>
-              <div style={{ width: 20, height: 20, borderRadius: '50%', background: VERT, border: '1.5px solid ' + OR, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 8, color: OR, fontWeight: 700 }}>
-                <i className="ti ti-microphone" style={{ fontSize: 10 }} />
+          <div style={{ position: 'absolute', top: 10, left: 10, right: 10, background: 'rgba(0,0,0,0.55)', borderRadius: 22, padding: '12px 12px 14px', zIndex: 5 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+              <div style={{ width: 34, height: 34, borderRadius: '50%', background: VERT, border: '2px solid ' + OR, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <i className="ti ti-user" style={{ fontSize: 16, color: OR }} />
               </div>
-              <span style={{ color: '#fff', fontSize: 9, fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Vous</span>
-              <span style={{ background: '#e53935', borderRadius: 5, padding: '1px 5px', color: '#fff', fontSize: 7, fontWeight: 700, marginLeft: 2 }}>{formatDuree(duree)}</span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ color: '#fff', fontSize: 13, fontWeight: 700 }}>Vous</div>
+                <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10 }}>En direct - {formatDuree(duree)}</div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'rgba(200,168,75,0.18)', border: '1px solid rgba(200,168,75,0.4)', borderRadius: 20, padding: '5px 10px', flexShrink: 0 }}>
+                <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#e53935' }} />
+                <span style={{ color: IVOIRE, fontSize: 11, fontWeight: 700 }}>{viewerCountReel}</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 3, background: 'rgba(255,255,255,0.1)', borderRadius: 20, padding: '5px 9px', flexShrink: 0 }}>
+                <i className="ti ti-heart" style={{ fontSize: 12, color: '#ef9a9a' }} />
+                <span style={{ color: IVOIRE, fontSize: 11, fontWeight: 700 }}>{likeTotal}</span>
+              </div>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 3, background: 'rgba(200,168,75,0.18)', border: '1px solid rgba(200,168,75,0.4)', borderRadius: 20, padding: '3px 8px', flexShrink: 0 }}>
-              <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#e53935' }} />
-              <span style={{ color: IVOIRE, fontSize: 8, fontWeight: 700 }}>{viewerCountReel}</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 2, background: 'rgba(255,255,255,0.08)', borderRadius: 20, padding: '3px 7px', flexShrink: 0 }}>
-              <i className="ti ti-heart" style={{ fontSize: 9, color: '#ef9a9a' }} />
-              <span style={{ color: IVOIRE, fontSize: 8, fontWeight: 700 }}>{likeTotal}</span>
-            </div>
-          </div>
 
-          <div style={{ position: 'absolute', top: 40, left: 8, right: 8, display: 'flex', justifyContent: 'flex-end', gap: 6, zIndex: 5 }}>
-            <button onClick={toggleMic} style={{ width: 27, height: 27, borderRadius: '50%', background: micOn ? 'rgba(129,199,132,0.15)' : 'rgba(229,57,53,0.15)', border: '1.5px solid ' + (micOn ? 'rgba(129,199,132,0.3)' : 'rgba(229,57,53,0.3)'), display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-              <i className={micOn ? 'ti ti-microphone' : 'ti ti-microphone-off'} style={{ color: micOn ? '#81C784' : '#e57373', fontSize: 12 }} />
-            </button>
-            <button onClick={toggleCamera} style={{ width: 27, height: 27, borderRadius: '50%', background: cameraOn ? 'rgba(129,199,132,0.15)' : 'rgba(229,57,53,0.15)', border: '1.5px solid ' + (cameraOn ? 'rgba(129,199,132,0.3)' : 'rgba(229,57,53,0.3)'), display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-              <i className={cameraOn ? 'ti ti-video' : 'ti ti-video-off'} style={{ color: cameraOn ? '#81C784' : '#e57373', fontSize: 12 }} />
-            </button>
-            <button onClick={retournerCamera} style={{ width: 27, height: 27, borderRadius: '50%', background: 'rgba(255,255,255,0.08)', border: '1.5px solid rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-              <i className="ti ti-camera-rotate" style={{ color: '#fff', fontSize: 12 }} />
-            </button>
-            <button onClick={mettreEnPause} style={{ width: 27, height: 27, borderRadius: '50%', background: 'rgba(200,168,75,0.2)', border: '1.5px solid rgba(200,168,75,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-              <i className="ti ti-player-pause" style={{ color: OR, fontSize: 12 }} />
-            </button>
-            <button onClick={terminerLive} style={{ width: 27, height: 27, borderRadius: '50%', background: '#e53935', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-              <i className="ti ti-power" style={{ color: '#fff', fontSize: 12 }} />
-            </button>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
+              <button onClick={toggleMic} style={{ width: 36, height: 36, borderRadius: '50%', background: micOn ? 'rgba(129,199,132,0.18)' : 'rgba(229,57,53,0.18)', border: '1.5px solid ' + (micOn ? 'rgba(129,199,132,0.4)' : 'rgba(229,57,53,0.4)'), display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                <i className={micOn ? 'ti ti-microphone' : 'ti ti-microphone-off'} style={{ color: micOn ? '#81C784' : '#e57373', fontSize: 16 }} />
+              </button>
+              <button onClick={toggleCamera} style={{ width: 36, height: 36, borderRadius: '50%', background: cameraOn ? 'rgba(129,199,132,0.18)' : 'rgba(229,57,53,0.18)', border: '1.5px solid ' + (cameraOn ? 'rgba(129,199,132,0.4)' : 'rgba(229,57,53,0.4)'), display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                <i className={cameraOn ? 'ti ti-video' : 'ti ti-video-off'} style={{ color: cameraOn ? '#81C784' : '#e57373', fontSize: 16 }} />
+              </button>
+              <button onClick={retournerCamera} style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', border: '1.5px solid rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                <i className="ti ti-camera-rotate" style={{ color: '#fff', fontSize: 16 }} />
+              </button>
+              <button onClick={mettreEnPause} style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(200,168,75,0.22)', border: '1.5px solid rgba(200,168,75,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                <i className="ti ti-player-pause" style={{ color: OR, fontSize: 16 }} />
+              </button>
+              <button onClick={terminerLive} style={{ width: 36, height: 36, borderRadius: '50%', background: '#e53935', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                <i className="ti ti-power" style={{ color: '#fff', fontSize: 16 }} />
+              </button>
+            </div>
           </div>
 
           <div style={{ position: 'absolute', left: 8, right: 8, bottom: 46, maxHeight: 220, overflowY: 'auto', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', gap: 5, zIndex: 4 }}>
