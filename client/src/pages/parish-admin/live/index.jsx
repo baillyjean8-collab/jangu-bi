@@ -1,80 +1,56 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Room, RoomEvent } from 'livekit-client';
+import { Room, Track } from 'livekit-client';
 import { io } from 'socket.io-client';
-import AdminShell from '../AdminShell';
 
 const OR      = '#C8A84B';
 const VERT    = '#1e2d14';
 const IVOIRE  = '#F5F0E8';
-const BOGOLAN_DARK = 'repeating-linear-gradient(0deg,transparent,transparent 8px,rgba(200,168,75,0.07) 8px,rgba(200,168,75,0.07) 9px),repeating-linear-gradient(90deg,transparent,transparent 8px,rgba(200,168,75,0.07) 8px,rgba(200,168,75,0.07) 9px)';
+
+const FILTRES_CSS = {
+  aucun: 'none',
+  adoucir: 'brightness(1.06) contrast(0.95) saturate(1.05) blur(0.4px)',
+  lumiere: 'brightness(1.28)',
+  contraste: 'contrast(1.3)',
+};
 
 export default function AdminLive() {
   const navigate = useNavigate();
   const token = localStorage.getItem('jb_admin_token');
   const BASE = import.meta.env.VITE_API_URL || '/api';
 
-  const [etat, setEtat]         = useState('verification'); // verification | config | direct | pause
-  const [titre, setTitre]       = useState('');
+  const [etat, setEtat] = useState('verification'); // verification | config | direct | pause
+  const [titre, setTitre] = useState('');
   const [cameraOn, setCameraOn] = useState(true);
-  const [confirm, setConfirm]   = useState(false);
-  const [erreur, setErreur]     = useState('');
-  const [liveId, setLiveId]     = useState(null);
-  const [duree, setDuree]       = useState(0);
+  const [micOn, setMicOn] = useState(true);
+  const [bruitReduction, setBruitReduction] = useState(true);
+  const [filtreActif, setFiltreActif] = useState('aucun');
+  const [confirm, setConfirm] = useState(false);
+  const [erreur, setErreur] = useState('');
+  const [liveId, setLiveId] = useState(null);
+  const [duree, setDuree] = useState(0);
   const [demarrage, setDemarrage] = useState(false);
+  const [resume, setResume] = useState(null);
 
   const [viewerCountReel, setViewerCountReel] = useState(0);
   const [likeTotal, setLikeTotal] = useState(0);
   const [messagesChat, setMessagesChat] = useState([]);
+  const [texteMessage, setTexteMessage] = useState('');
 
   const roomRef = useRef(null);
-  const videoRef = useRef(null);
+  const hiddenVideoRef = useRef(null);
+  const canvasRef = useRef(null);
   const dureeIntervalRef = useRef(null);
   const liveIdRef = useRef(null);
   const enDirectRef = useRef(false);
   const socketRef = useRef(null);
   const facingRef = useRef('user');
-  const [resume, setResume] = useState(null);
+  const filtreActifRef = useRef('aucun');
+  const rafRef = useRef(null);
+  const cameraStreamRef = useRef(null);
+  const videoPubRef = useRef(null);
 
-  function connecterSocket(parishId, sessionId) {
-    if (socketRef.current) return;
-    const apiUrl = import.meta.env.VITE_API_URL || '';
-    const socketUrl = apiUrl ? apiUrl.replace(/\/api\/?$/, '') : window.location.origin;
-    const socket = io(socketUrl, { auth: { token: token } });
-    socketRef.current = socket;
-
-    socket.on('connect', function() {
-      socket.emit('room:join', { parishId: parishId, liveId: sessionId });
-    });
-    socket.on('live:viewerCount', function(data) {
-      if (data.liveId === sessionId) setViewerCountReel(data.count);
-    });
-    socket.on('live:reaction', function(data) {
-      if (data.liveId === sessionId) setLikeTotal(function(c) { return c + 1; });
-    });
-    socket.on('chat:message:admin', function(data) {
-      if (data.liveId === sessionId) {
-        setMessagesChat(function(prev) { return prev.slice(-20).concat([{ id: data.id, type: 'chat', nom: data.nom, texte: data.texte }]); });
-      }
-    });
-    socket.on('live:reaction:admin', function(data) {
-      if (data.liveId === sessionId) {
-        setMessagesChat(function(prev) { return prev.slice(-20).concat([{ id: 'r-' + Date.now() + Math.random(), type: 'reaction', nom: data.nom, reactionType: data.type }]); });
-      }
-    });
-    socket.on('live:gift:admin', function(data) {
-      if (data.liveId === sessionId) {
-        setMessagesChat(function(prev) { return prev.slice(-20).concat([{ id: 'g-' + Date.now() + Math.random(), type: 'gift', nom: data.expediteur, cadeau: data.cadeau, emoji: data.emoji }]); });
-      }
-    });
-  }
-
-  function deconnecterSocket() {
-    if (socketRef.current) { socketRef.current.disconnect(); socketRef.current = null; }
-    setViewerCountReel(0);
-    setLikeTotal(0);
-    setMessagesChat([]);
-  }
+  useEffect(function() { filtreActifRef.current = filtreActif; }, [filtreActif]);
 
   async function recupererParishId() {
     const res = await fetch(BASE + '/users/me', { headers: { Authorization: 'Bearer ' + token } });
@@ -83,7 +59,66 @@ export default function AdminLive() {
     return u && u.parishId && (u.parishId._id || u.parishId);
   }
 
-  // Verification au chargement : un direct est-il deja actif (ou en pause) pour cette paroisse ?
+  // ---- Apercu camera (allume avant meme de lancer le direct) ----
+  function dessinerBoucle() {
+    if (hiddenVideoRef.current && canvasRef.current && hiddenVideoRef.current.readyState >= 2) {
+      const ctx = canvasRef.current.getContext('2d');
+      ctx.filter = FILTRES_CSS[filtreActifRef.current] || 'none';
+      ctx.drawImage(hiddenVideoRef.current, 0, 0, canvasRef.current.width, canvasRef.current.height);
+    }
+    rafRef.current = requestAnimationFrame(dessinerBoucle);
+  }
+
+  async function demarrerCameraPreview() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: facingRef.current }, audio: false });
+      cameraStreamRef.current = stream;
+      if (hiddenVideoRef.current) {
+        hiddenVideoRef.current.srcObject = stream;
+        await hiddenVideoRef.current.play();
+      }
+      const track = stream.getVideoTracks()[0];
+      const settings = track.getSettings ? track.getSettings() : {};
+      if (canvasRef.current) {
+        canvasRef.current.width = settings.width || 720;
+        canvasRef.current.height = settings.height || 1280;
+      }
+      if (!rafRef.current) dessinerBoucle();
+    } catch (e) {
+      console.log('Apercu camera:', e.message);
+      setErreur('Impossible d acceder a la camera. Verifiez les autorisations du navigateur.');
+    }
+  }
+
+  function arreterCameraPreview() {
+    if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = null; }
+    if (cameraStreamRef.current) {
+      cameraStreamRef.current.getTracks().forEach(function(t) { t.stop(); });
+      cameraStreamRef.current = null;
+    }
+  }
+
+  async function retournerCamera() {
+    facingRef.current = facingRef.current === 'user' ? 'environment' : 'user';
+    try {
+      if (cameraStreamRef.current) {
+        cameraStreamRef.current.getTracks().forEach(function(t) { t.stop(); });
+      }
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: facingRef.current }, audio: false });
+      cameraStreamRef.current = stream;
+      if (hiddenVideoRef.current) {
+        hiddenVideoRef.current.srcObject = stream;
+        await hiddenVideoRef.current.play();
+      }
+    } catch (e) { console.log('Retourner camera:', e.message); }
+  }
+
+  useEffect(function() {
+    demarrerCameraPreview();
+    return function() { arreterCameraPreview(); };
+  }, []);
+
+  // ---- Verification au chargement : direct deja actif ou en pause ? ----
   useEffect(function() {
     async function verifier() {
       try {
@@ -106,7 +141,7 @@ export default function AdminLive() {
         if (session.isPaused) {
           setEtat('pause');
         } else {
-          await reconnecter(session._id);
+          await publierFlux(session._id);
           setEtat('direct');
         }
       } catch (e) {
@@ -117,8 +152,7 @@ export default function AdminLive() {
     verifier();
   }, []);
 
-  // Pause automatique si l'onglet passe en arriere-plan ou si la page se ferme,
-  // pendant qu'un direct est en cours (pas deja en pause).
+  // ---- Pause automatique si on quitte la page / change d'onglet ----
   useEffect(function() {
     function gererVisibilite() {
       if (document.hidden && enDirectRef.current && liveIdRef.current) {
@@ -148,18 +182,81 @@ export default function AdminLive() {
     };
   }, []);
 
-  async function reconnecter(sessionId) {
+  // ---- Socket.io (spectateurs, reactions, chat identifie) ----
+  function connecterSocket(parishId, sessionId) {
+    if (socketRef.current) return;
+    const apiUrl = import.meta.env.VITE_API_URL || '';
+    const socketUrl = apiUrl ? apiUrl.replace(/\/api\/?$/, '') : window.location.origin;
+    const socket = io(socketUrl, { auth: { token: token } });
+    socketRef.current = socket;
+
+    socket.on('connect', function() {
+      socket.emit('room:join', { parishId: parishId, liveId: sessionId });
+    });
+    socket.on('live:viewerCount', function(data) {
+      if (data.liveId === sessionId) setViewerCountReel(data.count);
+    });
+    socket.on('live:reaction', function(data) {
+      if (data.liveId === sessionId) setLikeTotal(function(c) { return c + 1; });
+    });
+    socket.on('chat:message:admin', function(data) {
+      if (data.liveId === sessionId) {
+        setMessagesChat(function(prev) { return prev.slice(-30).concat([{ id: data.id, type: 'chat', nom: data.nom, texte: data.texte }]); });
+      }
+    });
+    socket.on('live:reaction:admin', function(data) {
+      if (data.liveId === sessionId) {
+        setMessagesChat(function(prev) { return prev.slice(-30).concat([{ id: 'r-' + Date.now() + Math.random(), type: 'reaction', nom: data.nom, reactionType: data.type }]); });
+      }
+    });
+    socket.on('live:gift:admin', function(data) {
+      if (data.liveId === sessionId) {
+        setMessagesChat(function(prev) { return prev.slice(-30).concat([{ id: 'g-' + Date.now() + Math.random(), type: 'gift', nom: data.expediteur, cadeau: data.cadeau, emoji: data.emoji }]); });
+      }
+    });
+  }
+
+  function deconnecterSocket() {
+    if (socketRef.current) { socketRef.current.disconnect(); socketRef.current = null; }
+    setViewerCountReel(0);
+    setLikeTotal(0);
+    setMessagesChat([]);
+  }
+
+  function envoyerMessageAdmin() {
+    const txt = texteMessage.trim();
+    if (!txt || !socketRef.current || !liveIdRef.current) return;
+    recupererParishId().then(function(parishId) {
+      socketRef.current.emit('chat:send', { parishId: parishId, liveId: liveIdRef.current, texte: txt });
+    });
+    setTexteMessage('');
+  }
+
+  // ---- Publication du flux (canvas avec effets) vers LiveKit ----
+  async function publierFlux(sessionId) {
     const resToken = await fetch(BASE + '/live/' + sessionId + '/token', {
       method: 'POST',
       headers: { Authorization: 'Bearer ' + token },
     });
     const dataToken = await resToken.json();
+
     const room = new Room();
     await room.connect(dataToken.data.url, dataToken.data.token);
-    await room.localParticipant.setCameraEnabled(true);
-    await room.localParticipant.setMicrophoneEnabled(true);
-    const camPub = room.localParticipant.videoTrackPublications.values().next().value;
-    if (camPub && camPub.track && videoRef.current) camPub.track.attach(videoRef.current);
+
+    if (!canvasRef.current.captureStream) {
+      throw new Error('captureStream non supporte par ce navigateur');
+    }
+    const canvasStream = canvasRef.current.captureStream(30);
+    const videoTrack = canvasStream.getVideoTracks()[0];
+    const pub = await room.localParticipant.publishTrack(videoTrack, { name: 'camera', source: Track.Source.Camera });
+    videoPubRef.current = pub;
+
+    await room.localParticipant.setMicrophoneEnabled(true, {
+      noiseSuppression: bruitReduction,
+      echoCancellation: true,
+      autoGainControl: true,
+    });
+
     roomRef.current = room;
     enDirectRef.current = true;
     dureeIntervalRef.current = setInterval(function() { setDuree(function(d) { return d + 1; }); }, 1000);
@@ -181,7 +278,7 @@ export default function AdminLive() {
       if (!resStart.ok) { setErreur((dataStart && dataStart.message) || 'Impossible de demarrer le live.'); setDemarrage(false); return; }
       const session = dataStart.data.session;
 
-      await reconnecter(session._id);
+      await publierFlux(session._id);
       connecterSocket(parishId, session._id);
       setLiveId(session._id);
       liveIdRef.current = session._id;
@@ -190,7 +287,7 @@ export default function AdminLive() {
       setDuree(0);
     } catch (e) {
       console.log('Lancer live:', e.message);
-      setErreur('Une erreur est survenue. Verifiez l autorisation de la camera.');
+      setErreur('Une erreur est survenue. Verifiez l autorisation de la camera et du micro.');
       setDemarrage(false);
     }
   }
@@ -205,14 +302,12 @@ export default function AdminLive() {
     setEtat('pause');
   }
 
-  async function mettreEnPause() {
-    await mettreEnPauseAutomatique();
-  }
+  async function mettreEnPause() { await mettreEnPauseAutomatique(); }
 
   async function reprendreLive() {
     try {
       await fetch(BASE + '/live/' + liveId + '/resume', { method: 'POST', headers: { Authorization: 'Bearer ' + token } });
-      await reconnecter(liveId);
+      await publierFlux(liveId);
       setEtat('direct');
     } catch (e) {
       console.log('Reprendre live:', e.message);
@@ -242,26 +337,36 @@ export default function AdminLive() {
     }
   }
 
-  async function retournerCamera() {
-    if (!roomRef.current) return;
-    facingRef.current = facingRef.current === 'user' ? 'environment' : 'user';
-    try {
-      const camPub = roomRef.current.localParticipant.videoTrackPublications.values().next().value;
-      if (camPub && camPub.track && camPub.track.restartTrack) {
-        await camPub.track.restartTrack({ facingMode: facingRef.current });
-      }
-    } catch (e) { console.log('Retourner camera:', e.message); }
-  }
-
-  async function toggleCamera() {
+  function toggleCamera() {
     const nouvelEtat = !cameraOn;
     setCameraOn(nouvelEtat);
+    if (videoPubRef.current) {
+      if (nouvelEtat) videoPubRef.current.unmute(); else videoPubRef.current.mute();
+    }
+  }
+
+  async function toggleMic() {
+    const nouvelEtat = !micOn;
+    setMicOn(nouvelEtat);
     if (roomRef.current) {
-      await roomRef.current.localParticipant.setCameraEnabled(nouvelEtat);
-      if (nouvelEtat) {
-        const camPub = roomRef.current.localParticipant.videoTrackPublications.values().next().value;
-        if (camPub && camPub.track && videoRef.current) camPub.track.attach(videoRef.current);
-      }
+      await roomRef.current.localParticipant.setMicrophoneEnabled(nouvelEtat, {
+        noiseSuppression: bruitReduction,
+        echoCancellation: true,
+        autoGainControl: true,
+      });
+    }
+  }
+
+  async function toggleBruitReduction() {
+    const nouvelEtat = !bruitReduction;
+    setBruitReduction(nouvelEtat);
+    if (roomRef.current && micOn) {
+      await roomRef.current.localParticipant.setMicrophoneEnabled(false);
+      await roomRef.current.localParticipant.setMicrophoneEnabled(true, {
+        noiseSuppression: nouvelEtat,
+        echoCancellation: true,
+        autoGainControl: true,
+      });
     }
   }
 
@@ -271,154 +376,201 @@ export default function AdminLive() {
     return String(m).padStart(2, '0') + ':' + String(sec).padStart(2, '0');
   }
 
+  const FILTRES = [
+    { id: 'aucun', label: 'Aucun', icon: 'ti-ban' },
+    { id: 'adoucir', label: 'Adoucir', icon: 'ti-sparkles' },
+    { id: 'lumiere', label: 'Lumiere', icon: 'ti-sun' },
+    { id: 'contraste', label: 'Contraste', icon: 'ti-contrast' },
+  ];
+
   return (
-    <AdminShell>
-      <div style={{ background: '#0C0A06', backgroundImage: BOGOLAN_DARK, padding: '44px 14px 16px', borderRadius: '0 0 24px 24px', marginBottom: 14 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <button onClick={function() { navigate(-1); }} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-            <i className="ti ti-arrow-left" style={{ fontSize: 20, color: OR }} />
-          </button>
-          <div style={{ fontFamily: 'Georgia,serif', fontSize: 18, fontWeight: 900, color: IVOIRE }}>Gestion Live</div>
-          {etat === 'direct' && <div style={{ background: '#e53935', borderRadius: 6, padding: '2px 8px', fontSize: 9, fontWeight: 700, color: 'white' }}>EN DIRECT - {formatDuree(duree)}</div>}
-          {etat === 'pause' && <div style={{ background: '#8B6020', borderRadius: 6, padding: '2px 8px', fontSize: 9, fontWeight: 700, color: 'white' }}>EN PAUSE</div>}
+    <div style={{ width: '100%', maxWidth: 430, margin: '0 auto', height: '100dvh', background: '#050505', position: 'relative', overflow: 'hidden', fontFamily: 'Georgia,serif' }}>
+
+      <video ref={hiddenVideoRef} muted playsInline style={{ display: 'none' }} />
+      <canvas ref={canvasRef} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', transform: facingRef.current === 'user' ? 'scaleX(-1)' : 'none' }} />
+
+      {etat === 'verification' && (
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.6)', fontSize: 13, zIndex: 5 }}>
+          Verification...
         </div>
-      </div>
+      )}
 
-      <div style={{ padding: '0 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+      {erreur && (
+        <div style={{ position: 'absolute', top: 60, left: 12, right: 12, background: 'rgba(180,20,20,0.85)', borderRadius: 10, padding: '8px 12px', color: '#fff', fontSize: 11, zIndex: 10 }}>{erreur}</div>
+      )}
 
-        {etat === 'verification' && (
-          <div style={{ textAlign: 'center', padding: 30, color: '#9A8E7E', fontFamily: 'Georgia,serif' }}>Verification...</div>
-        )}
+      {etat === 'config' && (
+        <>
+          <button onClick={function() { navigate(-1); }} style={{ position: 'absolute', top: 10, left: 10, width: 28, height: 28, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 5 }}>
+            <i className="ti ti-x" style={{ color: '#fff', fontSize: 14 }} />
+          </button>
 
-        {erreur && (
-          <div style={{ background: 'rgba(229,57,53,0.08)', border: '1px solid rgba(229,57,53,0.2)', borderRadius: 10, padding: 10, fontSize: 11, color: '#e53935' }}>{erreur}</div>
-        )}
-
-        {etat === 'config' && (
-          <>
-            <div style={{ background: 'white', borderRadius: 16, padding: 14, border: '1px solid rgba(0,0,0,0.06)' }}>
-              <div style={{ fontFamily: 'Georgia,serif', fontSize: 11, fontWeight: 700, color: VERT, marginBottom: 12 }}>Configuration du live</div>
-              <div style={{ marginBottom: 12 }}>
-                <div style={{ fontSize: 9, color: '#7A6E5E', marginBottom: 4 }}>Titre du live</div>
-                <input
-                  value={titre}
-                  onChange={function(e) { setTitre(e.target.value); }}
-                  placeholder="Ex: Messe dominicale en direct..."
-                  style={{ width: '100%', border: '1.5px solid rgba(200,168,75,0.2)', borderRadius: 10, padding: '9px 12px', fontSize: 11, color: VERT, fontFamily: 'Georgia,serif', outline: 'none', boxSizing: 'border-box', background: '#FAFAF8' }}
-                />
-              </div>
-            </div>
-
-            <div style={{ background: 'rgba(200,168,75,0.06)', border: '1px solid rgba(200,168,75,0.15)', borderRadius: 12, padding: '10px 14px' }}>
-              <div style={{ fontSize: 10, color: '#8B6020', lineHeight: 1.6, fontFamily: 'Georgia,serif' }}>
-                Une fois le live lance, votre camera et votre micro seront actives et vos fideles pourront regarder en direct. Si vous quittez la page, le direct se met automatiquement en pause.
-              </div>
-            </div>
-
-            <button
-              onClick={function() { if (titre) setConfirm(true); }}
-              disabled={demarrage}
-              style={{ width: '100%', padding: 14, background: titre ? 'linear-gradient(135deg,#7f0000,#3a0000)' : 'rgba(0,0,0,0.08)', border: 'none', borderRadius: 14, color: titre ? '#ffcdd2' : '#9A8E7E', fontWeight: 700, fontSize: 14, fontFamily: 'Georgia,serif', cursor: titre ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
-            >
-              <i className="ti ti-broadcast" style={{ fontSize: 18 }} />
-              {demarrage ? 'Demarrage...' : 'Lancer le live'}
-            </button>
-          </>
-        )}
-
-        {etat === 'pause' && (
-          <>
-            <div style={{ background: 'linear-gradient(135deg,#1e2d14,#0a140a)', borderRadius: 16, padding: 24, textAlign: 'center' }}>
-              <i className="ti ti-player-pause" style={{ fontSize: 32, color: OR, marginBottom: 10, display: 'block' }} />
-              <div style={{ fontFamily: 'Georgia,serif', fontSize: 14, fontWeight: 700, color: IVOIRE, marginBottom: 4 }}>"{titre}"</div>
-              <div style={{ fontSize: 11, color: 'rgba(245,239,228,0.6)' }}>Direct en pause - vos fideles voient un message d'attente</div>
-            </div>
-
-            <button onClick={reprendreLive} style={{ width: '100%', padding: 14, background: 'linear-gradient(135deg,#2E5C3E,#0D3B2E)', border: 'none', borderRadius: 14, color: '#fff', fontWeight: 700, fontSize: 14, fontFamily: 'Georgia,serif', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-              <i className="ti ti-player-play" style={{ fontSize: 18 }} />
-              Reprendre le direct
-            </button>
-
-            <button onClick={terminerLive} style={{ width: '100%', padding: 13, background: 'rgba(229,57,53,0.08)', border: '1.5px solid rgba(229,57,53,0.3)', borderRadius: 14, color: '#e53935', fontWeight: 700, fontSize: 13, fontFamily: 'Georgia,serif', cursor: 'pointer' }}>
-              Terminer le direct
-            </button>
-          </>
-        )}
-
-        {etat === 'direct' && (
-          <>
-            <div style={{ background: '#000', borderRadius: 16, overflow: 'hidden', aspectRatio: '9 / 12', position: 'relative' }}>
-              <video ref={videoRef} autoPlay muted playsInline style={{ width: '100%', height: '100%', objectFit: 'cover', display: cameraOn ? 'block' : 'none' }} />
-              {!cameraOn && (
-                <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <i className="ti ti-video-off" style={{ fontSize: 32, color: 'rgba(200,168,75,0.4)' }} />
-                </div>
-              )}
-            </div>
-
-            <div style={{ display: 'flex', gap: 8 }}>
-              <div style={{ flex: 1, background: 'white', borderRadius: 12, padding: '10px 8px', textAlign: 'center', border: '1px solid rgba(0,0,0,0.06)' }}>
-                <div style={{ fontSize: 16, fontWeight: 700, color: VERT }}>{viewerCountReel}</div>
-                <div style={{ fontSize: 8, color: '#7A6E5E' }}>Spectateurs</div>
-              </div>
-              <div style={{ flex: 1, background: 'white', borderRadius: 12, padding: '10px 8px', textAlign: 'center', border: '1px solid rgba(0,0,0,0.06)' }}>
-                <div style={{ fontSize: 16, fontWeight: 700, color: '#e53935' }}>{likeTotal}</div>
-                <div style={{ fontSize: 8, color: '#7A6E5E' }}>Reactions</div>
-              </div>
-            </div>
-
-            <div style={{ background: 'white', borderRadius: 16, padding: 12, border: '1px solid rgba(0,0,0,0.06)', maxHeight: 160, overflowY: 'auto' }}>
-              <div style={{ fontFamily: 'Georgia,serif', fontSize: 11, fontWeight: 700, color: VERT, marginBottom: 8 }}>Commentaires en direct</div>
-              {messagesChat.length === 0 && <div style={{ fontSize: 10, color: '#9A8E7E' }}>Aucun commentaire pour le moment</div>}
-              {messagesChat.map(function(m) {
-                if (m.type === 'reaction') {
-                  return (
-                    <div key={m.id} style={{ fontSize: 10, color: '#7A6E5E', marginBottom: 4, fontStyle: 'italic' }}>
-                      <span style={{ fontWeight: 700, color: OR }}>{m.nom}</span> a envoye une reaction ({m.reactionType})
-                    </div>
-                  );
-                }
-                if (m.type === 'gift') {
-                  return (
-                    <div key={m.id} style={{ fontSize: 10, color: '#8B6020', marginBottom: 4, fontWeight: 700 }}>
-                      {m.emoji} <span style={{ fontWeight: 700 }}>{m.nom}</span> a envoye {m.cadeau}
-                    </div>
-                  );
-                }
+          <div style={{ position: 'absolute', top: 48, left: 10, right: 10, zIndex: 5 }}>
+            <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.5)', marginBottom: 5, letterSpacing: 1 }}>EFFETS</div>
+            <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4 }}>
+              {FILTRES.map(function(f) {
+                const actif = filtreActif === f.id;
                 return (
-                  <div key={m.id} style={{ fontSize: 10, color: VERT, marginBottom: 4 }}>
-                    <span style={{ fontWeight: 700, color: OR }}>{m.nom}</span> {m.texte}
+                  <div key={f.id} onClick={function() { setFiltreActif(f.id); }} style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, cursor: 'pointer' }}>
+                    <div style={{ width: 36, height: 36, borderRadius: '50%', background: actif ? 'rgba(200,168,75,0.9)' : 'rgba(255,255,255,0.12)', border: actif ? '2px solid ' + OR : '1.5px solid rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <i className={'ti ' + f.icon} style={{ color: actif ? VERT : '#fff', fontSize: 15 }} />
+                    </div>
+                    <span style={{ color: actif ? '#fff' : 'rgba(255,255,255,0.55)', fontSize: 7 }}>{f.label}</span>
                   </div>
                 );
               })}
             </div>
+          </div>
 
-            <div style={{ background: 'white', borderRadius: 16, padding: 14, border: '1px solid rgba(0,0,0,0.06)' }}>
-              <div style={{ fontFamily: 'Georgia,serif', fontSize: 11, fontWeight: 700, color: VERT, marginBottom: 10 }}>Controles</div>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <button onClick={toggleCamera} style={{ flex: 1, padding: 10, background: cameraOn ? 'rgba(16,185,129,0.1)' : 'rgba(229,57,53,0.08)', border: cameraOn ? '1px solid rgba(16,185,129,0.3)' : '1px solid rgba(229,57,53,0.2)', borderRadius: 10, fontSize: 11, color: cameraOn ? '#065F46' : '#e53935', cursor: 'pointer', fontFamily: 'Georgia,serif', fontWeight: 700 }}>
-                  <i className={cameraOn ? 'ti ti-video' : 'ti ti-video-off'} style={{ fontSize: 13, verticalAlign: -2 }} /> {cameraOn ? 'Camera activee' : 'Camera desactivee'}
-                </button>
-                <button onClick={retournerCamera} style={{ flex: 1, padding: 10, background: 'rgba(200,168,75,0.1)', border: '1px solid rgba(200,168,75,0.2)', borderRadius: 10, fontSize: 11, color: '#8B6020', cursor: 'pointer', fontFamily: 'Georgia,serif', fontWeight: 700 }}>
-                  <i className="ti ti-camera-rotate" style={{ fontSize: 13, verticalAlign: -2 }} /> Retourner
-                </button>
+          <div style={{ position: 'absolute', bottom: 168, left: 10, right: 10, zIndex: 5 }}>
+            <div style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 10, padding: '8px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ color: '#fff', fontSize: 10 }}><i className="ti ti-microphone-2" style={{ fontSize: 13, verticalAlign: -2, marginRight: 5 }} />Reduction de bruit</span>
+              <div onClick={function() { setBruitReduction(function(v) { return !v; }); }} style={{ width: 32, height: 18, borderRadius: 10, background: bruitReduction ? OR : 'rgba(255,255,255,0.2)', position: 'relative', cursor: 'pointer' }}>
+                <div style={{ position: 'absolute', top: 2, left: bruitReduction ? 16 : 2, width: 14, height: 14, borderRadius: '50%', background: '#fff', transition: 'left .2s' }} />
               </div>
             </div>
+          </div>
 
-            <button onClick={mettreEnPause} style={{ width: '100%', padding: 13, background: 'rgba(200,168,75,0.1)', border: '1.5px solid rgba(200,168,75,0.3)', borderRadius: 14, color: '#8B6020', fontWeight: 700, fontSize: 13, fontFamily: 'Georgia,serif', cursor: 'pointer' }}>
-              <i className="ti ti-player-pause" style={{ fontSize: 14, verticalAlign: -2 }} /> Mettre en pause
-            </button>
+          <div style={{ position: 'absolute', bottom: 126, left: 10, right: 10, zIndex: 5 }}>
+            <input
+              value={titre}
+              onChange={function(e) { setTitre(e.target.value); }}
+              placeholder="Titre du direct..."
+              style={{ width: '100%', background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: 10, padding: '10px 14px', fontSize: 12, color: '#fff', outline: 'none', fontFamily: 'Georgia,serif', boxSizing: 'border-box' }}
+            />
+          </div>
 
-            <button onClick={terminerLive} style={{ width: '100%', padding: 13, background: 'rgba(229,57,53,0.08)', border: '1.5px solid rgba(229,57,53,0.3)', borderRadius: 14, color: '#e53935', fontWeight: 700, fontSize: 13, fontFamily: 'Georgia,serif', cursor: 'pointer' }}>
-              Terminer le live
+          <div style={{ position: 'absolute', bottom: 84, left: 10, right: 10, zIndex: 5 }}>
+            <div style={{ background: 'rgba(200,168,75,0.1)', border: '1px solid rgba(200,168,75,0.25)', borderRadius: 10, padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <i className="ti ti-shield-check" style={{ color: OR, fontSize: 13 }} />
+              <span style={{ color: OR, fontSize: 9 }}>Le direct est modere : propos malsains bloques automatiquement</span>
+            </div>
+          </div>
+
+          <div style={{ position: 'absolute', bottom: 16, left: 10, right: 10, zIndex: 5 }}>
+            <button
+              onClick={function() { if (titre) setConfirm(true); }}
+              disabled={demarrage}
+              style={{ width: '100%', padding: 14, background: titre ? 'linear-gradient(135deg,#7f0000,#3a0000)' : 'rgba(255,255,255,0.1)', border: 'none', borderRadius: 20, color: titre ? '#ffcdd2' : 'rgba(255,255,255,0.4)', fontWeight: 700, fontSize: 13, fontFamily: 'Georgia,serif', cursor: titre ? 'pointer' : 'default' }}
+            >
+              {demarrage ? 'Demarrage...' : 'Passer en direct'}
             </button>
-          </>
-        )}
-      </div>
+          </div>
+        </>
+      )}
+
+      {etat === 'pause' && (
+        <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.75)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, zIndex: 5, padding: 24 }}>
+          <i className="ti ti-player-pause" style={{ fontSize: 36, color: OR }} />
+          <div style={{ color: '#fff', fontSize: 14, fontWeight: 700, textAlign: 'center' }}>"{titre}"</div>
+          <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11 }}>Direct en pause</div>
+          <button onClick={reprendreLive} style={{ padding: '12px 28px', background: 'linear-gradient(135deg,#2E5C3E,#0D3B2E)', border: 'none', borderRadius: 20, color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
+            <i className="ti ti-player-play" style={{ fontSize: 15, verticalAlign: -2, marginRight: 4 }} /> Reprendre
+          </button>
+          <button onClick={terminerLive} style={{ padding: '10px 24px', background: 'rgba(229,57,53,0.15)', border: '1.5px solid rgba(229,57,53,0.4)', borderRadius: 20, color: '#e57373', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>
+            Terminer le direct
+          </button>
+        </div>
+      )}
+
+      {etat === 'direct' && (
+        <>
+          <div style={{ position: 'absolute', top: 8, left: 8, right: 8, display: 'flex', alignItems: 'center', gap: 6, zIndex: 5 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'rgba(0,0,0,0.4)', borderRadius: 20, padding: '3px 7px 3px 3px', flex: 1, minWidth: 0 }}>
+              <div style={{ width: 20, height: 20, borderRadius: '50%', background: VERT, border: '1.5px solid ' + OR, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 8, color: OR, fontWeight: 700 }}>
+                <i className="ti ti-microphone" style={{ fontSize: 10 }} />
+              </div>
+              <span style={{ color: '#fff', fontSize: 9, fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Vous</span>
+              <span style={{ background: '#e53935', borderRadius: 5, padding: '1px 5px', color: '#fff', fontSize: 7, fontWeight: 700, marginLeft: 2 }}>{formatDuree(duree)}</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 3, background: 'rgba(200,168,75,0.18)', border: '1px solid rgba(200,168,75,0.4)', borderRadius: 20, padding: '3px 8px', flexShrink: 0 }}>
+              <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#e53935' }} />
+              <span style={{ color: IVOIRE, fontSize: 8, fontWeight: 700 }}>{viewerCountReel}</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 2, background: 'rgba(255,255,255,0.08)', borderRadius: 20, padding: '3px 7px', flexShrink: 0 }}>
+              <i className="ti ti-heart" style={{ fontSize: 9, color: '#ef9a9a' }} />
+              <span style={{ color: IVOIRE, fontSize: 8, fontWeight: 700 }}>{likeTotal}</span>
+            </div>
+          </div>
+
+          <div style={{ position: 'absolute', top: 40, left: 8, right: 8, display: 'flex', justifyContent: 'flex-end', gap: 6, zIndex: 5 }}>
+            <button onClick={toggleMic} style={{ width: 27, height: 27, borderRadius: '50%', background: micOn ? 'rgba(129,199,132,0.15)' : 'rgba(229,57,53,0.15)', border: '1.5px solid ' + (micOn ? 'rgba(129,199,132,0.3)' : 'rgba(229,57,53,0.3)'), display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+              <i className={micOn ? 'ti ti-microphone' : 'ti ti-microphone-off'} style={{ color: micOn ? '#81C784' : '#e57373', fontSize: 12 }} />
+            </button>
+            <button onClick={toggleCamera} style={{ width: 27, height: 27, borderRadius: '50%', background: cameraOn ? 'rgba(129,199,132,0.15)' : 'rgba(229,57,53,0.15)', border: '1.5px solid ' + (cameraOn ? 'rgba(129,199,132,0.3)' : 'rgba(229,57,53,0.3)'), display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+              <i className={cameraOn ? 'ti ti-video' : 'ti ti-video-off'} style={{ color: cameraOn ? '#81C784' : '#e57373', fontSize: 12 }} />
+            </button>
+            <button onClick={retournerCamera} style={{ width: 27, height: 27, borderRadius: '50%', background: 'rgba(255,255,255,0.08)', border: '1.5px solid rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+              <i className="ti ti-camera-rotate" style={{ color: '#fff', fontSize: 12 }} />
+            </button>
+            <button onClick={mettreEnPause} style={{ width: 27, height: 27, borderRadius: '50%', background: 'rgba(200,168,75,0.2)', border: '1.5px solid rgba(200,168,75,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+              <i className="ti ti-player-pause" style={{ color: OR, fontSize: 12 }} />
+            </button>
+            <button onClick={terminerLive} style={{ width: 27, height: 27, borderRadius: '50%', background: '#e53935', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+              <i className="ti ti-power" style={{ color: '#fff', fontSize: 12 }} />
+            </button>
+          </div>
+
+          <div style={{ position: 'absolute', left: 8, right: 8, bottom: 46, maxHeight: 220, overflowY: 'auto', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', gap: 5, zIndex: 4 }}>
+            {messagesChat.map(function(m) {
+              if (m.type === 'reaction') {
+                return (
+                  <div key={m.id} style={{ fontSize: 9, color: 'rgba(255,255,255,0.55)', fontStyle: 'italic' }}>
+                    <span style={{ fontWeight: 700, color: OR }}>{m.nom}</span> a envoye une reaction ({m.reactionType})
+                  </div>
+                );
+              }
+              if (m.type === 'gift') {
+                return (
+                  <div key={m.id} style={{ background: 'rgba(0,0,0,0.45)', borderRadius: 12, padding: '4px 10px', display: 'inline-block', alignSelf: 'flex-start' }}>
+                    <span style={{ fontSize: 12, marginRight: 4 }}>{m.emoji}</span>
+                    <span style={{ fontWeight: 700, color: OR, fontSize: 9 }}>{m.nom}</span> <span style={{ color: '#fff', fontSize: 9 }}>a envoye {m.cadeau}</span>
+                  </div>
+                );
+              }
+              return (
+                <div key={m.id} style={{ background: 'rgba(0,0,0,0.4)', borderRadius: 12, padding: '4px 10px', display: 'inline-block', alignSelf: 'flex-start' }}>
+                  <span style={{ fontWeight: 700, color: OR, fontSize: 9 }}>{m.nom}</span> <span style={{ color: '#fff', fontSize: 9 }}>{m.texte}</span>
+                </div>
+              );
+            })}
+          </div>
+
+          <div style={{ position: 'absolute', bottom: 8, left: 8, right: 8, zIndex: 5, display: 'flex', gap: 6, alignItems: 'center' }}>
+            <input
+              value={texteMessage}
+              onChange={function(e) { setTexteMessage(e.target.value); }}
+              onKeyDown={function(e) { if (e.key === 'Enter') envoyerMessageAdmin(); }}
+              placeholder="Repondre a un commentaire..."
+              style={{ flex: 1, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(200,168,75,0.2)', borderRadius: 20, padding: '7px 12px', fontSize: 10, color: '#fff', outline: 'none', fontFamily: 'Georgia,serif' }}
+            />
+            <button onClick={envoyerMessageAdmin} style={{ width: 30, height: 30, borderRadius: '50%', background: 'linear-gradient(135deg,#C8A84B,#8B6020)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
+              <i className="ti ti-send" style={{ color: VERT, fontSize: 13 }} />
+            </button>
+          </div>
+        </>
+      )}
+
+      {confirm && (
+        <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 20, padding: 24 }}>
+          <div style={{ background: IVOIRE, borderRadius: 20, padding: 24, width: '100%', maxWidth: 320 }}>
+            <div style={{ fontFamily: 'Georgia,serif', fontSize: 15, fontWeight: 700, color: VERT, textAlign: 'center', marginBottom: 8 }}>Lancer le direct ?</div>
+            <div style={{ fontSize: 12, color: '#7A6E5E', textAlign: 'center', marginBottom: 20, lineHeight: 1.6 }}>
+              "{titre}"<br />Vos fideles seront notifies.
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button onClick={function() { setConfirm(false); }} style={{ flex: 1, padding: 12, background: 'none', border: '1.5px solid #e5e0d5', borderRadius: 12, color: '#7A6E5E', fontWeight: 700, fontSize: 12, fontFamily: 'Georgia,serif', cursor: 'pointer' }}>Annuler</button>
+              <button onClick={function() { setConfirm(false); lancerLive(); }} style={{ flex: 1, padding: 12, background: 'linear-gradient(135deg,#7f0000,#3a0000)', border: 'none', borderRadius: 12, color: '#ffcdd2', fontWeight: 700, fontSize: 12, fontFamily: 'Georgia,serif', cursor: 'pointer' }}>
+                Lancer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {resume && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200, padding: 24 }}>
-          <div style={{ background: IVOIRE, borderRadius: 20, padding: 24, width: '100%', maxWidth: 340 }}>
+        <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 20, padding: 24 }}>
+          <div style={{ background: IVOIRE, borderRadius: 20, padding: 24, width: '100%', maxWidth: 320 }}>
             <div style={{ textAlign: 'center', marginBottom: 16 }}>
               <i className="ti ti-confetti" style={{ fontSize: 30, color: OR }} />
               <div style={{ fontFamily: 'Georgia,serif', fontSize: 17, fontWeight: 700, color: VERT, marginTop: 6 }}>Direct termine</div>
@@ -448,23 +600,6 @@ export default function AdminLive() {
           </div>
         </div>
       )}
-
-      {confirm && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200, padding: 24 }}>
-          <div style={{ background: IVOIRE, borderRadius: 20, padding: 24, width: '100%', maxWidth: 340 }}>
-            <div style={{ fontFamily: 'Georgia,serif', fontSize: 15, fontWeight: 700, color: VERT, textAlign: 'center', marginBottom: 8 }}>Lancer le live ?</div>
-            <div style={{ fontSize: 12, color: '#7A6E5E', textAlign: 'center', marginBottom: 20, lineHeight: 1.6 }}>
-              "{titre}"<br />Votre camera et votre micro vont s'activer.
-            </div>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button onClick={function() { setConfirm(false); }} style={{ flex: 1, padding: 12, background: 'none', border: '1.5px solid #e5e0d5', borderRadius: 12, color: '#7A6E5E', fontWeight: 700, fontSize: 12, fontFamily: 'Georgia,serif', cursor: 'pointer' }}>Annuler</button>
-              <button onClick={function() { setConfirm(false); lancerLive(); }} style={{ flex: 1, padding: 12, background: 'linear-gradient(135deg,#7f0000,#3a0000)', border: 'none', borderRadius: 12, color: '#ffcdd2', fontWeight: 700, fontSize: 12, fontFamily: 'Georgia,serif', cursor: 'pointer' }}>
-                Lancer
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </AdminShell>
+    </div>
   );
 }
