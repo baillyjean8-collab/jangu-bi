@@ -33,6 +33,8 @@ export default function AdminLive() {
   const liveIdRef = useRef(null);
   const enDirectRef = useRef(false);
   const socketRef = useRef(null);
+  const facingRef = useRef('user');
+  const [resume, setResume] = useState(null);
 
   function connecterSocket(parishId, sessionId) {
     if (socketRef.current) return;
@@ -219,12 +221,15 @@ export default function AdminLive() {
   }
 
   async function terminerLive() {
+    let sessionFinale = null;
     try {
       enDirectRef.current = false;
       if (roomRef.current) { roomRef.current.disconnect(); roomRef.current = null; }
       clearInterval(dureeIntervalRef.current);
       if (liveId) {
-        await fetch(BASE + '/live/' + liveId + '/end', { method: 'POST', headers: { Authorization: 'Bearer ' + token } });
+        const res = await fetch(BASE + '/live/' + liveId + '/end', { method: 'POST', headers: { Authorization: 'Bearer ' + token } });
+        const data = await res.json();
+        sessionFinale = data && data.data && data.data.session;
       }
     } catch (e) { console.log('Terminer live:', e.message); }
     finally {
@@ -233,7 +238,19 @@ export default function AdminLive() {
       setLiveId(null);
       liveIdRef.current = null;
       setTitre('');
+      if (sessionFinale) setResume(sessionFinale);
     }
+  }
+
+  async function retournerCamera() {
+    if (!roomRef.current) return;
+    facingRef.current = facingRef.current === 'user' ? 'environment' : 'user';
+    try {
+      const camPub = roomRef.current.localParticipant.videoTrackPublications.values().next().value;
+      if (camPub && camPub.track && camPub.track.restartTrack) {
+        await camPub.track.restartTrack({ facingMode: facingRef.current });
+      }
+    } catch (e) { console.log('Retourner camera:', e.message); }
   }
 
   async function toggleCamera() {
@@ -378,9 +395,14 @@ export default function AdminLive() {
 
             <div style={{ background: 'white', borderRadius: 16, padding: 14, border: '1px solid rgba(0,0,0,0.06)' }}>
               <div style={{ fontFamily: 'Georgia,serif', fontSize: 11, fontWeight: 700, color: VERT, marginBottom: 10 }}>Controles</div>
-              <button onClick={toggleCamera} style={{ width: '100%', padding: 10, background: cameraOn ? 'rgba(16,185,129,0.1)' : 'rgba(229,57,53,0.08)', border: cameraOn ? '1px solid rgba(16,185,129,0.3)' : '1px solid rgba(229,57,53,0.2)', borderRadius: 10, fontSize: 11, color: cameraOn ? '#065F46' : '#e53935', cursor: 'pointer', fontFamily: 'Georgia,serif', fontWeight: 700 }}>
-                <i className={cameraOn ? 'ti ti-video' : 'ti ti-video-off'} style={{ fontSize: 13, verticalAlign: -2 }} /> {cameraOn ? 'Camera activee' : 'Camera desactivee'}
-              </button>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button onClick={toggleCamera} style={{ flex: 1, padding: 10, background: cameraOn ? 'rgba(16,185,129,0.1)' : 'rgba(229,57,53,0.08)', border: cameraOn ? '1px solid rgba(16,185,129,0.3)' : '1px solid rgba(229,57,53,0.2)', borderRadius: 10, fontSize: 11, color: cameraOn ? '#065F46' : '#e53935', cursor: 'pointer', fontFamily: 'Georgia,serif', fontWeight: 700 }}>
+                  <i className={cameraOn ? 'ti ti-video' : 'ti ti-video-off'} style={{ fontSize: 13, verticalAlign: -2 }} /> {cameraOn ? 'Camera activee' : 'Camera desactivee'}
+                </button>
+                <button onClick={retournerCamera} style={{ flex: 1, padding: 10, background: 'rgba(200,168,75,0.1)', border: '1px solid rgba(200,168,75,0.2)', borderRadius: 10, fontSize: 11, color: '#8B6020', cursor: 'pointer', fontFamily: 'Georgia,serif', fontWeight: 700 }}>
+                  <i className="ti ti-camera-rotate" style={{ fontSize: 13, verticalAlign: -2 }} /> Retourner
+                </button>
+              </div>
             </div>
 
             <button onClick={mettreEnPause} style={{ width: '100%', padding: 13, background: 'rgba(200,168,75,0.1)', border: '1.5px solid rgba(200,168,75,0.3)', borderRadius: 14, color: '#8B6020', fontWeight: 700, fontSize: 13, fontFamily: 'Georgia,serif', cursor: 'pointer' }}>
@@ -393,6 +415,39 @@ export default function AdminLive() {
           </>
         )}
       </div>
+
+      {resume && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200, padding: 24 }}>
+          <div style={{ background: IVOIRE, borderRadius: 20, padding: 24, width: '100%', maxWidth: 340 }}>
+            <div style={{ textAlign: 'center', marginBottom: 16 }}>
+              <i className="ti ti-confetti" style={{ fontSize: 30, color: OR }} />
+              <div style={{ fontFamily: 'Georgia,serif', fontSize: 17, fontWeight: 700, color: VERT, marginTop: 6 }}>Direct termine</div>
+              <div style={{ fontSize: 11, color: '#7A6E5E', marginTop: 2 }}>"{resume.title}"</div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 16 }}>
+              <div style={{ background: 'white', borderRadius: 12, padding: '10px 6px', textAlign: 'center', border: '1px solid rgba(0,0,0,0.06)' }}>
+                <div style={{ fontSize: 16, fontWeight: 700, color: VERT }}>{resume.peakViewers || 0}</div>
+                <div style={{ fontSize: 8, color: '#7A6E5E' }}>Pic spectateurs</div>
+              </div>
+              <div style={{ background: 'white', borderRadius: 12, padding: '10px 6px', textAlign: 'center', border: '1px solid rgba(0,0,0,0.06)' }}>
+                <div style={{ fontSize: 16, fontWeight: 700, color: '#e53935' }}>
+                  {resume.reactionCounts ? Object.values(resume.reactionCounts).reduce(function(a, b) { return a + b; }, 0) : 0}
+                </div>
+                <div style={{ fontSize: 8, color: '#7A6E5E' }}>Reactions</div>
+              </div>
+              <div style={{ background: 'white', borderRadius: 12, padding: '10px 6px', textAlign: 'center', border: '1px solid rgba(0,0,0,0.06)' }}>
+                <div style={{ fontSize: 16, fontWeight: 700, color: OR }}>
+                  {resume.durationSeconds ? Math.floor(resume.durationSeconds / 60) + ' min' : '-'}
+                </div>
+                <div style={{ fontSize: 8, color: '#7A6E5E' }}>Duree</div>
+              </div>
+            </div>
+            <button onClick={function() { setResume(null); }} style={{ width: '100%', padding: 12, background: 'linear-gradient(135deg,#1e2d14,#0a140a)', border: 'none', borderRadius: 12, color: OR, fontWeight: 700, fontSize: 13, fontFamily: 'Georgia,serif', cursor: 'pointer' }}>
+              Fermer
+            </button>
+          </div>
+        </div>
+      )}
 
       {confirm && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200, padding: 24 }}>

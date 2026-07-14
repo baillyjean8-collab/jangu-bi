@@ -181,6 +181,16 @@ export default function LiveScreen() {
           });
           socket.on('live:gift', function(data) {
             lancerCadeau(data.emoji, data.nom);
+            setCommentaires(function(prev) {
+              return prev.slice(-30).concat([{
+                id: 'gift-' + Date.now() + Math.random(),
+                profil: { bg: 'rgba(200,168,75,0.15)', col: OR, tc: VERT },
+                initiales: '',
+                nom: '',
+                texte: 'Un fidele a envoye ' + data.emoji + ' ' + data.nom,
+                isJoin: true,
+              }]);
+            });
           });
           socket.on('live:ended', function(data) {
             if (data.liveId === id) afficherBanniere('Le direct est termine', 4000);
