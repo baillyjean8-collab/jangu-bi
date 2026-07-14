@@ -210,9 +210,10 @@ function handleConnection(io, socket) {
       // Si ce socket est l'administrateur qui a lance ce direct, il rejoint
       // aussi une salle privee reservee : c'est la seule a recevoir les
       // evenements avec l'identite reelle des fideles (chat, reactions, cadeaux).
+      let sessionActuelle = null;
       try {
-        const session = await liveRepo.findById(liveId);
-        if (session && socket.user && String(session.startedBy) === String(socket.user.userId)) {
+        sessionActuelle = await liveRepo.findById(liveId);
+        if (sessionActuelle && socket.user && String(sessionActuelle.startedBy) === String(socket.user.userId)) {
           await socket.join('admin:' + liveId);
         }
       } catch (lookupErr) { /* pas grave si echec, l'admin restera anonyme */ }
@@ -224,7 +225,7 @@ function handleConnection(io, socket) {
         io.to('admin:' + liveId).emit(EVENTS.ROSTER_UPDATE, {
           liveId,
           roster: Array.from(roster.get(room).values()).filter(function(p) {
-            return !session || String(p.userId) !== String(session.startedBy);
+            return !sessionActuelle || String(p.userId) !== String(sessionActuelle.startedBy);
           }),
         });
       }
