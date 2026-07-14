@@ -34,6 +34,7 @@ const liveSchemas = {
 const { Live, Parish } = require('../../models');
 const { AccessToken } = require('livekit-server-sdk');
 const config = require('../../config/env');
+const guestRegistry = require('../../realtime/guestRegistry');
 
 const liveRepo = {
   async create(data) {
@@ -179,6 +180,7 @@ const liveService = {
 
     const isBroadcaster = (userRole === 'parish_admin' || userRole === 'super_admin') &&
       String(session.startedBy) === String(userId);
+    const isApprovedGuest = guestRegistry.isApproved(String(session._id), userId);
 
     const at = new AccessToken(config.livekit.apiKey, config.livekit.apiSecret, {
       identity: String(userId),
@@ -187,7 +189,7 @@ const liveService = {
     at.addGrant({
       room: String(session._id),
       roomJoin: true,
-      canPublish: isBroadcaster,
+      canPublish: isBroadcaster || isApprovedGuest,
       canSubscribe: true,
       canPublishData: true,
     });
