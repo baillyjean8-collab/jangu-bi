@@ -14,18 +14,28 @@ const COLORS = {
   live: '#e53e3e',
 };
 
+function formatDateFr(iso) {
+  try {
+    const d = new Date(iso);
+    return d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }) + ' a ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  } catch (e) { return ''; }
+}
+
 export default function LiveListPage() {
   const navigate = useNavigate();
   const [lives, setLives] = useState([]);
+  const [upcoming, setUpcoming] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(function() {
     async function charger() {
       try {
         const { liveApi } = await import('../../services/api');
-        const data = await liveApi.getActifs();
-        const sessions = data && data.data && data.data.sessions ? data.data.sessions : [];
+        const [dataActifs, dataAVenir] = await Promise.all([liveApi.getActifs(), liveApi.getUpcoming()]);
+        const sessions = dataActifs && dataActifs.data && dataActifs.data.sessions ? dataActifs.data.sessions : [];
+        const sessionsAVenir = dataAVenir && dataAVenir.data && dataAVenir.data.sessions ? dataAVenir.data.sessions : [];
         setLives(sessions);
+        setUpcoming(sessionsAVenir);
       } catch (e) {
         console.log('Live actifs:', e.message);
       } finally {
@@ -47,8 +57,8 @@ export default function LiveListPage() {
         {loading && (
           <div style={{ textAlign: 'center', padding: 40, color: COLORS.textMuted, fontSize: 13 }}>Chargement...</div>
         )}
-        {!loading && lives.length === 0 && (
-          <div style={{ textAlign: 'center', padding: 40, color: COLORS.textMuted, fontSize: 13 }}>Aucun direct en cours pour le moment</div>
+        {!loading && lives.length === 0 && upcoming.length === 0 && (
+          <div style={{ textAlign: 'center', padding: 40, color: COLORS.textMuted, fontSize: 13 }}>Aucun direct en cours ou a venir</div>
         )}
         {lives.map(function(live) {
           const paroisse = live.parishId && live.parishId.name ? live.parishId.name : 'Paroisse';
@@ -64,12 +74,29 @@ export default function LiveListPage() {
                 <span style={{ fontSize: '11px', color: COLORS.textMuted }}>{live.currentViewerCount || 0} spectateurs</span>
               </div>
               <div style={{ fontSize: '15px', fontWeight: 700, color: COLORS.textPrimary, marginBottom: '4px' }}>{live.title}</div>
+              {live.goal && <div style={{ fontSize: '11px', color: COLORS.gold, marginBottom: '4px' }}>But : {live.goal}</div>}
               <div style={{ fontSize: '12px', color: COLORS.textMuted, marginBottom: '12px' }}>{paroisse}</div>
               <button
                 onClick={function(e) { e.stopPropagation(); navigate('/live/' + live._id); }}
                 style={{ background: COLORS.green, color: '#fff', border: 'none', borderRadius: '10px', padding: '10px', fontSize: '13px', fontWeight: 700, cursor: 'pointer', width: '100%' }}>
                 Rejoindre le direct
               </button>
+            </div>
+          );
+        })}
+
+        {upcoming.length > 0 && (
+          <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted, textTransform: 'uppercase', letterSpacing: 1, margin: '18px 0 10px' }}>A venir</div>
+        )}
+        {upcoming.map(function(live) {
+          const paroisse = live.parishId && live.parishId.name ? live.parishId.name : 'Paroisse';
+          return (
+            <div key={live._id} style={{ background: COLORS.bgCard, borderRadius: '16px', border: '1.5px solid ' + COLORS.accent, marginBottom: '12px', padding: '16px', boxShadow: '0 2px 8px rgba(30,45,20,0.06)' }}>
+              <span style={{ background: COLORS.accent, color: '#5a6e4a', fontSize: '10px', fontWeight: 600, padding: '2px 8px', borderRadius: '20px' }}>A venir</span>
+              <div style={{ fontSize: '15px', fontWeight: 700, color: COLORS.textPrimary, margin: '6px 0 4px' }}>{live.title}</div>
+              {live.goal && <div style={{ fontSize: '11px', color: COLORS.gold, marginBottom: '4px' }}>But : {live.goal}</div>}
+              <div style={{ fontSize: '12px', color: COLORS.textMuted, marginBottom: '4px' }}>{paroisse}</div>
+              <div style={{ fontSize: '11px', color: COLORS.green, fontWeight: 700 }}>{formatDateFr(live.scheduledAt)}</div>
             </div>
           );
         })}

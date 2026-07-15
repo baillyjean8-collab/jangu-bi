@@ -14,6 +14,16 @@ const liveSchemas = {
     title:       Joi.string().trim().max(150).optional(),
     description: Joi.string().trim().max(500).optional(),
     streamUrl:   Joi.string().uri({ scheme: ['https', 'http', 'rtmp', 'rtmps'] }).optional(),
+    goal:        Joi.string().trim().max(200).allow(null, '').optional(),
+    coverUrl:    Joi.string().allow(null, '').optional(),
+  }),
+
+  schedule: Joi.object({
+    parishId:    JoiFields.objectId().required(),
+    title:       Joi.string().trim().max(150).optional(),
+    goal:        Joi.string().trim().max(200).allow(null, '').optional(),
+    coverUrl:    Joi.string().allow(null, '').optional(),
+    scheduledAt: Joi.date().iso().required(),
   }),
 
   end: Joi.object({
@@ -51,6 +61,18 @@ const liveRepo = {
 
   async findActiveByParish(parishId) {
     return Live.findOne({ parishId, isActive: true }).exec();
+  },
+
+  async findScheduledByParish(parishId) {
+    return Live.findOne({ parishId, isScheduled: true }).lean().exec();
+  },
+
+  async findUpcoming() {
+    return Live.find({ isScheduled: true, scheduledAt: { $gte: new Date() } })
+      .populate('parishId', 'name logoUrl location')
+      .sort({ scheduledAt: 1 })
+      .lean()
+      .exec();
   },
 
   async findAllActive() {
@@ -104,7 +126,7 @@ const {
 } = require('../../shared/errors');
 
 const liveService = {
-  async startSession({ parishId, title, description, streamUrl }, adminId, req) {
+  async startSession({ parishId, title, description, streamUrl, goal, coverUrl }, adminId, req) {
     // Verify parish belongs to this admin (or super_admin bypasses)
     const parish = await Parish.findById(parishId).lean();
     if (!parish || !parish.isActive) throw new NotFoundError('Parish');
@@ -121,11 +143,68 @@ const liveService = {
       title: title || `Service en direct — ${parish.name}`,
       description,
       streamUrl,
+      goal: goal || null,
+      coverUrl: coverUrl || null,
     });
 
     await audit.live(AuditLog.ACTIONS.LIVE_STARTED, adminId, session._id, req);
 
     return session;
+  },
+
+  async scheduleSession({ parishId, title, goal, coverUrl, scheduledAt }, adminId, req) {
+    const parish = await Parish.findById(parishId).lean();
+    if (!parish || !parish.isActive) throw new NotFoundError('Parish');
+
+    const existingScheduled = await liveRepo.findScheduledByParish(parishId);
+    if (existingScheduled) {
+      throw new ConflictError('A live session is already scheduled for this parish');
+    }
+
+    const session = await liveRepo.create({
+      parishId,
+      startedBy: adminId,
+      title: title || `Service en direct — ${parish.name}`,
+      goal: goal || null,
+      coverUrl: coverUrl || null,
+      scheduledAt,
+      isScheduled: true,
+      isActive: false,
+    });
+
+    await audit.live(AuditLog.ACTIONS.LIVE_STARTED, adminId, session._id, req);
+
+    return session;
+  },
+
+  async activateScheduled(liveId, adminId, adminRole, req) {
+    const session = await liveRepo.findById(liveId);
+    if (!session) throw new NotFoundError('Live session');
+    if (adminRole !== 'super_admin' && String(session.startedBy) !== String(adminId)) {
+      throw new AuthorizationError('Only the admin who scheduled this live can start it');
+    }
+
+    const existing = await liveRepo.findActiveByParish(session.parishId);
+    if (existing) {
+      throw new ConflictError('A live session is already active for this parish');
+    }
+
+    session.isScheduled = false;
+    session.isActive = true;
+    session.startedAt = new Date();
+    await session.save();
+
+    await audit.live(AuditLog.ACTIONS.LIVE_STARTED, adminId, session._id, req);
+
+    return session;
+  },
+
+  async getScheduledForParish(parishId) {
+    return liveRepo.findScheduledByParish(parishId);
+  },
+
+  async getUpcoming() {
+    return liveRepo.findUpcoming();
   },
 
   async endSession(liveId, adminId, adminRole, req) {
@@ -262,6 +341,26 @@ const liveController = {
     return sendSuccess(res, { sessions, count: sessions.length });
   },
 
+  async getUpcoming(req, res) {
+    const sessions = await liveService.getUpcoming();
+    return sendSuccess(res, { sessions, count: sessions.length });
+  },
+
+  async schedule(req, res) {
+    const session = await liveService.scheduleSession(req.body, req.user.userId, req);
+    return sendCreated(res, { session }, 'Live schedule');
+  },
+
+  async activate(req, res) {
+    const session = await liveService.activateScheduled(req.params.id, req.user.userId, req.user.role, req);
+    return sendSuccess(res, { session }, 'Live active');
+  },
+
+  async getScheduledForParish(req, res) {
+    const session = await liveService.getScheduledForParish(req.params.parishId);
+    return sendSuccess(res, { session });
+  },
+
   async getById(req, res) {
     const session = await liveService.getById(req.params.id);
     return sendSuccess(res, { session });
@@ -323,11 +422,32 @@ router.post('/:id/resume',
 );
 
 // Parish admin or super_admin — manage sessions
+router.get('/upcoming', asyncHandler(liveController.getUpcoming));
+
+router.get('/parish/:parishId/scheduled',
+  authenticate, requireVerified,
+  authorize('parish_admin', 'super_admin'),
+  asyncHandler(liveController.getScheduledForParish)
+);
+
 router.post('/start',
   authenticate, requireVerified,
   authorize('parish_admin', 'super_admin'),
   validate(liveSchemas.start),
   asyncHandler(liveController.start)
+);
+
+router.post('/schedule',
+  authenticate, requireVerified,
+  authorize('parish_admin', 'super_admin'),
+  validate(liveSchemas.schedule),
+  asyncHandler(liveController.schedule)
+);
+
+router.post('/:id/activate',
+  authenticate, requireVerified,
+  authorize('parish_admin', 'super_admin'),
+  asyncHandler(liveController.activate)
 );
 
 router.post('/:id/end',

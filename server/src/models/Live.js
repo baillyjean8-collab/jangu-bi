@@ -73,6 +73,28 @@ const liveSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    isScheduled: {
+      type: Boolean,
+      default: false,
+    },
+    scheduledAt: {
+      type: Date,
+      default: null,
+    },
+    goal: {
+      type: String,
+      trim: true,
+      maxlength: [200, 'Goal must not exceed 200 characters'],
+      default: null,
+    },
+    coverUrl: {
+      type: String,
+      default: null,
+      validate: {
+        validator: isSafeUrl,
+        message: 'coverUrl must be a valid and safe URL',
+      },
+    },
     isPaused: {
       type: Boolean,
       default: false,
