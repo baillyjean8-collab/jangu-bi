@@ -36,6 +36,8 @@ export default function AdminLive() {
   const [rosterListe, setRosterListe] = useState([]);
   const [showInviter, setShowInviter] = useState(false);
   const [showGuestMenu, setShowGuestMenu] = useState(false);
+  const [guestMicOn, setGuestMicOn] = useState(true);
+  const [guestCameraOn, setGuestCameraOn] = useState(true);
   const [invitesEnvoyes, setInvitesEnvoyes] = useState([]);
   const [guestConnecte, setGuestConnecte] = useState(null);
 
@@ -330,11 +332,26 @@ export default function AdminLive() {
     socket.on('live:guest:joined', function(data) {
       if (data.liveId === sessionId) {
         setGuestConnecte({ nom: data.nom, userId: data.userId });
+        setGuestMicOn(true);
+        setGuestCameraOn(true);
         setMessagesChat(function(prev) { return prev.slice(-30).concat([{ id: 'j-' + Date.now(), type: 'gift', nom: data.nom, cadeau: 'a rejoint le direct', emoji: '' }]); });
       }
     });
     socket.on('live:guest:removed', function(data) {
-      if (data.liveId === sessionId) { setGuestConnecte(null); setShowGuestMenu(false); }
+      if (data.liveId === sessionId) {
+        setShowGuestMenu(false);
+        setInvitesEnvoyes(function(prev) { return prev.filter(function(uid) { return uid !== data.userId; }); });
+        setGuestConnecte(function(prev) {
+          const nomInvite = prev ? prev.nom : 'Le fidele';
+          setMessagesChat(function(prevMsgs) {
+            return prevMsgs.slice(-30).concat([{ id: 'd-' + Date.now(), type: 'gift', nom: nomInvite, cadeau: 'est descendu du direct', emoji: '' }]);
+          });
+          return null;
+        });
+      }
+    });
+    socket.on('live:guest:camera:response:received', function(data) {
+      if (data.liveId === sessionId && data.accepted) setGuestCameraOn(true);
     });
   }
 
@@ -345,13 +362,33 @@ export default function AdminLive() {
     setInvitesEnvoyes(function(prev) { return prev.concat([targetUserId]); });
   }
 
-  function envoyerControleInvite(action) {
+  function toggleGuestMic() {
+    if (!guestConnecte || !guestConnecte.userId) return;
+    const nouvelEtat = !guestMicOn;
+    recupererParishId().then(function(parishId) {
+      socketRef.current.emit('live:guest:control:send', { parishId: parishId, liveId: liveIdRef.current, targetUserId: guestConnecte.userId, action: nouvelEtat ? 'unmute' : 'mute' });
+    });
+    setGuestMicOn(nouvelEtat);
+  }
+
+  function toggleGuestCamera() {
     if (!guestConnecte || !guestConnecte.userId) return;
     recupererParishId().then(function(parishId) {
-      socketRef.current.emit('live:guest:control:send', { parishId: parishId, liveId: liveIdRef.current, targetUserId: guestConnecte.userId, action: action });
+      if (guestCameraOn) {
+        socketRef.current.emit('live:guest:control:send', { parishId: parishId, liveId: liveIdRef.current, targetUserId: guestConnecte.userId, action: 'camera-off' });
+      } else {
+        socketRef.current.emit('live:guest:control:send', { parishId: parishId, liveId: liveIdRef.current, targetUserId: guestConnecte.userId, action: 'camera-request' });
+      }
+    });
+    if (guestCameraOn) setGuestCameraOn(false);
+  }
+
+  function faireDescendreInvite() {
+    if (!guestConnecte || !guestConnecte.userId) return;
+    recupererParishId().then(function(parishId) {
+      socketRef.current.emit('live:guest:control:send', { parishId: parishId, liveId: liveIdRef.current, targetUserId: guestConnecte.userId, action: 'kick' });
     });
     setShowGuestMenu(false);
-    if (action === 'kick') setGuestConnecte(null);
   }
 
   function deconnecterSocket() {
@@ -714,7 +751,7 @@ export default function AdminLive() {
       )}
 
       {guestConnecte && (
-        <div onClick={function() { setShowGuestMenu(true); }} style={{ position: 'absolute', right: 8, bottom: 100, width: 70, height: 96, borderRadius: 12, overflow: 'hidden', border: '2px solid ' + OR, zIndex: 6, background: '#000', cursor: 'pointer' }}>
+        <div onClick={function() { setShowGuestMenu(function(v) { return !v; }); }} style={{ position: 'absolute', right: 8, bottom: 100, width: 70, height: 96, borderRadius: 12, overflow: 'hidden', border: '2px solid ' + OR, zIndex: 6, background: '#000', cursor: 'pointer' }}>
           <video ref={guestVideoRef} autoPlay playsInline style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,0.6)', padding: '2px 4px' }}>
             <span style={{ color: '#fff', fontSize: 6 }}>{guestConnecte.nom}</span>
@@ -723,19 +760,16 @@ export default function AdminLive() {
       )}
 
       {showGuestMenu && guestConnecte && (
-        <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 25 }} onClick={function() { setShowGuestMenu(false); }}>
-          <div onClick={function(e) { e.stopPropagation(); }} style={{ background: IVOIRE, borderRadius: 16, padding: 18, width: 250 }}>
-            <div style={{ fontFamily: 'Georgia,serif', fontSize: 13, fontWeight: 700, color: VERT, marginBottom: 12, textAlign: 'center' }}>{guestConnecte.nom}</div>
-            <button onClick={function() { envoyerControleInvite('mute'); }} style={{ width: '100%', padding: 10, marginBottom: 8, background: 'rgba(0,0,0,0.06)', border: 'none', borderRadius: 12, color: VERT, fontWeight: 700, fontSize: 12, fontFamily: 'Georgia,serif', cursor: 'pointer', textAlign: 'left' }}>
-              <i className="ti ti-microphone-off" style={{ marginRight: 8, verticalAlign: -2 }} /> Couper le micro
-            </button>
-            <button onClick={function() { envoyerControleInvite('camera-off'); }} style={{ width: '100%', padding: 10, marginBottom: 8, background: 'rgba(0,0,0,0.06)', border: 'none', borderRadius: 12, color: VERT, fontWeight: 700, fontSize: 12, fontFamily: 'Georgia,serif', cursor: 'pointer', textAlign: 'left' }}>
-              <i className="ti ti-video-off" style={{ marginRight: 8, verticalAlign: -2 }} /> Eteindre la camera
-            </button>
-            <button onClick={function() { envoyerControleInvite('kick'); }} style={{ width: '100%', padding: 10, background: 'rgba(229,57,53,0.12)', border: '1px solid rgba(229,57,53,0.3)', borderRadius: 12, color: '#c0392b', fontWeight: 700, fontSize: 12, fontFamily: 'Georgia,serif', cursor: 'pointer', textAlign: 'left' }}>
-              <i className="ti ti-arrow-down" style={{ marginRight: 8, verticalAlign: -2 }} /> Faire descendre
-            </button>
-          </div>
+        <div style={{ position: 'absolute', right: 84, bottom: 100, display: 'flex', flexDirection: 'column', gap: 6, zIndex: 7 }}>
+          <button onClick={toggleGuestMic} style={{ width: 30, height: 30, borderRadius: '50%', background: guestMicOn ? 'rgba(129,199,132,0.25)' : 'rgba(229,57,53,0.25)', border: '1.5px solid ' + (guestMicOn ? 'rgba(129,199,132,0.5)' : 'rgba(229,57,53,0.5)'), display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+            <i className={guestMicOn ? 'ti ti-microphone' : 'ti ti-microphone-off'} style={{ color: guestMicOn ? '#81C784' : '#e57373', fontSize: 14 }} />
+          </button>
+          <button onClick={toggleGuestCamera} style={{ width: 30, height: 30, borderRadius: '50%', background: guestCameraOn ? 'rgba(129,199,132,0.25)' : 'rgba(229,57,53,0.25)', border: '1.5px solid ' + (guestCameraOn ? 'rgba(129,199,132,0.5)' : 'rgba(229,57,53,0.5)'), display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+            <i className={guestCameraOn ? 'ti ti-video' : 'ti ti-video-off'} style={{ color: guestCameraOn ? '#81C784' : '#e57373', fontSize: 14 }} />
+          </button>
+          <button onClick={faireDescendreInvite} style={{ width: 30, height: 30, borderRadius: '50%', background: 'rgba(229,57,53,0.25)', border: '1.5px solid rgba(229,57,53,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+            <i className="ti ti-arrow-down" style={{ color: '#e57373', fontSize: 14 }} />
+          </button>
         </div>
       )}
 

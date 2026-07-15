@@ -57,6 +57,8 @@ const EVENTS = Object.freeze({
   GUEST_CONTROL_SEND:     'live:guest:control:send',
   GUEST_CONTROL_RECEIVED: 'live:guest:control:received',
   GUEST_REMOVED:          'live:guest:removed',
+  GUEST_CAMERA_RESPONSE_SEND:     'live:guest:camera:response:send',
+  GUEST_CAMERA_RESPONSE_RECEIVED: 'live:guest:camera:response:received',
 });
 
 // ── Rate Limiter (per socket) ──────────────────────────────────────────────────
@@ -413,7 +415,7 @@ function handleConnection(io, socket) {
     if (!socket.isAuthenticated) return;
     if (!parishId || !/^[a-f0-9]{24}$/i.test(String(parishId))) return;
     if (!socket.rooms.has('admin:' + liveId)) return; // seul l'admin du direct peut envoyer cet ordre
-    if (['mute', 'camera-off', 'kick'].indexOf(action) === -1) return;
+    if (['mute', 'unmute', 'camera-off', 'camera-request', 'kick'].indexOf(action) === -1) return;
 
     const room = parishRoom(parishId);
     const map = roster.get(room);
@@ -429,6 +431,17 @@ function handleConnection(io, socket) {
         break;
       }
     }
+  });
+
+  // --- Reponse du fidele a une demande de reactivation de sa camera ---
+  socket.on(EVENTS.GUEST_CAMERA_RESPONSE_SEND, ({ liveId, accepted }) => {
+    if (!socket.isAuthenticated) return;
+    if (!liveId) return;
+    io.to('admin:' + liveId).emit(EVENTS.GUEST_CAMERA_RESPONSE_RECEIVED, {
+      liveId,
+      userId: socket.user.userId,
+      accepted: !!accepted,
+    });
   });
 
   socket.on('disconnect', async () => {

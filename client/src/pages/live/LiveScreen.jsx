@@ -127,6 +127,7 @@ export default function LiveScreen() {
   const [viewerCountReel, setViewerCountReel] = useState(0);
   const [likeTotal, setLikeTotal] = useState(0);
   const [inviteRecue, setInviteRecue] = useState(false);
+  const [demandeCamera, setDemandeCamera] = useState(false);
   const [estInvite, setEstInvite] = useState(false);
   const monVideoRef = useRef(null);
   const videoRef = useRef(null);
@@ -202,8 +203,12 @@ export default function LiveScreen() {
             if (data.liveId !== id) return;
             if (data.action === 'mute') {
               if (roomRef.current) roomRef.current.localParticipant.setMicrophoneEnabled(false);
+            } else if (data.action === 'unmute') {
+              if (roomRef.current) roomRef.current.localParticipant.setMicrophoneEnabled(true);
             } else if (data.action === 'camera-off') {
               if (roomRef.current) roomRef.current.localParticipant.setCameraEnabled(false);
+            } else if (data.action === 'camera-request') {
+              setDemandeCamera(true);
             } else if (data.action === 'kick') {
               if (roomRef.current) {
                 roomRef.current.localParticipant.setCameraEnabled(false);
@@ -383,6 +388,21 @@ export default function LiveScreen() {
 
   function refuserInvitation() {
     setInviteRecue(false);
+  }
+
+  function accepterCamera() {
+    setDemandeCamera(false);
+    if (roomRef.current) roomRef.current.localParticipant.setCameraEnabled(true);
+    if (socketRef.current && sessionReelle && sessionReelle.parishId) {
+      socketRef.current.emit('live:guest:camera:response:send', { parishId: sessionReelle.parishId._id, liveId: id, accepted: true });
+    }
+  }
+
+  function refuserCamera() {
+    setDemandeCamera(false);
+    if (socketRef.current && sessionReelle && sessionReelle.parishId) {
+      socketRef.current.emit('live:guest:camera:response:send', { parishId: sessionReelle.parishId._id, liveId: id, accepted: false });
+    }
   }
 
   // ── Commentaire ────────────────────────────────────────────────────────────
@@ -709,6 +729,20 @@ export default function LiveScreen() {
             <div style={{ display: 'flex', gap: 8 }}>
               <button onClick={refuserInvitation} style={{ flex: 1, padding: 11, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 14, color: 'rgba(255,255,255,0.7)', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>Refuser</button>
               <button onClick={accepterInvitation} style={{ flex: 1, padding: 11, background: 'linear-gradient(135deg,#C8A84B,#8B6020)', border: 'none', borderRadius: 14, color: '#1e2d14', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>Accepter</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {demandeCamera && (
+        <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 40, padding: 24 }}>
+          <div style={{ background: '#0C0A06', border: '1px solid rgba(200,168,75,0.3)', borderRadius: 20, padding: 24, width: '100%', maxWidth: 300, textAlign: 'center' }}>
+            <i className="ti ti-video" style={{ fontSize: 28, color: OR }} />
+            <div style={{ color: '#fff', fontSize: 13, fontWeight: 700, marginTop: 10, marginBottom: 4 }}>Reactiver votre camera ?</div>
+            <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 11, marginBottom: 18 }}>L'administrateur souhaite reactiver votre camera</div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button onClick={refuserCamera} style={{ flex: 1, padding: 11, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 14, color: 'rgba(255,255,255,0.7)', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>Refuser</button>
+              <button onClick={accepterCamera} style={{ flex: 1, padding: 11, background: 'linear-gradient(135deg,#C8A84B,#8B6020)', border: 'none', borderRadius: 14, color: '#1e2d14', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>Accepter</button>
             </div>
           </div>
         </div>
