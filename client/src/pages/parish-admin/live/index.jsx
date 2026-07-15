@@ -535,6 +535,7 @@ export default function AdminLive() {
 
     const room = new Room();
     room.on(RoomEvent.TrackSubscribed, function(track, publication, participant) {
+      if (track.kind === 'audio') { const a = track.attach(); a.autoplay = true; document.body.appendChild(a); return; }
       if (track.kind !== 'video') return;
       const uid = participant.identity;
       const el = guestVideoRefsMap.current.get(uid);
