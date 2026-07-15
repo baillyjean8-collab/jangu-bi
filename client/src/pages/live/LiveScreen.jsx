@@ -129,8 +129,12 @@ export default function LiveScreen() {
   const [inviteRecue, setInviteRecue] = useState(false);
   const [demandeCamera, setDemandeCamera] = useState(false);
   const [estInvite, setEstInvite] = useState(false);
+  const [inviteComplet, setInviteComplet] = useState(false);
+  const [guestsConnectesFidele, setGuestsConnectesFidele] = useState([]);
   const monVideoRef = useRef(null);
   const [mesCameraOn, setMesCameraOn] = useState(false);
+  const guestVideoRefsMap = useRef(new Map());
+  const pendingGuestTracksRef = useRef(new Map());
   const videoRef = useRef(null);
   const roomRef = useRef(null);
   const socketRef = useRef(null);
@@ -200,6 +204,24 @@ export default function LiveScreen() {
           socket.on('live:invite:received', function(data) {
             if (data.liveId === id) setInviteRecue(true);
           });
+          socket.on('live:invite:full', function(data) {
+            if (data.liveId === id) setInviteComplet(true);
+          });
+          socket.on('live:guest:joined', function(data) {
+            if (data.liveId === id) {
+              setGuestsConnectesFidele(function(prev) {
+                if (prev.some(function(p) { return p.userId === data.userId; })) return prev;
+                return prev.concat([{ userId: data.userId, nom: data.nom }]);
+              });
+            }
+          });
+          socket.on('live:guest:removed', function(data) {
+            if (data.liveId === id) {
+              guestVideoRefsMap.current.delete(data.userId);
+              pendingGuestTracksRef.current.delete(data.userId);
+              setGuestsConnectesFidele(function(prev) { return prev.filter(function(p) { return p.userId !== data.userId; }); });
+            }
+          });
           socket.on('live:guest:control:received', function(data) {
             if (data.liveId !== id) return;
             if (data.action === 'mute') {
@@ -227,15 +249,29 @@ export default function LiveScreen() {
         const dataToken = await liveApi.getToken(id);
         if (annule) return;
         const room = new Room();
-        room.on(RoomEvent.TrackSubscribed, function(track) {
-          if (track.kind === 'video' && videoRef.current) track.attach(videoRef.current);
+        room.on(RoomEvent.TrackSubscribed, function(track, publication, participant) {
+          if (track.kind !== 'video') return;
+          const estDiffuseur = session && String(participant.identity) === String(session.startedBy);
+          if (estDiffuseur) {
+            if (videoRef.current) track.attach(videoRef.current);
+          } else {
+            const el = guestVideoRefsMap.current.get(participant.identity);
+            if (el) { track.attach(el); } else { pendingGuestTracksRef.current.set(participant.identity, track); }
+          }
         });
         await room.connect(dataToken.data.url, dataToken.data.token);
         roomRef.current = room;
 
         room.remoteParticipants.forEach(function(participant) {
+          const estDiffuseurExistant = session && String(participant.identity) === String(session.startedBy);
           participant.videoTrackPublications.forEach(function(pub) {
-            if (pub.track && videoRef.current) pub.track.attach(videoRef.current);
+            if (!pub.track) return;
+            if (estDiffuseurExistant) {
+              if (videoRef.current) pub.track.attach(videoRef.current);
+            } else {
+              const el = guestVideoRefsMap.current.get(participant.identity);
+              if (el) { pub.track.attach(el); } else { pendingGuestTracksRef.current.set(participant.identity, pub.track); }
+            }
           });
         });
 
@@ -369,13 +405,27 @@ export default function LiveScreen() {
       const { liveApi } = await import('../../services/api');
       const dataToken = await liveApi.getToken(id);
       const room = new Room();
-      room.on(RoomEvent.TrackSubscribed, function(track) {
-        if (track.kind === 'video' && videoRef.current) track.attach(videoRef.current);
+      room.on(RoomEvent.TrackSubscribed, function(track, publication, participant) {
+        if (track.kind !== 'video') return;
+        const estDiffuseur = sessionReelle && String(participant.identity) === String(sessionReelle.startedBy);
+        if (estDiffuseur) {
+          if (videoRef.current) track.attach(videoRef.current);
+        } else {
+          const el = guestVideoRefsMap.current.get(participant.identity);
+          if (el) { track.attach(el); } else { pendingGuestTracksRef.current.set(participant.identity, track); }
+        }
       });
       await room.connect(dataToken.data.url, dataToken.data.token);
       room.remoteParticipants.forEach(function(participant) {
+        const estDiffuseurExistant = sessionReelle && String(participant.identity) === String(sessionReelle.startedBy);
         participant.videoTrackPublications.forEach(function(pub) {
-          if (pub.track && videoRef.current) pub.track.attach(videoRef.current);
+          if (!pub.track) return;
+          if (estDiffuseurExistant) {
+            if (videoRef.current) pub.track.attach(videoRef.current);
+          } else {
+            const el = guestVideoRefsMap.current.get(participant.identity);
+            if (el) { pub.track.attach(el); } else { pendingGuestTracksRef.current.set(participant.identity, pub.track); }
+          }
         });
       });
       await room.localParticipant.setMicrophoneEnabled(true);
@@ -570,13 +620,18 @@ export default function LiveScreen() {
       {/* ── PARTICIPANTS (colonne fixe à droite) ── */}
       <div style={{ position: 'absolute', top: 105, right: 52, width: 62, bottom: 62, display: 'flex', flexDirection: 'column', gap: 5, padding: '4px 0', zIndex: 2 }}>
         {Array.from({length: 5}).map((_, idx) => {
-          const p = live.participants[idx];
+          const p = guestsConnectesFidele[idx];
           return p ? (
-            <div key={p.id} onClick={() => setSpeakingId(p.id)} style={{ flex: 1, borderRadius: 10, background: p.bg, border: speakingId === p.id ? `2px solid ${OR}` : `1.5px solid ${p.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', minHeight: 60, animation: speakingId === p.id ? 'jb-speaking 1.5s ease-in-out infinite' : 'none', cursor: 'pointer' }}>
-              <i className="ti ti-user" style={{ fontSize: 16, color: 'rgba(255,255,255,0.25)' }} />
-              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,0.6)', borderRadius: '0 0 8px 8px', padding: '2px 4px', display: 'flex', justifyContent: 'space-between' }}>
+            <div key={p.userId} style={{ flex: 1, borderRadius: 10, background: '#1a3a2a', border: '1.5px solid rgba(200,168,75,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', minHeight: 60, overflow: 'hidden' }}>
+              <video ref={function(el) {
+                if (el) {
+                  guestVideoRefsMap.current.set(p.userId, el);
+                  const pending = pendingGuestTracksRef.current.get(p.userId);
+                  if (pending) { pending.attach(el); pendingGuestTracksRef.current.delete(p.userId); }
+                }
+              }} autoPlay playsInline style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,0.6)', borderRadius: '0 0 8px 8px', padding: '2px 4px' }}>
                 <span style={{ fontSize: 6, color: 'rgba(255,255,255,0.8)' }}>{p.nom}</span>
-                <i className={`ti ti-microphone${p.micOn ? '' : '-off'}`} style={{ fontSize: 7, color: p.micOn ? '#81C784' : '#e57373' }} />
               </div>
             </div>
           ) : (
@@ -740,6 +795,16 @@ export default function LiveScreen() {
           </div>
         </div>
       </div>
+
+      {inviteComplet && (
+        <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 40, padding: 24 }}>
+          <div style={{ background: '#0C0A06', border: '1px solid rgba(200,168,75,0.3)', borderRadius: 20, padding: 24, width: '100%', maxWidth: 300, textAlign: 'center' }}>
+            <i className="ti ti-users" style={{ fontSize: 28, color: OR }} />
+            <div style={{ color: '#fff', fontSize: 13, fontWeight: 700, marginTop: 10, marginBottom: 10 }}>Le direct est complet</div>
+            <button onClick={function() { setInviteComplet(false); }} style={{ padding: '10px 24px', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 14, color: '#fff', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>Fermer</button>
+          </div>
+        </div>
+      )}
 
       {inviteRecue && (
         <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 40, padding: 24 }}>
