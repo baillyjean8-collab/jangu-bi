@@ -32,6 +32,12 @@ export default function AdminLive() {
   const [duree, setDuree] = useState(0);
   const [demarrage, setDemarrage] = useState(false);
   const [resume, setResume] = useState(null);
+  const [but, setBut] = useState('');
+  const [couvertureUrl, setCouvertureUrl] = useState(null);
+  const [showDateProgramme, setShowDateProgramme] = useState(false);
+  const [dateProgrammee, setDateProgrammee] = useState('');
+  const [programmeExistant, setProgrammeExistant] = useState(null);
+  const [programmationEnCours, setProgrammationEnCours] = useState(false);
   const [parishLogoUrl, setParishLogoUrl] = useState(null);
   const [rosterListe, setRosterListe] = useState([]);
   const [showInviter, setShowInviter] = useState(false);
@@ -236,6 +242,13 @@ export default function AdminLive() {
       try {
         const parishId = await recupererParishId();
         if (!parishId) { setEtat('config'); return; }
+
+        try {
+          const resProg = await fetch(BASE + '/live/parish/' + parishId + '/scheduled', { headers: { Authorization: 'Bearer ' + token } });
+          const dataProg = await resProg.json();
+          const sessionProg = dataProg && dataProg.data && dataProg.data.session;
+          if (sessionProg) setProgrammeExistant(sessionProg);
+        } catch (progErr) { console.log('Verification programme:', progErr.message); }
 
         const res = await fetch(BASE + '/live/parish/' + parishId + '/active', { headers: { Authorization: 'Bearer ' + token } });
         if (res.status === 404) { setEtat('config'); return; }
@@ -549,6 +562,70 @@ export default function AdminLive() {
     }
   }
 
+  function choisirCouverture(e) {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(ev) { setCouvertureUrl(ev.target.result); };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  }
+
+  async function programmerLive() {
+    if (!titre || !dateProgrammee) return;
+    setProgrammationEnCours(true);
+    try {
+      const parishId = await recupererParishId();
+      const res = await fetch(BASE + '/live/schedule', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          parishId,
+          title: titre,
+          goal: but,
+          coverUrl: couvertureUrl,
+          scheduledAt: new Date(dateProgrammee).toISOString(),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setErreur((data && data.message) || 'Impossible de programmer le direct.'); setProgrammationEnCours(false); return; }
+      setProgrammeExistant(data.data.session);
+      setShowDateProgramme(false);
+      setProgrammationEnCours(false);
+    } catch (e) {
+      console.log('Programmer live:', e.message);
+      setErreur('Une erreur est survenue lors de la programmation.');
+      setProgrammationEnCours(false);
+    }
+  }
+
+  async function lancerProgramme() {
+    if (!programmeExistant) return;
+    setDemarrage(true);
+    try {
+      const res = await fetch(BASE + '/live/' + programmeExistant._id + '/activate', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + token },
+      });
+      const data = await res.json();
+      if (!res.ok) { setErreur((data && data.message) || 'Impossible de lancer ce direct.'); setDemarrage(false); return; }
+      const session = data.data.session;
+      const parishId = await recupererParishId();
+      await publierFlux(session._id);
+      connecterSocket(parishId, session._id);
+      setLiveId(session._id);
+      liveIdRef.current = session._id;
+      setProgrammeExistant(null);
+      setEtat('direct');
+      setDemarrage(false);
+      setDuree(0);
+    } catch (e) {
+      console.log('Lancer programme:', e.message);
+      setErreur('Une erreur est survenue.');
+      setDemarrage(false);
+    }
+  }
+
   function partagerLive() {
     const url = window.location.origin + '/live/' + liveId;
     if (navigator.share) {
@@ -610,39 +687,94 @@ export default function AdminLive() {
             </div>
           </div>
 
-          <div style={{ position: 'absolute', bottom: 168, left: 10, right: 10, zIndex: 5 }}>
-            <div style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 10, padding: '8px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ color: '#fff', fontSize: 10 }}><i className="ti ti-microphone-2" style={{ fontSize: 13, verticalAlign: -2, marginRight: 5 }} />Reduction de bruit</span>
-              <div onClick={function() { setBruitReduction(function(v) { return !v; }); }} style={{ width: 32, height: 18, borderRadius: 10, background: bruitReduction ? OR : 'rgba(255,255,255,0.2)', position: 'relative', cursor: 'pointer' }}>
-                <div style={{ position: 'absolute', top: 2, left: bruitReduction ? 16 : 2, width: 14, height: 14, borderRadius: '50%', background: '#fff', transition: 'left .2s' }} />
-              </div>
-            </div>
-          </div>
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, maxHeight: '72%', overflowY: 'auto', zIndex: 5, padding: '10px 10px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
 
-          <div style={{ position: 'absolute', bottom: 126, left: 10, right: 10, zIndex: 5 }}>
-            <input
-              value={titre}
-              onChange={function(e) { setTitre(e.target.value); }}
-              placeholder="Titre du direct..."
-              style={{ width: '100%', background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: 10, padding: '10px 14px', fontSize: 12, color: '#fff', outline: 'none', fontFamily: 'Georgia,serif', boxSizing: 'border-box' }}
-            />
-          </div>
+            {programmeExistant ? (
+              <>
+                <div style={{ background: 'rgba(200,168,75,0.15)', border: '1px solid rgba(200,168,75,0.35)', borderRadius: 12, padding: 12 }}>
+                  <div style={{ color: OR, fontSize: 10, fontWeight: 700, marginBottom: 4 }}>DIRECT PROGRAMME</div>
+                  <div style={{ color: '#fff', fontSize: 13, fontWeight: 700 }}>{programmeExistant.title}</div>
+                  {programmeExistant.goal && <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 10, marginTop: 2 }}>But : {programmeExistant.goal}</div>}
+                  <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 10, marginTop: 4 }}>{new Date(programmeExistant.scheduledAt).toLocaleString('fr-FR')}</div>
+                </div>
+                <button
+                  onClick={lancerProgramme}
+                  disabled={demarrage}
+                  style={{ width: '100%', padding: 14, background: 'linear-gradient(135deg,#7f0000,#3a0000)', border: 'none', borderRadius: 20, color: '#ffcdd2', fontWeight: 700, fontSize: 13, fontFamily: 'Georgia,serif', cursor: 'pointer' }}
+                >
+                  {demarrage ? 'Demarrage...' : 'Lancer maintenant'}
+                </button>
+              </>
+            ) : (
+              <>
+                <div style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 10, padding: '8px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ color: '#fff', fontSize: 10 }}><i className="ti ti-microphone-2" style={{ fontSize: 13, verticalAlign: -2, marginRight: 5 }} />Reduction de bruit</span>
+                  <div onClick={function() { setBruitReduction(function(v) { return !v; }); }} style={{ width: 32, height: 18, borderRadius: 10, background: bruitReduction ? OR : 'rgba(255,255,255,0.2)', position: 'relative', cursor: 'pointer' }}>
+                    <div style={{ position: 'absolute', top: 2, left: bruitReduction ? 16 : 2, width: 14, height: 14, borderRadius: '50%', background: '#fff', transition: 'left .2s' }} />
+                  </div>
+                </div>
 
-          <div style={{ position: 'absolute', bottom: 84, left: 10, right: 10, zIndex: 5 }}>
-            <div style={{ background: 'rgba(200,168,75,0.1)', border: '1px solid rgba(200,168,75,0.25)', borderRadius: 10, padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 6 }}>
-              <i className="ti ti-shield-check" style={{ color: OR, fontSize: 13 }} />
-              <span style={{ color: OR, fontSize: 9 }}>Le direct est modere : propos malsains bloques automatiquement</span>
-            </div>
-          </div>
+                <input
+                  value={titre}
+                  onChange={function(e) { setTitre(e.target.value); }}
+                  placeholder="Titre du direct..."
+                  style={{ width: '100%', background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: 10, padding: '10px 14px', fontSize: 12, color: '#fff', outline: 'none', fontFamily: 'Georgia,serif', boxSizing: 'border-box' }}
+                />
 
-          <div style={{ position: 'absolute', bottom: 16, left: 10, right: 10, zIndex: 5 }}>
-            <button
-              onClick={function() { if (titre) setConfirm(true); }}
-              disabled={demarrage}
-              style={{ width: '100%', padding: 14, background: titre ? 'linear-gradient(135deg,#7f0000,#3a0000)' : 'rgba(255,255,255,0.1)', border: 'none', borderRadius: 20, color: titre ? '#ffcdd2' : 'rgba(255,255,255,0.4)', fontWeight: 700, fontSize: 13, fontFamily: 'Georgia,serif', cursor: titre ? 'pointer' : 'default' }}
-            >
-              {demarrage ? 'Demarrage...' : 'Passer en direct'}
-            </button>
+                <input
+                  value={but}
+                  onChange={function(e) { setBut(e.target.value); }}
+                  placeholder="But du direct (optionnel)..."
+                  style={{ width: '100%', background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: 10, padding: '10px 14px', fontSize: 12, color: '#fff', outline: 'none', fontFamily: 'Georgia,serif', boxSizing: 'border-box' }}
+                />
+
+                <label style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.1)', borderRadius: 10, padding: '8px 12px', cursor: 'pointer' }}>
+                  <div style={{ width: 30, height: 30, borderRadius: 8, background: couvertureUrl ? 'transparent' : 'rgba(255,255,255,0.15)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    {couvertureUrl ? <img src={couvertureUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <i className="ti ti-photo" style={{ color: '#fff', fontSize: 15 }} />}
+                  </div>
+                  <span style={{ color: '#fff', fontSize: 10 }}>{couvertureUrl ? 'Couverture choisie' : 'Ajouter une couverture (optionnel)'}</span>
+                  <input type="file" accept="image/*" onChange={choisirCouverture} style={{ display: 'none' }} />
+                </label>
+
+                <div style={{ background: 'rgba(200,168,75,0.1)', border: '1px solid rgba(200,168,75,0.25)', borderRadius: 10, padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <i className="ti ti-shield-check" style={{ color: OR, fontSize: 13 }} />
+                  <span style={{ color: OR, fontSize: 9 }}>Le direct est modere : propos malsains bloques automatiquement</span>
+                </div>
+
+                {!showDateProgramme ? (
+                  <>
+                    <button
+                      onClick={function() { if (titre) setConfirm(true); }}
+                      disabled={demarrage}
+                      style={{ width: '100%', padding: 14, background: titre ? 'linear-gradient(135deg,#7f0000,#3a0000)' : 'rgba(255,255,255,0.1)', border: 'none', borderRadius: 20, color: titre ? '#ffcdd2' : 'rgba(255,255,255,0.4)', fontWeight: 700, fontSize: 13, fontFamily: 'Georgia,serif', cursor: titre ? 'pointer' : 'default' }}
+                    >
+                      {demarrage ? 'Demarrage...' : 'Passer en direct'}
+                    </button>
+                    <button
+                      onClick={function() { if (titre) setShowDateProgramme(true); }}
+                      style={{ width: '100%', padding: 12, background: 'rgba(255,255,255,0.08)', border: '1.5px solid rgba(255,255,255,0.2)', borderRadius: 20, color: titre ? '#fff' : 'rgba(255,255,255,0.35)', fontWeight: 700, fontSize: 12, fontFamily: 'Georgia,serif', cursor: titre ? 'pointer' : 'default' }}
+                    >
+                      Programmer pour plus tard
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <input
+                      type="datetime-local"
+                      value={dateProgrammee}
+                      onChange={function(e) { setDateProgrammee(e.target.value); }}
+                      style={{ width: '100%', background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: 10, padding: '10px 14px', fontSize: 12, color: '#fff', outline: 'none', fontFamily: 'Georgia,serif', boxSizing: 'border-box' }}
+                    />
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button onClick={function() { setShowDateProgramme(false); }} style={{ flex: 1, padding: 12, background: 'rgba(255,255,255,0.08)', border: '1.5px solid rgba(255,255,255,0.2)', borderRadius: 20, color: '#fff', fontWeight: 700, fontSize: 12, fontFamily: 'Georgia,serif', cursor: 'pointer' }}>Annuler</button>
+                      <button onClick={programmerLive} disabled={!dateProgrammee || programmationEnCours} style={{ flex: 1, padding: 12, background: dateProgrammee ? 'linear-gradient(135deg,#C8A84B,#8B6020)' : 'rgba(255,255,255,0.1)', border: 'none', borderRadius: 20, color: dateProgrammee ? '#1e2d14' : 'rgba(255,255,255,0.4)', fontWeight: 700, fontSize: 12, fontFamily: 'Georgia,serif', cursor: dateProgrammee ? 'pointer' : 'default' }}>
+                        {programmationEnCours ? 'Programmation...' : 'Confirmer'}
+                      </button>
+                    </div>
+                  </>
+                )}
+              </>
+            )}
           </div>
         </>
       )}
