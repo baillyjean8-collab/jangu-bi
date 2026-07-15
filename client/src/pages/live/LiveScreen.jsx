@@ -130,6 +130,7 @@ export default function LiveScreen() {
   const [demandeCamera, setDemandeCamera] = useState(false);
   const [estInvite, setEstInvite] = useState(false);
   const monVideoRef = useRef(null);
+  const [mesCameraOn, setMesCameraOn] = useState(false);
   const videoRef = useRef(null);
   const roomRef = useRef(null);
   const socketRef = useRef(null);
@@ -377,13 +378,23 @@ export default function LiveScreen() {
           if (pub.track && videoRef.current) pub.track.attach(videoRef.current);
         });
       });
-      await room.localParticipant.setCameraEnabled(true);
       await room.localParticipant.setMicrophoneEnabled(true);
-      const camPub = room.localParticipant.videoTrackPublications.values().next().value;
-      if (camPub && camPub.track && monVideoRef.current) camPub.track.attach(monVideoRef.current);
       roomRef.current = room;
       setEstInvite(true);
     } catch (e) { console.log('Accepter invitation:', e.message); }
+  }
+
+  async function toggleMaCamera() {
+    if (!roomRef.current) return;
+    const nouvelEtat = !mesCameraOn;
+    try {
+      await roomRef.current.localParticipant.setCameraEnabled(nouvelEtat);
+      if (nouvelEtat) {
+        const camPub = roomRef.current.localParticipant.videoTrackPublications.values().next().value;
+        if (camPub && camPub.track && monVideoRef.current) camPub.track.attach(monVideoRef.current);
+      }
+      setMesCameraOn(nouvelEtat);
+    } catch (e) { console.log('Ma camera:', e.message); }
   }
 
   function refuserInvitation() {
@@ -713,10 +724,20 @@ export default function LiveScreen() {
         </div>
       )}
 
-    <div style={{ position: 'absolute', bottom: 100, right: 8, width: 70, height: 96, borderRadius: 12, overflow: 'hidden', border: '2px solid ' + OR, zIndex: 30, background: '#000', display: estInvite ? 'block' : 'none' }}>
-        <video ref={monVideoRef} autoPlay muted playsInline style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,0.6)', padding: '2px 4px' }}>
-          <span style={{ color: '#fff', fontSize: 6 }}>Vous</span>
+    <div style={{ position: 'absolute', bottom: 100, right: 8, display: estInvite ? 'flex' : 'none', flexDirection: 'column', alignItems: 'center', gap: 6, zIndex: 30 }}>
+        <button onClick={toggleMaCamera} style={{ width: 34, height: 34, borderRadius: '50%', background: mesCameraOn ? 'rgba(16,60,20,0.92)' : 'rgba(90,10,10,0.92)', border: '2px solid ' + (mesCameraOn ? '#81C784' : '#e57373'), boxShadow: '0 2px 6px rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+          <i className={mesCameraOn ? 'ti ti-video' : 'ti ti-video-off'} style={{ color: mesCameraOn ? '#81C784' : '#e57373', fontSize: 16 }} />
+        </button>
+        <div style={{ width: 70, height: 96, borderRadius: 12, overflow: 'hidden', border: '2px solid ' + OR, background: '#000', position: 'relative' }}>
+          <video ref={monVideoRef} autoPlay muted playsInline style={{ width: '100%', height: '100%', objectFit: 'cover', display: mesCameraOn ? 'block' : 'none' }} />
+          {!mesCameraOn && (
+            <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <i className="ti ti-video-off" style={{ color: 'rgba(200,168,75,0.5)', fontSize: 20 }} />
+            </div>
+          )}
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,0.6)', padding: '2px 4px' }}>
+            <span style={{ color: '#fff', fontSize: 6 }}>Vous</span>
+          </div>
         </div>
       </div>
 

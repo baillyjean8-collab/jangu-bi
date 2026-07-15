@@ -761,14 +761,14 @@ export default function AdminLive() {
 
       {showGuestMenu && guestConnecte && (
         <div style={{ position: 'absolute', right: 84, bottom: 100, display: 'flex', flexDirection: 'column', gap: 6, zIndex: 7 }}>
-          <button onClick={toggleGuestMic} style={{ width: 30, height: 30, borderRadius: '50%', background: guestMicOn ? 'rgba(129,199,132,0.25)' : 'rgba(229,57,53,0.25)', border: '1.5px solid ' + (guestMicOn ? 'rgba(129,199,132,0.5)' : 'rgba(229,57,53,0.5)'), display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-            <i className={guestMicOn ? 'ti ti-microphone' : 'ti ti-microphone-off'} style={{ color: guestMicOn ? '#81C784' : '#e57373', fontSize: 14 }} />
+          <button onClick={toggleGuestMic} style={{ width: 34, height: 34, borderRadius: '50%', background: guestMicOn ? 'rgba(16,60,20,0.92)' : 'rgba(90,10,10,0.92)', border: '2px solid ' + (guestMicOn ? '#81C784' : '#e57373'), boxShadow: '0 2px 6px rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+            <i className={guestMicOn ? 'ti ti-microphone' : 'ti ti-microphone-off'} style={{ color: guestMicOn ? '#81C784' : '#e57373', fontSize: 16 }} />
           </button>
-          <button onClick={toggleGuestCamera} style={{ width: 30, height: 30, borderRadius: '50%', background: guestCameraOn ? 'rgba(129,199,132,0.25)' : 'rgba(229,57,53,0.25)', border: '1.5px solid ' + (guestCameraOn ? 'rgba(129,199,132,0.5)' : 'rgba(229,57,53,0.5)'), display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-            <i className={guestCameraOn ? 'ti ti-video' : 'ti ti-video-off'} style={{ color: guestCameraOn ? '#81C784' : '#e57373', fontSize: 14 }} />
+          <button onClick={toggleGuestCamera} style={{ width: 34, height: 34, borderRadius: '50%', background: guestCameraOn ? 'rgba(16,60,20,0.92)' : 'rgba(90,10,10,0.92)', border: '2px solid ' + (guestCameraOn ? '#81C784' : '#e57373'), boxShadow: '0 2px 6px rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+            <i className={guestCameraOn ? 'ti ti-video' : 'ti ti-video-off'} style={{ color: guestCameraOn ? '#81C784' : '#e57373', fontSize: 16 }} />
           </button>
-          <button onClick={faireDescendreInvite} style={{ width: 30, height: 30, borderRadius: '50%', background: 'rgba(229,57,53,0.25)', border: '1.5px solid rgba(229,57,53,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-            <i className="ti ti-arrow-down" style={{ color: '#e57373', fontSize: 14 }} />
+          <button onClick={faireDescendreInvite} style={{ width: 34, height: 34, borderRadius: '50%', background: 'rgba(90,10,10,0.92)', border: '2px solid #e57373', boxShadow: '0 2px 6px rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+            <i className="ti ti-arrow-down" style={{ color: '#e57373', fontSize: 16 }} />
           </button>
         </div>
       )}
