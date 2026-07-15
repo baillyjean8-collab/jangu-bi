@@ -254,6 +254,7 @@ export default function LiveScreen() {
         if (annule) return;
         const room = new Room();
         room.on(RoomEvent.TrackSubscribed, function(track, publication, participant) {
+          if (track.kind === 'audio') { const a = track.attach(); a.autoplay = true; document.body.appendChild(a); return; }
           if (track.kind !== 'video') return;
           const estDiffuseur = session && String(participant.identity) === String(session.startedBy);
           if (estDiffuseur) {
