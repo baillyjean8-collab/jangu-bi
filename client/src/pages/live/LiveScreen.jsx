@@ -422,6 +422,7 @@ export default function LiveScreen() {
       const dataToken = await liveApi.getToken(id);
       const room = new Room();
       room.on(RoomEvent.TrackSubscribed, function(track, publication, participant) {
+        if (track.kind === 'audio') { const a = track.attach(); a.autoplay = true; document.body.appendChild(a); return; }
         if (track.kind !== 'video') return;
         const estDiffuseur = sessionReelle && String(participant.identity) === String(sessionReelle.startedBy);
         if (estDiffuseur) {
