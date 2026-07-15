@@ -39,6 +39,9 @@ export default function AdminLive() {
   const [programmeExistant, setProgrammeExistant] = useState(null);
   const [programmationEnCours, setProgrammationEnCours] = useState(false);
   const [parishLogoUrl, setParishLogoUrl] = useState(null);
+  const [fondActif, setFondActif] = useState('aucun');
+  const [segmentationPrete, setSegmentationPrete] = useState(false);
+  const [chargementSegmentation, setChargementSegmentation] = useState(false);
   const [rosterListe, setRosterListe] = useState([]);
   const [showInviter, setShowInviter] = useState(false);
   const [showGuestMenu, setShowGuestMenu] = useState(false);
@@ -66,6 +69,11 @@ export default function AdminLive() {
   const videoPubRef = useRef(null);
   const guestVideoRef = useRef(null);
   const parishLogoImgRef = useRef(null);
+  const parishCoverImgRef = useRef(null);
+  const fondActifRef = useRef('aucun');
+  const segmentationRef = useRef(null);
+
+  useEffect(function() { fondActifRef.current = fondActif; }, [fondActif]);
   const cameraOnRef = useRef(true);
   const audioCtxRef = useRef(null);
   const analyserRef = useRef(null);
@@ -91,7 +99,9 @@ export default function AdminLive() {
       const h = canvasRef.current.height;
 
       if (cameraOnRef.current) {
-        if (hiddenVideoRef.current && hiddenVideoRef.current.readyState >= 2) {
+        if (fondActifRef.current !== 'aucun' && segmentationRef.current && hiddenVideoRef.current && hiddenVideoRef.current.readyState >= 2) {
+          segmentationRef.current.send({ image: hiddenVideoRef.current }).catch(function() {});
+        } else if (hiddenVideoRef.current && hiddenVideoRef.current.readyState >= 2) {
           ctx.filter = FILTRES_CSS[filtreActifRef.current] || 'none';
           ctx.drawImage(hiddenVideoRef.current, 0, 0, w, h);
         }
@@ -198,6 +208,68 @@ export default function AdminLive() {
     analyserRef.current = null;
   }
 
+  function chargerScriptSegmentation() {
+    return new Promise(function(resolve, reject) {
+      if (window.SelfieSegmentation) { resolve(); return; }
+      const script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js';
+      script.crossOrigin = 'anonymous';
+      script.onload = function() { resolve(); };
+      script.onerror = function() { reject(new Error('Echec du chargement de la segmentation')); };
+      document.head.appendChild(script);
+    });
+  }
+
+  function initialiserSegmentation() {
+    if (segmentationRef.current || !window.SelfieSegmentation) return;
+    const seg = new window.SelfieSegmentation({
+      locateFile: function(file) { return 'https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/' + file; },
+    });
+    seg.setOptions({ modelSelection: 0 });
+    seg.onResults(function(results) {
+      if (!canvasRef.current) return;
+      const ctx = canvasRef.current.getContext('2d');
+      const w = canvasRef.current.width;
+      const h = canvasRef.current.height;
+      ctx.save();
+      ctx.clearRect(0, 0, w, h);
+      ctx.drawImage(results.segmentationMask, 0, 0, w, h);
+      ctx.globalCompositeOperation = 'source-in';
+      ctx.drawImage(results.image, 0, 0, w, h);
+      ctx.globalCompositeOperation = 'destination-over';
+      if (fondActifRef.current === 'paroisse' && parishCoverImgRef.current && parishCoverImgRef.current.complete && parishCoverImgRef.current.naturalWidth > 0) {
+        ctx.drawImage(parishCoverImgRef.current, 0, 0, w, h);
+      } else {
+        ctx.filter = 'blur(10px)';
+        ctx.drawImage(results.image, 0, 0, w, h);
+        ctx.filter = 'none';
+      }
+      ctx.restore();
+    });
+    segmentationRef.current = seg;
+    setSegmentationPrete(true);
+  }
+
+  async function choisirFond(id) {
+    if (id === 'aucun') {
+      setFondActif('aucun');
+      return;
+    }
+    if (!segmentationRef.current) {
+      setChargementSegmentation(true);
+      try {
+        await chargerScriptSegmentation();
+        initialiserSegmentation();
+      } catch (e) {
+        console.log('Segmentation:', e.message);
+        setChargementSegmentation(false);
+        return;
+      }
+      setChargementSegmentation(false);
+    }
+    setFondActif(id);
+  }
+
   async function retournerCamera() {
     facingRef.current = facingRef.current === 'user' ? 'environment' : 'user';
     try {
@@ -226,6 +298,12 @@ export default function AdminLive() {
         img.crossOrigin = 'anonymous';
         img.src = p.logoUrl;
         parishLogoImgRef.current = img;
+      }
+      if (p && p.coverUrl) {
+        const imgCouverture = new Image();
+        imgCouverture.crossOrigin = 'anonymous';
+        imgCouverture.src = p.coverUrl;
+        parishCoverImgRef.current = imgCouverture;
       }
     } catch (e) { console.log('Logo paroisse:', e.message); }
   }
@@ -671,6 +749,25 @@ export default function AdminLive() {
           </button>
 
           <div style={{ position: 'absolute', top: 48, left: 10, right: 10, zIndex: 5 }}>
+            <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.5)', marginBottom: 5, letterSpacing: 1 }}>ARRIERE-PLAN {chargementSegmentation ? '(chargement...)' : ''}</div>
+            <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 8 }}>
+              {[
+                { id: 'aucun', label: 'Aucun', icon: 'ti-ban' },
+                { id: 'flou', label: 'Flou', icon: 'ti-blur' },
+                { id: 'paroisse', label: 'Paroisse', icon: 'ti-building-church' },
+              ].map(function(f) {
+                const actif = fondActif === f.id;
+                return (
+                  <div key={f.id} onClick={function() { choisirFond(f.id); }} style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, cursor: 'pointer' }}>
+                    <div style={{ width: 36, height: 36, borderRadius: '50%', background: actif ? 'rgba(200,168,75,0.9)' : 'rgba(255,255,255,0.12)', border: actif ? '2px solid ' + OR : '1.5px solid rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <i className={'ti ' + f.icon} style={{ color: actif ? VERT : '#fff', fontSize: 15 }} />
+                    </div>
+                    <span style={{ color: actif ? '#fff' : 'rgba(255,255,255,0.55)', fontSize: 7 }}>{f.label}</span>
+                  </div>
+                );
+              })}
+            </div>
+
             <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.5)', marginBottom: 5, letterSpacing: 1 }}>EFFETS</div>
             <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4 }}>
               {FILTRES.map(function(f) {
