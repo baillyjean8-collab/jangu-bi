@@ -126,6 +126,7 @@ export default function LiveScreen() {
   const [connexionVideo, setConnexionVideo] = useState('chargement');
   const [viewerCountReel, setViewerCountReel] = useState(0);
   const [likeTotal, setLikeTotal] = useState(0);
+  const [shareCount, setShareCount] = useState(0);
   const [inviteRecue, setInviteRecue] = useState(false);
   const [demandeCamera, setDemandeCamera] = useState(false);
   const [estInvite, setEstInvite] = useState(false);
@@ -167,6 +168,9 @@ export default function LiveScreen() {
           });
           socket.on('live:viewerCount', function(data) {
             if (data.liveId === id) setViewerCountReel(data.count);
+          });
+          socket.on('live:shareCount', function(data) {
+            if (data.liveId === id) setShareCount(data.count);
           });
           socket.on('live:reaction', function(data) {
             if (data.liveId !== id) return;
@@ -389,6 +393,18 @@ export default function LiveScreen() {
   }
   function removeCadeau(id) { setCadeaux(prev => prev.filter(c => c.id !== id)); }
 
+  function partagerDirect() {
+    const url = window.location.href;
+    if (navigator.share) {
+      navigator.share({ title: (sessionReelle && sessionReelle.title) || 'Direct en cours', url: url }).catch(function() {});
+    } else if (navigator.clipboard) {
+      navigator.clipboard.writeText(url);
+    }
+    if (socketRef.current && sessionReelle && sessionReelle.parishId) {
+      socketRef.current.emit('share:send', { parishId: sessionReelle.parishId._id, liveId: id });
+    }
+  }
+
   function envoyerCadeau(emoji, nom) {
     if (socketRef.current && sessionReelle && sessionReelle.parishId) {
       socketRef.current.emit('gift:send', { parishId: sessionReelle.parishId._id, liveId: id, emoji: emoji, nom: nom });
@@ -530,6 +546,10 @@ export default function LiveScreen() {
   useEffect(() => {
     const style = document.createElement('style');
     style.textContent = `
+      @keyframes jb-pop-count {
+        0% { transform: scale(1.5); }
+        100% { transform: scale(1); }
+      }
       @keyframes jb-heart-pop {
         0%  { opacity:0; transform:scale(0); }
         30% { opacity:1; transform:scale(1.5); }
@@ -665,7 +685,7 @@ export default function LiveScreen() {
           </div>
           <span style={{ fontSize: 7, color: 'rgba(255,255,255,0.45)' }}>Dons</span>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, cursor: 'pointer' }}>
+        <div onClick={partagerDirect} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, cursor: 'pointer' }}>
           <div style={{ width: 40, height: 40, borderRadius: 12, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <i className="ti ti-share" style={{ fontSize: 18, color: 'rgba(255,255,255,0.5)' }} />
           </div>
@@ -695,7 +715,11 @@ export default function LiveScreen() {
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 3, background: 'rgba(255,255,255,0.06)', borderRadius: 20, padding: '2px 9px' }}>
             <i className="ti ti-heart" style={{ fontSize: 11, color: '#ef9a9a', filter: 'drop-shadow(0 0 4px rgba(239,154,154,0.8))' }} />
-            <span style={{ fontSize: 10, color: '#F5F0E8', fontWeight: 700 }}>{likeTotal}</span>
+            <span key={likeTotal} style={{ fontSize: 10, color: '#F5F0E8', fontWeight: 700, display: 'inline-block', animation: 'jb-pop-count 0.3s ease-out' }}>{likeTotal}</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 3, background: 'rgba(255,255,255,0.06)', borderRadius: 20, padding: '2px 9px' }}>
+            <i className="ti ti-share" style={{ fontSize: 11, color: '#90CAF9' }} />
+            <span key={'s' + shareCount} style={{ fontSize: 10, color: '#F5F0E8', fontWeight: 700, display: 'inline-block', animation: 'jb-pop-count 0.3s ease-out' }}>{shareCount}</span>
           </div>
         </div>
       </div>

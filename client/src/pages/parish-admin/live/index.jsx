@@ -52,7 +52,18 @@ export default function AdminLive() {
 
   const [viewerCountReel, setViewerCountReel] = useState(0);
   const [likeTotal, setLikeTotal] = useState(0);
+  const [shareCount, setShareCount] = useState(0);
   const [messagesChat, setMessagesChat] = useState([]);
+  const messagesChatRef = useRef([]);
+
+  useEffect(function() { messagesChatRef.current = messagesChat; }, [messagesChat]);
+
+  useEffect(function() {
+    const style = document.createElement('style');
+    style.textContent = '@keyframes jb-pop-count { 0% { transform: scale(1.5); } 100% { transform: scale(1); } }';
+    document.head.appendChild(style);
+    return function() { document.head.removeChild(style); };
+  }, []);
   const [texteMessage, setTexteMessage] = useState('');
 
   const roomRef = useRef(null);
@@ -403,6 +414,9 @@ export default function AdminLive() {
     socket.on('live:reaction', function(data) {
       if (data.liveId === sessionId) setLikeTotal(function(c) { return c + 1; });
     });
+    socket.on('live:shareCount', function(data) {
+      if (data.liveId === sessionId) setShareCount(data.count);
+    });
     socket.on('chat:message:admin', function(data) {
       if (data.liveId === sessionId) {
         setMessagesChat(function(prev) { return prev.slice(-30).concat([{ id: data.id, type: 'chat', nom: data.nom, texte: data.texte }]); });
@@ -604,6 +618,7 @@ export default function AdminLive() {
 
   async function terminerLive() {
     let sessionFinale = null;
+    const donsRecus = messagesChatRef.current.filter(function(m) { return m.type === 'gift' && m.cadeau && m.cadeau.indexOf('rejoint') === -1 && m.cadeau.indexOf('descendu') === -1; });
     try {
       enDirectRef.current = false;
       if (roomRef.current) { roomRef.current.disconnect(); roomRef.current = null; }
@@ -621,7 +636,7 @@ export default function AdminLive() {
       setLiveId(null);
       liveIdRef.current = null;
       setTitre('');
-      if (sessionFinale) setResume(sessionFinale);
+      if (sessionFinale) setResume(Object.assign({}, sessionFinale, { donsRecus: donsRecus }));
     }
   }
 
@@ -725,6 +740,9 @@ export default function AdminLive() {
     } else if (navigator.clipboard) {
       navigator.clipboard.writeText(url);
     }
+    recupererParishId().then(function(parishId) {
+      if (socketRef.current) socketRef.current.emit('share:send', { parishId: parishId, liveId: liveIdRef.current });
+    });
   }
 
   function formatDuree(s) {
@@ -924,7 +942,11 @@ export default function AdminLive() {
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 3, background: 'rgba(255,255,255,0.1)', borderRadius: 20, padding: '5px 9px', flexShrink: 0 }}>
                 <i className="ti ti-heart" style={{ fontSize: 12, color: '#ef9a9a' }} />
-                <span style={{ color: IVOIRE, fontSize: 11, fontWeight: 700 }}>{likeTotal}</span>
+                <span key={likeTotal} style={{ color: IVOIRE, fontSize: 11, fontWeight: 700, display: 'inline-block', animation: 'jb-pop-count 0.3s ease-out' }}>{likeTotal}</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 3, background: 'rgba(255,255,255,0.1)', borderRadius: 20, padding: '5px 9px', flexShrink: 0 }}>
+                <i className="ti ti-share" style={{ fontSize: 12, color: '#90CAF9' }} />
+                <span key={'s' + shareCount} style={{ color: IVOIRE, fontSize: 11, fontWeight: 700, display: 'inline-block', animation: 'jb-pop-count 0.3s ease-out' }}>{shareCount}</span>
               </div>
             </div>
 
@@ -1098,6 +1120,20 @@ export default function AdminLive() {
                 <div style={{ fontSize: 8, color: '#7A6E5E' }}>Duree</div>
               </div>
             </div>
+
+            {resume.donsRecus && resume.donsRecus.length > 0 && (
+              <div style={{ background: 'white', borderRadius: 12, padding: 12, border: '1px solid rgba(0,0,0,0.06)', marginBottom: 16, maxHeight: 140, overflowY: 'auto' }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: VERT, marginBottom: 8 }}>Cadeaux recus</div>
+                {resume.donsRecus.map(function(d) {
+                  return (
+                    <div key={d.id} style={{ fontSize: 11, color: VERT, marginBottom: 5 }}>
+                      {d.emoji} <span style={{ fontWeight: 700, color: OR }}>{d.nom}</span> a envoye {d.cadeau}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
             <button onClick={function() { setResume(null); }} style={{ width: '100%', padding: 12, background: 'linear-gradient(135deg,#1e2d14,#0a140a)', border: 'none', borderRadius: 12, color: OR, fontWeight: 700, fontSize: 13, fontFamily: 'Georgia,serif', cursor: 'pointer' }}>
               Fermer
             </button>

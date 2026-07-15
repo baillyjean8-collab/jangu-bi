@@ -105,6 +105,14 @@ const liveRepo = {
     return Live.atomicViewerUpdate(liveId, -1);
   },
 
+  async atomicShare(liveId) {
+    return Live.findByIdAndUpdate(
+      liveId,
+      { $inc: { sharesCount: 1 } },
+      { new: true, select: 'sharesCount' }
+    ).exec();
+  },
+
   async atomicReaction(liveId, type) {
     const field = `reactionCounts.${type}`;
     return Live.findByIdAndUpdate(
@@ -289,6 +297,12 @@ const liveService = {
   // Called from Socket.io layer when user leaves
   async viewerLeft(liveId) {
     return liveRepo.atomicViewerLeave(liveId);
+  },
+
+  // Called from Socket.io layer when a viewer taps "Partager"
+  async incrementShare(liveId) {
+    const updated = await liveRepo.atomicShare(liveId);
+    return updated ? updated.sharesCount : 0;
   },
 
   // Called from Socket.io layer for reactions — returns safe display string

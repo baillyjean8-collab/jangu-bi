@@ -77,6 +77,11 @@ const liveSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    sharesCount: {
+      type: Number,
+      default: 0,
+      min: [0, 'Shares count cannot be negative'],
+    },
     scheduledAt: {
       type: Date,
       default: null,

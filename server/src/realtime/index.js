@@ -60,6 +60,8 @@ const EVENTS = Object.freeze({
   GUEST_CAMERA_RESPONSE_SEND:     'live:guest:camera:response:send',
   GUEST_CAMERA_RESPONSE_RECEIVED: 'live:guest:camera:response:received',
   INVITE_FULL: 'live:invite:full',
+  SEND_SHARE:  'share:send',
+  SHARE_COUNT: 'live:shareCount',
 });
 
 const MAX_GUESTS_SIMULTANES = 4;
@@ -306,6 +308,16 @@ function handleConnection(io, socket) {
   });
 
   // ── Disconnect ───────────────────────────────────────────────────────────────
+  // --- Partage du direct ---
+  socket.on(EVENTS.SEND_SHARE, ({ parishId, liveId }) => {
+    if (!parishId || !/^[a-f0-9]{24}$/i.test(String(parishId))) return;
+    if (!liveId || !/^[a-f0-9]{24}$/i.test(String(liveId))) return;
+    liveService.incrementShare(liveId).then(function(count) {
+      const room = parishRoom(parishId);
+      io.to(room).emit(EVENTS.SHARE_COUNT, { liveId, count });
+    }).catch(function(err) { console.error('[Socket] share error:', err.message); });
+  });
+
   // --- Chat (texte libre, requiert une authentification) ---
   socket.on(EVENTS.SEND_CHAT, ({ parishId, liveId, texte }) => {
     try {
