@@ -595,7 +595,7 @@ export default function LiveScreen() {
       {cadeaux.map(cadeau => <GiftAnim key={cadeau.id} emoji={cadeau.emoji} x={cadeau.x} onDone={() => removeCadeau(cadeau.id)} />)}
 
       {/* ── FOND VIDÉO ── */}
-      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(160deg,#0a1a0f,#040404)' }} />
+      <div style={{ position: 'absolute', inset: 0, background: '#000000' }} />
 
       {/* ── ZONE VIDÉO CLIQUABLE ── */}
       <div
@@ -660,14 +660,14 @@ export default function LiveScreen() {
       {/* ── ICÔNES ACTION (colonne fixe extrême droite) ── */}
       <div style={{ position: 'absolute', right: 4, top: '50%', transform: 'translateY(-50%)', width: 50, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, zIndex: 2 }}>
         <div onClick={() => { incLike(); }} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, cursor: 'pointer' }}>
-          <div style={{ width: 40, height: 40, borderRadius: 14, background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ width: 40, height: 40, borderRadius: 14, background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <i className="ti ti-heart" style={{ fontSize: 18, color: '#ef9a9a' }} />
           </div>
           <span style={{ fontSize: 7, color: 'rgba(255,255,255,0.45)', fontFamily: 'Georgia,serif' }}>J'aime</span>
         </div>
         <div onClick={() => setShowWaitlist(w => !w)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, cursor: 'pointer' }}>
           <div style={{ position: 'relative' }}>
-            <div style={{ width: 40, height: 40, borderRadius: 14, background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ width: 40, height: 40, borderRadius: 14, background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <i className="ti ti-hand-stop" style={{ fontSize: 18, color: OR }} />
             </div>
             <div style={{ position: 'absolute', top: -4, right: -4, width: 15, height: 15, borderRadius: '50%', background: '#e53935', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 7, fontWeight: 700, color: 'white', border: '1.5px solid rgba(5,5,5,0.8)' }}>3</div>
@@ -675,13 +675,13 @@ export default function LiveScreen() {
           <span style={{ fontSize: 7, color: 'rgba(255,255,255,0.45)' }}>Demande</span>
         </div>
         <div onClick={() => { if(showCadeauxDrawer) closeDrawer(); else setShowCadeauxDrawer(true); }} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, cursor: 'pointer' }}>
-          <div style={{ width: 40, height: 40, borderRadius: 14, background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ width: 40, height: 40, borderRadius: 14, background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <i className="ti ti-gift" style={{ fontSize: 18, color: OR }} />
           </div>
           <span style={{ fontSize: 7, color: 'rgba(255,255,255,0.45)' }}>Dons</span>
         </div>
         <div onClick={partagerDirect} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, cursor: 'pointer' }}>
-          <div style={{ width: 40, height: 40, borderRadius: 14, background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ width: 40, height: 40, borderRadius: 14, background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <i className="ti ti-share" style={{ fontSize: 18, color: '#fff' }} />
           </div>
           <span style={{ fontSize: 7, color: 'rgba(255,255,255,0.45)' }}>Partager</span>
