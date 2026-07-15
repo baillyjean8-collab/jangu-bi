@@ -198,6 +198,21 @@ export default function LiveScreen() {
           socket.on('live:invite:received', function(data) {
             if (data.liveId === id) setInviteRecue(true);
           });
+          socket.on('live:guest:control:received', function(data) {
+            if (data.liveId !== id) return;
+            if (data.action === 'mute') {
+              if (roomRef.current) roomRef.current.localParticipant.setMicrophoneEnabled(false);
+            } else if (data.action === 'camera-off') {
+              if (roomRef.current) roomRef.current.localParticipant.setCameraEnabled(false);
+            } else if (data.action === 'kick') {
+              if (roomRef.current) {
+                roomRef.current.localParticipant.setCameraEnabled(false);
+                roomRef.current.localParticipant.setMicrophoneEnabled(false);
+              }
+              setEstInvite(false);
+              afficherBanniere("L'administrateur vous a fait descendre du direct", 4000);
+            }
+          });
           socket.on('live:ended', function(data) {
             if (data.liveId === id) afficherBanniere('Le direct est termine', 4000);
           });

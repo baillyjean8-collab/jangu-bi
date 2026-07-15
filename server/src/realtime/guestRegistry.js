@@ -14,8 +14,13 @@ function isApproved(liveId, userId) {
   return !!set && set.has(String(userId));
 }
 
+function revoke(liveId, userId) {
+  const set = approvedGuests.get(liveId);
+  if (set) set.delete(String(userId));
+}
+
 function clear(liveId) {
   approvedGuests.delete(liveId);
 }
 
-module.exports = { approve, isApproved, clear };
+module.exports = { approve, isApproved, revoke, clear };

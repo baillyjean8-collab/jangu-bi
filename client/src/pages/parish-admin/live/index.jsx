@@ -35,6 +35,7 @@ export default function AdminLive() {
   const [parishLogoUrl, setParishLogoUrl] = useState(null);
   const [rosterListe, setRosterListe] = useState([]);
   const [showInviter, setShowInviter] = useState(false);
+  const [showGuestMenu, setShowGuestMenu] = useState(false);
   const [invitesEnvoyes, setInvitesEnvoyes] = useState([]);
   const [guestConnecte, setGuestConnecte] = useState(null);
 
@@ -328,9 +329,12 @@ export default function AdminLive() {
     });
     socket.on('live:guest:joined', function(data) {
       if (data.liveId === sessionId) {
-        setGuestConnecte({ nom: data.nom });
+        setGuestConnecte({ nom: data.nom, userId: data.userId });
         setMessagesChat(function(prev) { return prev.slice(-30).concat([{ id: 'j-' + Date.now(), type: 'gift', nom: data.nom, cadeau: 'a rejoint le direct', emoji: '' }]); });
       }
+    });
+    socket.on('live:guest:removed', function(data) {
+      if (data.liveId === sessionId) { setGuestConnecte(null); setShowGuestMenu(false); }
     });
   }
 
@@ -339,6 +343,15 @@ export default function AdminLive() {
       socketRef.current.emit('live:invite:send', { parishId: parishId, liveId: liveIdRef.current, targetUserId: targetUserId });
     });
     setInvitesEnvoyes(function(prev) { return prev.concat([targetUserId]); });
+  }
+
+  function envoyerControleInvite(action) {
+    if (!guestConnecte || !guestConnecte.userId) return;
+    recupererParishId().then(function(parishId) {
+      socketRef.current.emit('live:guest:control:send', { parishId: parishId, liveId: liveIdRef.current, targetUserId: guestConnecte.userId, action: action });
+    });
+    setShowGuestMenu(false);
+    if (action === 'kick') setGuestConnecte(null);
   }
 
   function deconnecterSocket() {
@@ -701,10 +714,27 @@ export default function AdminLive() {
       )}
 
       {guestConnecte && (
-        <div style={{ position: 'absolute', right: 8, bottom: 100, width: 70, height: 96, borderRadius: 12, overflow: 'hidden', border: '2px solid ' + OR, zIndex: 6, background: '#000' }}>
+        <div onClick={function() { setShowGuestMenu(true); }} style={{ position: 'absolute', right: 8, bottom: 100, width: 70, height: 96, borderRadius: 12, overflow: 'hidden', border: '2px solid ' + OR, zIndex: 6, background: '#000', cursor: 'pointer' }}>
           <video ref={guestVideoRef} autoPlay playsInline style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,0.6)', padding: '2px 4px' }}>
             <span style={{ color: '#fff', fontSize: 6 }}>{guestConnecte.nom}</span>
+          </div>
+        </div>
+      )}
+
+      {showGuestMenu && guestConnecte && (
+        <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 25 }} onClick={function() { setShowGuestMenu(false); }}>
+          <div onClick={function(e) { e.stopPropagation(); }} style={{ background: IVOIRE, borderRadius: 16, padding: 18, width: 250 }}>
+            <div style={{ fontFamily: 'Georgia,serif', fontSize: 13, fontWeight: 700, color: VERT, marginBottom: 12, textAlign: 'center' }}>{guestConnecte.nom}</div>
+            <button onClick={function() { envoyerControleInvite('mute'); }} style={{ width: '100%', padding: 10, marginBottom: 8, background: 'rgba(0,0,0,0.06)', border: 'none', borderRadius: 12, color: VERT, fontWeight: 700, fontSize: 12, fontFamily: 'Georgia,serif', cursor: 'pointer', textAlign: 'left' }}>
+              <i className="ti ti-microphone-off" style={{ marginRight: 8, verticalAlign: -2 }} /> Couper le micro
+            </button>
+            <button onClick={function() { envoyerControleInvite('camera-off'); }} style={{ width: '100%', padding: 10, marginBottom: 8, background: 'rgba(0,0,0,0.06)', border: 'none', borderRadius: 12, color: VERT, fontWeight: 700, fontSize: 12, fontFamily: 'Georgia,serif', cursor: 'pointer', textAlign: 'left' }}>
+              <i className="ti ti-video-off" style={{ marginRight: 8, verticalAlign: -2 }} /> Eteindre la camera
+            </button>
+            <button onClick={function() { envoyerControleInvite('kick'); }} style={{ width: '100%', padding: 10, background: 'rgba(229,57,53,0.12)', border: '1px solid rgba(229,57,53,0.3)', borderRadius: 12, color: '#c0392b', fontWeight: 700, fontSize: 12, fontFamily: 'Georgia,serif', cursor: 'pointer', textAlign: 'left' }}>
+              <i className="ti ti-arrow-down" style={{ marginRight: 8, verticalAlign: -2 }} /> Faire descendre
+            </button>
           </div>
         </div>
       )}
