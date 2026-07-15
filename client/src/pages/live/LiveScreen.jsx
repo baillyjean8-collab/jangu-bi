@@ -638,11 +638,10 @@ export default function LiveScreen() {
       </div>
 
       {/* ── PARTICIPANTS (colonne fixe à droite) ── */}
-      <div style={{ position: 'absolute', top: 105, right: 52, width: 62, bottom: 62, display: 'flex', flexDirection: 'column', gap: 5, padding: '4px 0', zIndex: 2 }}>
-        {Array.from({length: 5}).map((_, idx) => {
-          const p = guestsConnectesFidele[idx];
-          return p ? (
-            <div key={p.userId} style={{ flex: 1, borderRadius: 10, background: '#1a3a2a', border: '1.5px solid rgba(200,168,75,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', minHeight: 60, overflow: 'hidden' }}>
+      <div style={{ position: 'absolute', top: 100, right: 52, width: 44, display: 'flex', flexDirection: 'column', gap: 6, zIndex: 2 }}>
+        {guestsConnectesFidele.map(function(p) {
+          return (
+            <div key={p.userId} style={{ width: 44, height: 58, borderRadius: 9, background: '#1a3a2a', border: '1.5px solid rgba(200,168,75,0.4)', position: 'relative', overflow: 'hidden', flexShrink: 0 }}>
               <video ref={function(el) {
                 if (el) {
                   guestVideoRefsMap.current.set(p.userId, el);
@@ -650,20 +649,16 @@ export default function LiveScreen() {
                   if (pending) { pending.attach(el); pendingGuestTracksRef.current.delete(p.userId); }
                 }
               }} autoPlay playsInline style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,0.6)', borderRadius: '0 0 8px 8px', padding: '2px 4px' }}>
-                <span style={{ fontSize: 6, color: 'rgba(255,255,255,0.8)' }}>{p.nom}</span>
+              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,0.6)', padding: '1px 3px' }}>
+                <span style={{ fontSize: 6, color: 'rgba(255,255,255,0.85)' }}>{p.nom}</span>
               </div>
-            </div>
-          ) : (
-            <div key={'empty-'+idx} style={{ flex: 1, borderRadius: 10, background: 'rgba(255,255,255,0.02)', border: '1.5px dashed rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 60 }}>
-              <span style={{ fontSize: 7, color: 'rgba(255,255,255,0.12)', textAlign: 'center', lineHeight: 1.4 }}>{idx+1}</span>
             </div>
           );
         })}
       </div>
 
       {/* ── ICÔNES ACTION (colonne fixe extrême droite) ── */}
-      <div style={{ position: 'absolute', right: 4, top: 0, bottom: 62, width: 50, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', gap: 6, zIndex: 2, paddingBottom: 70 }}>
+      <div style={{ position: 'absolute', right: 4, top: '50%', transform: 'translateY(-50%)', width: 50, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, zIndex: 2 }}>
         <div onClick={() => { incLike(); }} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, cursor: 'pointer' }}>
           <div style={{ width: 40, height: 40, borderRadius: 12, background: 'rgba(239,154,154,0.15)', border: '1px solid rgba(239,154,154,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <i className="ti ti-heart" style={{ fontSize: 18, color: '#ef9a9a' }} />
@@ -742,7 +737,7 @@ export default function LiveScreen() {
       </div>
 
       {/* ── BARRE BAS (fixe en bas) ── */}
-      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 4, background: '#0C0A06', backgroundImage: BOGOLAN_DARK, borderTop: '1.5px solid rgba(200,168,75,0.35)', padding: '8px 12px 16px', display: 'flex', gap: 7, alignItems: 'center' }}>
+      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 4, background: '#0C0A06', backgroundImage: BOGOLAN_DARK, border: '1.5px solid rgba(200,168,75,0.35)', borderBottom: 'none', borderRadius: '20px 20px 0 0', padding: '8px 12px 16px', display: 'flex', gap: 7, alignItems: 'center' }}>
         <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'linear-gradient(135deg,#C8A84B,#8B6020)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700, color: '#1e2d14', flexShrink: 0, border: `1.5px solid ${OR}99` }}>MD</div>
         <input
           value={commentaire}
