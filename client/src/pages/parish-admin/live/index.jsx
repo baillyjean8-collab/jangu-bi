@@ -780,8 +780,8 @@ export default function AdminLive() {
             <i className="ti ti-x" style={{ color: '#fff', fontSize: 14 }} />
           </button>
 
-          <div style={{ position: 'absolute', top: 48, left: 10, right: 10, zIndex: 5 }}>
-            <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.5)', marginBottom: 5, letterSpacing: 1 }}>ARRIERE-PLAN {chargementSegmentation ? '(chargement...)' : ''}</div>
+          <div style={{ position: 'absolute', top: 48, left: 10, right: 10, zIndex: 5, background: 'rgba(12,10,6,0.65)', borderRadius: 16, padding: 10 }}>
+            <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.6)', marginBottom: 6, letterSpacing: 1 }}>ARRIERE-PLAN {chargementSegmentation ? '(chargement...)' : ''}</div>
             <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 8 }}>
               {[
                 { id: 'aucun', label: 'Aucun', icon: 'ti-ban' },
@@ -790,26 +790,26 @@ export default function AdminLive() {
               ].map(function(f) {
                 const actif = fondActif === f.id;
                 return (
-                  <div key={f.id} onClick={function() { choisirFond(f.id); }} style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, cursor: 'pointer' }}>
-                    <div style={{ width: 36, height: 36, borderRadius: '50%', background: actif ? 'rgba(200,168,75,0.9)' : 'rgba(255,255,255,0.12)', border: actif ? '2px solid ' + OR : '1.5px solid rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <i className={'ti ' + f.icon} style={{ color: actif ? VERT : '#fff', fontSize: 15 }} />
+                  <div key={f.id} onClick={function() { choisirFond(f.id); }} style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, cursor: 'pointer' }}>
+                    <div style={{ width: 44, height: 44, borderRadius: '50%', background: actif ? 'rgba(200,168,75,0.9)' : 'rgba(255,255,255,0.15)', border: actif ? '2px solid ' + OR : '1.5px solid rgba(255,255,255,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <i className={'ti ' + f.icon} style={{ color: actif ? VERT : '#fff', fontSize: 18 }} />
                     </div>
-                    <span style={{ color: actif ? '#fff' : 'rgba(255,255,255,0.55)', fontSize: 7 }}>{f.label}</span>
+                    <span style={{ color: actif ? '#fff' : 'rgba(255,255,255,0.65)', fontSize: 8 }}>{f.label}</span>
                   </div>
                 );
               })}
             </div>
 
-            <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.5)', marginBottom: 5, letterSpacing: 1 }}>EFFETS</div>
+            <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.6)', marginBottom: 6, marginTop: 4, letterSpacing: 1 }}>EFFETS</div>
             <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4 }}>
               {FILTRES.map(function(f) {
                 const actif = filtreActif === f.id;
                 return (
-                  <div key={f.id} onClick={function() { setFiltreActif(f.id); }} style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, cursor: 'pointer' }}>
-                    <div style={{ width: 36, height: 36, borderRadius: '50%', background: actif ? 'rgba(200,168,75,0.9)' : 'rgba(255,255,255,0.12)', border: actif ? '2px solid ' + OR : '1.5px solid rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <i className={'ti ' + f.icon} style={{ color: actif ? VERT : '#fff', fontSize: 15 }} />
+                  <div key={f.id} onClick={function() { setFiltreActif(f.id); }} style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, cursor: 'pointer' }}>
+                    <div style={{ width: 44, height: 44, borderRadius: '50%', background: actif ? 'rgba(200,168,75,0.9)' : 'rgba(255,255,255,0.15)', border: actif ? '2px solid ' + OR : '1.5px solid rgba(255,255,255,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <i className={'ti ' + f.icon} style={{ color: actif ? VERT : '#fff', fontSize: 18 }} />
                     </div>
-                    <span style={{ color: actif ? '#fff' : 'rgba(255,255,255,0.55)', fontSize: 7 }}>{f.label}</span>
+                    <span style={{ color: actif ? '#fff' : 'rgba(255,255,255,0.65)', fontSize: 8 }}>{f.label}</span>
                   </div>
                 );
               })}
