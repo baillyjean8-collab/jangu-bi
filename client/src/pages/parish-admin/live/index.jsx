@@ -44,11 +44,11 @@ export default function AdminLive() {
   const [chargementSegmentation, setChargementSegmentation] = useState(false);
   const [rosterListe, setRosterListe] = useState([]);
   const [showInviter, setShowInviter] = useState(false);
-  const [showGuestMenu, setShowGuestMenu] = useState(false);
-  const [guestMicOn, setGuestMicOn] = useState(true);
-  const [guestCameraOn, setGuestCameraOn] = useState(true);
+  const [guestMenuOuvert, setGuestMenuOuvert] = useState(null);
+  const [guestMicStates, setGuestMicStates] = useState({});
+  const [guestCameraStates, setGuestCameraStates] = useState({});
   const [invitesEnvoyes, setInvitesEnvoyes] = useState([]);
-  const [guestConnecte, setGuestConnecte] = useState(null);
+  const [guestsConnectes, setGuestsConnectes] = useState([]);
 
   const [viewerCountReel, setViewerCountReel] = useState(0);
   const [likeTotal, setLikeTotal] = useState(0);
@@ -67,7 +67,8 @@ export default function AdminLive() {
   const rafRef = useRef(null);
   const cameraStreamRef = useRef(null);
   const videoPubRef = useRef(null);
-  const guestVideoRef = useRef(null);
+  const guestVideoRefsMap = useRef(new Map());
+  const pendingGuestTracksRef = useRef(new Map());
   const parishLogoImgRef = useRef(null);
   const parishCoverImgRef = useRef(null);
   const fondActifRef = useRef('aucun');
@@ -422,27 +423,38 @@ export default function AdminLive() {
     });
     socket.on('live:guest:joined', function(data) {
       if (data.liveId === sessionId) {
-        setGuestConnecte({ nom: data.nom, userId: data.userId });
-        setGuestMicOn(true);
-        setGuestCameraOn(true);
+        setGuestsConnectes(function(prev) {
+          if (prev.some(function(g) { return g.userId === data.userId; })) return prev;
+          return prev.concat([{ nom: data.nom, userId: data.userId }]);
+        });
+        setGuestMicStates(function(prev) { const next = Object.assign({}, prev); next[data.userId] = true; return next; });
+        setGuestCameraStates(function(prev) { const next = Object.assign({}, prev); next[data.userId] = true; return next; });
         setMessagesChat(function(prev) { return prev.slice(-30).concat([{ id: 'j-' + Date.now(), type: 'gift', nom: data.nom, cadeau: 'a rejoint le direct', emoji: '' }]); });
       }
     });
     socket.on('live:guest:removed', function(data) {
       if (data.liveId === sessionId) {
-        setShowGuestMenu(false);
+        setGuestMenuOuvert(function(prev) { return prev === data.userId ? null : prev; });
         setInvitesEnvoyes(function(prev) { return prev.filter(function(uid) { return uid !== data.userId; }); });
-        setGuestConnecte(function(prev) {
-          const nomInvite = prev ? prev.nom : 'Le fidele';
+        guestVideoRefsMap.current.delete(data.userId);
+        pendingGuestTracksRef.current.delete(data.userId);
+        setGuestsConnectes(function(prev) {
+          const invite = prev.find(function(g) { return g.userId === data.userId; });
+          const nomInvite = invite ? invite.nom : 'Le fidele';
           setMessagesChat(function(prevMsgs) {
             return prevMsgs.slice(-30).concat([{ id: 'd-' + Date.now(), type: 'gift', nom: nomInvite, cadeau: 'est descendu du direct', emoji: '' }]);
           });
-          return null;
+          return prev.filter(function(g) { return g.userId !== data.userId; });
         });
       }
     });
     socket.on('live:guest:camera:response:received', function(data) {
-      if (data.liveId === sessionId && data.accepted) setGuestCameraOn(true);
+      if (data.liveId === sessionId && data.accepted) {
+        setGuestCameraStates(function(prev) { const next = Object.assign({}, prev); next[data.userId] = true; return next; });
+      }
+    });
+    socket.on('live:invite:full', function(data) {
+      if (data.liveId === sessionId) setErreur('Le nombre maximum d invites simultanes est atteint (4).');
     });
   }
 
@@ -453,33 +465,34 @@ export default function AdminLive() {
     setInvitesEnvoyes(function(prev) { return prev.concat([targetUserId]); });
   }
 
-  function toggleGuestMic() {
-    if (!guestConnecte || !guestConnecte.userId) return;
-    const nouvelEtat = !guestMicOn;
+  function toggleGuestMic(userId) {
+    const etatActuel = guestMicStates[userId] !== false;
+    const nouvelEtat = !etatActuel;
     recupererParishId().then(function(parishId) {
-      socketRef.current.emit('live:guest:control:send', { parishId: parishId, liveId: liveIdRef.current, targetUserId: guestConnecte.userId, action: nouvelEtat ? 'unmute' : 'mute' });
+      socketRef.current.emit('live:guest:control:send', { parishId: parishId, liveId: liveIdRef.current, targetUserId: userId, action: nouvelEtat ? 'unmute' : 'mute' });
     });
-    setGuestMicOn(nouvelEtat);
+    setGuestMicStates(function(prev) { const next = Object.assign({}, prev); next[userId] = nouvelEtat; return next; });
   }
 
-  function toggleGuestCamera() {
-    if (!guestConnecte || !guestConnecte.userId) return;
+  function toggleGuestCamera(userId) {
+    const etatActuel = guestCameraStates[userId] !== false;
     recupererParishId().then(function(parishId) {
-      if (guestCameraOn) {
-        socketRef.current.emit('live:guest:control:send', { parishId: parishId, liveId: liveIdRef.current, targetUserId: guestConnecte.userId, action: 'camera-off' });
+      if (etatActuel) {
+        socketRef.current.emit('live:guest:control:send', { parishId: parishId, liveId: liveIdRef.current, targetUserId: userId, action: 'camera-off' });
       } else {
-        socketRef.current.emit('live:guest:control:send', { parishId: parishId, liveId: liveIdRef.current, targetUserId: guestConnecte.userId, action: 'camera-request' });
+        socketRef.current.emit('live:guest:control:send', { parishId: parishId, liveId: liveIdRef.current, targetUserId: userId, action: 'camera-request' });
       }
     });
-    if (guestCameraOn) setGuestCameraOn(false);
+    if (etatActuel) {
+      setGuestCameraStates(function(prev) { const next = Object.assign({}, prev); next[userId] = false; return next; });
+    }
   }
 
-  function faireDescendreInvite() {
-    if (!guestConnecte || !guestConnecte.userId) return;
+  function faireDescendreInvite(userId) {
     recupererParishId().then(function(parishId) {
-      socketRef.current.emit('live:guest:control:send', { parishId: parishId, liveId: liveIdRef.current, targetUserId: guestConnecte.userId, action: 'kick' });
+      socketRef.current.emit('live:guest:control:send', { parishId: parishId, liveId: liveIdRef.current, targetUserId: userId, action: 'kick' });
     });
-    setShowGuestMenu(false);
+    setGuestMenuOuvert(null);
   }
 
   function deconnecterSocket() {
@@ -507,10 +520,11 @@ export default function AdminLive() {
     const dataToken = await resToken.json();
 
     const room = new Room();
-    room.on(RoomEvent.TrackSubscribed, function(track) {
-      if (track.kind === 'video' && guestVideoRef.current) {
-        track.attach(guestVideoRef.current);
-      }
+    room.on(RoomEvent.TrackSubscribed, function(track, publication, participant) {
+      if (track.kind !== 'video') return;
+      const uid = participant.identity;
+      const el = guestVideoRefsMap.current.get(uid);
+      if (el) { track.attach(el); } else { pendingGuestTracksRef.current.set(uid, track); }
     });
     await room.connect(dataToken.data.url, dataToken.data.token);
 
@@ -979,28 +993,42 @@ export default function AdminLive() {
         </>
       )}
 
-      {guestConnecte && (
-        <div onClick={function() { setShowGuestMenu(function(v) { return !v; }); }} style={{ position: 'absolute', right: 8, bottom: 100, width: 70, height: 96, borderRadius: 12, overflow: 'hidden', border: '2px solid ' + OR, zIndex: 6, background: '#000', cursor: 'pointer' }}>
-          <video ref={guestVideoRef} autoPlay playsInline style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,0.6)', padding: '2px 4px' }}>
-            <span style={{ color: '#fff', fontSize: 6 }}>{guestConnecte.nom}</span>
-          </div>
-        </div>
-      )}
+      {guestsConnectes.map(function(g, idx) {
+        const micOn = guestMicStates[g.userId] !== false;
+        const camOn = guestCameraStates[g.userId] !== false;
+        const menuOuvert = guestMenuOuvert === g.userId;
+        const decalageBas = 100 + idx * 106;
+        return (
+          <div key={g.userId}>
+            <div onClick={function() { setGuestMenuOuvert(function(prev) { return prev === g.userId ? null : g.userId; }); }} style={{ position: 'absolute', right: 8, bottom: decalageBas, width: 70, height: 96, borderRadius: 12, overflow: 'hidden', border: '2px solid ' + OR, zIndex: 6, background: '#000', cursor: 'pointer' }}>
+              <video ref={function(el) {
+                if (el) {
+                  guestVideoRefsMap.current.set(g.userId, el);
+                  const pending = pendingGuestTracksRef.current.get(g.userId);
+                  if (pending) { pending.attach(el); pendingGuestTracksRef.current.delete(g.userId); }
+                }
+              }} autoPlay playsInline style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,0.6)', padding: '2px 4px' }}>
+                <span style={{ color: '#fff', fontSize: 6 }}>{g.nom}</span>
+              </div>
+            </div>
 
-      {showGuestMenu && guestConnecte && (
-        <div style={{ position: 'absolute', right: 84, bottom: 100, display: 'flex', flexDirection: 'column', gap: 6, zIndex: 7 }}>
-          <button onClick={toggleGuestMic} style={{ width: 34, height: 34, borderRadius: '50%', background: guestMicOn ? 'rgba(16,60,20,0.92)' : 'rgba(90,10,10,0.92)', border: '2px solid ' + (guestMicOn ? '#81C784' : '#e57373'), boxShadow: '0 2px 6px rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-            <i className={guestMicOn ? 'ti ti-microphone' : 'ti ti-microphone-off'} style={{ color: guestMicOn ? '#81C784' : '#e57373', fontSize: 16 }} />
-          </button>
-          <button onClick={toggleGuestCamera} style={{ width: 34, height: 34, borderRadius: '50%', background: guestCameraOn ? 'rgba(16,60,20,0.92)' : 'rgba(90,10,10,0.92)', border: '2px solid ' + (guestCameraOn ? '#81C784' : '#e57373'), boxShadow: '0 2px 6px rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-            <i className={guestCameraOn ? 'ti ti-video' : 'ti ti-video-off'} style={{ color: guestCameraOn ? '#81C784' : '#e57373', fontSize: 16 }} />
-          </button>
-          <button onClick={faireDescendreInvite} style={{ width: 34, height: 34, borderRadius: '50%', background: 'rgba(90,10,10,0.92)', border: '2px solid #e57373', boxShadow: '0 2px 6px rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-            <i className="ti ti-arrow-down" style={{ color: '#e57373', fontSize: 16 }} />
-          </button>
-        </div>
-      )}
+            {menuOuvert && (
+              <div style={{ position: 'absolute', right: 84, bottom: decalageBas, display: 'flex', flexDirection: 'column', gap: 6, zIndex: 7 }}>
+                <button onClick={function() { toggleGuestMic(g.userId); }} style={{ width: 34, height: 34, borderRadius: '50%', background: micOn ? 'rgba(16,60,20,0.92)' : 'rgba(90,10,10,0.92)', border: '2px solid ' + (micOn ? '#81C784' : '#e57373'), boxShadow: '0 2px 6px rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                  <i className={micOn ? 'ti ti-microphone' : 'ti ti-microphone-off'} style={{ color: micOn ? '#81C784' : '#e57373', fontSize: 16 }} />
+                </button>
+                <button onClick={function() { toggleGuestCamera(g.userId); }} style={{ width: 34, height: 34, borderRadius: '50%', background: camOn ? 'rgba(16,60,20,0.92)' : 'rgba(90,10,10,0.92)', border: '2px solid ' + (camOn ? '#81C784' : '#e57373'), boxShadow: '0 2px 6px rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                  <i className={camOn ? 'ti ti-video' : 'ti ti-video-off'} style={{ color: camOn ? '#81C784' : '#e57373', fontSize: 16 }} />
+                </button>
+                <button onClick={function() { faireDescendreInvite(g.userId); }} style={{ width: 34, height: 34, borderRadius: '50%', background: 'rgba(90,10,10,0.92)', border: '2px solid #e57373', boxShadow: '0 2px 6px rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                  <i className="ti ti-arrow-down" style={{ color: '#e57373', fontSize: 16 }} />
+                </button>
+              </div>
+            )}
+          </div>
+        );
+      })}
 
       {showInviter && (
         <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 20 }} onClick={function() { setShowInviter(false); }}>
@@ -1010,16 +1038,19 @@ export default function AdminLive() {
               <div style={{ fontSize: 12, color: '#7A6E5E', textAlign: 'center', padding: 20 }}>Aucun fidele connecte pour le moment</div>
             )}
             {rosterListe.map(function(p) {
+              const dejaConnecte = guestsConnectes.some(function(g) { return g.userId === p.userId; });
               const dejaInvite = invitesEnvoyes.indexOf(p.userId) !== -1;
+              const bloque = dejaConnecte || dejaInvite || guestsConnectes.length >= 4;
               return (
                 <div key={p.userId} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 4px', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
                   <span style={{ fontSize: 12, color: VERT, fontFamily: 'Georgia,serif' }}>{p.nom}</span>
-                  <button onClick={function() { inviterFidele(p.userId); }} disabled={dejaInvite} style={{ padding: '6px 14px', background: dejaInvite ? 'rgba(0,0,0,0.06)' : 'linear-gradient(135deg,#1e2d14,#0a140a)', border: 'none', borderRadius: 16, color: dejaInvite ? '#9A8E7E' : OR, fontSize: 10, fontWeight: 700, cursor: dejaInvite ? 'default' : 'pointer' }}>
-                    {dejaInvite ? 'Invite' : 'Inviter'}
+                  <button onClick={function() { inviterFidele(p.userId); }} disabled={bloque} style={{ padding: '6px 14px', background: bloque ? 'rgba(0,0,0,0.06)' : 'linear-gradient(135deg,#1e2d14,#0a140a)', border: 'none', borderRadius: 16, color: bloque ? '#9A8E7E' : OR, fontSize: 10, fontWeight: 700, cursor: bloque ? 'default' : 'pointer' }}>
+                    {dejaConnecte ? 'En direct' : dejaInvite ? 'Invite' : 'Inviter'}
                   </button>
                 </div>
               );
             })}
+            <div style={{ fontSize: 9, color: '#9A8E7E', textAlign: 'center', marginTop: 10 }}>{guestsConnectes.length} / 4 invites en direct</div>
           </div>
         </div>
       )}

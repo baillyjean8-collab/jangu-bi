@@ -19,8 +19,13 @@ function revoke(liveId, userId) {
   if (set) set.delete(String(userId));
 }
 
+function count(liveId) {
+  const set = approvedGuests.get(liveId);
+  return set ? set.size : 0;
+}
+
 function clear(liveId) {
   approvedGuests.delete(liveId);
 }
 
-module.exports = { approve, isApproved, revoke, clear };
+module.exports = { approve, isApproved, revoke, count, clear };

@@ -59,7 +59,10 @@ const EVENTS = Object.freeze({
   GUEST_REMOVED:          'live:guest:removed',
   GUEST_CAMERA_RESPONSE_SEND:     'live:guest:camera:response:send',
   GUEST_CAMERA_RESPONSE_RECEIVED: 'live:guest:camera:response:received',
+  INVITE_FULL: 'live:invite:full',
 });
+
+const MAX_GUESTS_SIMULTANES = 4;
 
 // ── Rate Limiter (per socket) ──────────────────────────────────────────────────
 
@@ -401,6 +404,10 @@ function handleConnection(io, socket) {
   socket.on(EVENTS.INVITE_ACCEPT, ({ parishId, liveId }) => {
     if (!socket.isAuthenticated) return;
     if (!liveId) return;
+    if (guestRegistry.count(String(liveId)) >= MAX_GUESTS_SIMULTANES) {
+      socket.emit(EVENTS.INVITE_FULL, { liveId });
+      return;
+    }
     guestRegistry.approve(String(liveId), socket.user.userId);
     const room = parishRoom(parishId);
     io.to(room).emit(EVENTS.GUEST_JOINED, {
