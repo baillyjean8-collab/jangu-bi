@@ -602,7 +602,7 @@ export default function LiveScreen() {
       {/* ── ZONE VIDÉO CLIQUABLE ── */}
       <div
         onClick={handleEcranClick}
-        style={{ position: 'absolute', top: 100, left: 0, right: 110, bottom: 62, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 1,
+        style={{ position: 'absolute', top: 100, left: 0, right: 0, bottom: 62, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 1,
           background: fondEcran === 'color1' ? 'linear-gradient(135deg,#1e2d14,#0C0A06)' :
                       fondEcran === 'color2' ? 'linear-gradient(135deg,#1a1a4e,#0a0a2a)' :
                       fondEcran === 'color3' ? 'linear-gradient(135deg,#2d1a0a,#1a0a00)' :
