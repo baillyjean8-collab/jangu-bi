@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppShell } from '../../components/layout';
+import { genererAnneeLiturgique, determinerSaison } from '../../utils/liturgical-calendar';
 
 const VERT = '#1e2d14';
 const OR   = '#c8a84b';
@@ -117,9 +118,46 @@ const LOISIRS = [
 const catColor = (cat) => CATEGORIES.find(c => c.id === cat)?.color || VERT;
 const catLabel = (cat) => CATEGORIES.find(c => c.id === cat)?.label || cat;
 
+const NOMS_JOURS = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+const NOMS_MOIS = ['Jan','Fev','Mar','Avr','Mai','Jun','Jul','Aou','Sep','Oct','Nov','Dec'];
+
+function calculerAnneeLectionnaire(date) {
+  const anneeRef = date.getMonth() >= 10 ? date.getFullYear() : date.getFullYear() - 1;
+  const reste = (anneeRef + 1) % 3;
+  if (reste === 1) return 'A';
+  if (reste === 2) return 'B';
+  return 'C';
+}
+
+function construireCalendrierReel() {
+  const maintenant = new Date();
+  maintenant.setHours(0, 0, 0, 0);
+  const anneeCourante = maintenant.getFullYear();
+  const a1 = genererAnneeLiturgique(anneeCourante);
+  const a2 = genererAnneeLiturgique(anneeCourante + 1);
+  const tous = a1.evenements.concat(a2.evenements);
+  return tous
+    .filter(function(e) { return e.date.getTime() >= maintenant.getTime(); })
+    .slice(0, 20)
+    .map(function(e) {
+      return {
+        date: e.date.getDate() + ' ' + NOMS_MOIS[e.date.getMonth()],
+        jour: NOMS_JOURS[e.date.getDay()],
+        titre: e.titre,
+        type: e.type,
+        couleur: e.couleur,
+      };
+    });
+}
+
 export default function AnnoncesPage() {
   const navigate = useNavigate();
-  const [onglet, setOnglet]       = useState('annonces');
+  const [onglet, setOnglet] = useState('annonces');
+  const maintenant = new Date();
+  const mobilesAnnee = genererAnneeLiturgique(maintenant.getFullYear()).mobiles;
+  const saisonActuelle = determinerSaison(maintenant, mobilesAnnee);
+  const anneeLectionnaire = calculerAnneeLectionnaire(maintenant);
+  const CALENDRIER = construireCalendrierReel();
   const [categorie, setCategorie] = useState('tous');
   const [rappels, setRappels]     = useState({});
 
@@ -263,7 +301,7 @@ export default function AnnoncesPage() {
               <span style={{ fontSize: 24 }}>⛪</span>
               <div>
                 <p style={{ margin: 0, color: '#fff', fontWeight: 700, fontSize: 13 }}>Calendrier liturgique</p>
-                <p style={{ margin: 0, color: OR, fontSize: 11 }}>Temps ordinaire — Année B</p>
+              <p style={{ margin: 0, color: OR, fontSize: 11 }}>{saisonActuelle.nom} — Annee {anneeLectionnaire}</p>
               </div>
             </div>
 
