@@ -735,9 +735,23 @@ setCommentError('');
                     <i className="ti ti-message-circle" style={{ fontSize: 13 }} /> {postsState[i]?.comments ?? post.comments}
                   </span>
                 )}
-                <span onClick={() => navigator.share?.({ title: post.paroisse, text: post.texte || post.titre })} style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}>
-                  <i className="ti ti-share" style={{ fontSize: 13 }} /> Partager
-                </span>
+                <span onClick={() => {
+navigator.share?.({ title: post.paroisse, text: post.texte || post.titre });
+if (post._id) {
+import('../../services/api').then(function(mod) {
+mod.postsApi.share(post._id).then(function(res) {
+const nb = res && res.data && typeof res.data.sharesCount === 'number' ? res.data.sharesCount : null;
+if (nb !== null) {
+setPostsState(function(prev) {
+return prev.map(function(p, idx) { return idx === i ? Object.assign({}, p, { sharesCount: nb }) : p; });
+});
+}
+}).catch(function(e) { console.log('Share:', e.message); });
+});
+}
+}} style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}>
+<i className="ti ti-share" style={{ fontSize: 13 }} /> {postsState[i]?.sharesCount ?? 0}
+</span>
               </div>
 
               {/* Section commentaires integree (deroulante, style Facebook) */}
