@@ -43,6 +43,7 @@ export const postsApi = {
     return apiFetch('/posts/' + id, { method: 'DELETE' });
   },
   like: function(id) { return apiFetch('/posts/' + id + '/like', { method: 'POST' }); },
+share: function(id) { return apiFetch('/posts/' + id + '/share', { method: 'POST' }); },
   comment: function(id, text) {
     // Route reelle cote backend : /posts/:id/comment (singulier), pas /comments
     return apiFetch('/posts/' + id + '/comment', {
