@@ -102,12 +102,12 @@ return post;
 // -- Controller ---------------------------------------------------
 const postController = {
   async create(req, res) {
-    const { content, imageUrl, type } = req.body;
-    const parishId = req.user.parishId;
-    if (!parishId) throw new AuthorizationError('No parish assigned');
-    const post = await postRepo.create({ parishId, content, imageUrl, type });
-    return sendCreated(res, { post }, 'Publication creee');
-  },
+const { content, imageUrl, imageUrls, type } = req.body;
+const parishId = req.user.parishId;
+if (!parishId) throw new AuthorizationError('No parish assigned');
+const post = await postRepo.create({ parishId, content, imageUrl, imageUrls, type });
+return sendCreated(res, { post }, 'Publication creee');
+},
 
   async list(req, res) {
     const { page = 1, limit = 10, parishId } = req.query;
