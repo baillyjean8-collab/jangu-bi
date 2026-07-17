@@ -142,4 +142,5 @@ function genererAnneeLiturgique(annee) {
   return { annee: annee, mobiles: mobiles, evenements: evenements };
 }
 
-module.exports = { calculerPaques, calculerFetesMobiles, genererAnneeLiturgique, determinerSaison, COULEURS };
+export { calculerPaques, calculerFetesMobiles, genererAnneeLiturgique, determinerSaison, COULEURS };
+
