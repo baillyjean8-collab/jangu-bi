@@ -57,17 +57,23 @@ const postRepo = {
   },
 
   async toggleLike(postId, userId) {
-    const post = await Post.findById(postId);
-    if (!post) throw new NotFoundError('Post');
-    const liked = post.likes.includes(userId);
-    if (liked) {
-      post.likes.pull(userId);
-    } else {
-      post.likes.push(userId);
-    }
-    await post.save();
-    return post;
-  },
+const post = await Post.findById(postId);
+if (!post) throw new NotFoundError('Post');
+const liked = post.likes.includes(userId);
+if (liked) {
+post.likes.pull(userId);
+} else {
+post.likes.push(userId);
+}
+await post.save();
+return post;
+},
+
+async incrementShare(postId) {
+const post = await Post.findByIdAndUpdate(postId, { $inc: { sharesCount: 1 } }, { new: true });
+if (!post) throw new NotFoundError('Post');
+return post;
+},
 
   async addComment(postId, userId, text) {
     const post = await Post.findById(postId);
@@ -119,9 +125,14 @@ const postController = {
   },
 
   async like(req, res) {
-    const post = await postRepo.toggleLike(req.params.id, req.user.userId);
-    return sendSuccess(res, { likes: post.likes.length });
-  },
+const post = await postRepo.toggleLike(req.params.id, req.user.userId);
+return sendSuccess(res, { likes: post.likes.length });
+},
+
+async share(req, res) {
+const post = await postRepo.incrementShare(req.params.id);
+return sendSuccess(res, { sharesCount: post.sharesCount });
+},
 
   async comment(req, res) {
     const post = await postRepo.addComment(req.params.id, req.user.userId, req.body.text);
@@ -170,8 +181,13 @@ router.patch('/:id',
 );
 
 router.post('/:id/like',
-  authenticate,
-  asyncHandler(postController.like)
+authenticate,
+asyncHandler(postController.like)
+);
+
+router.post('/:id/share',
+authenticate,
+asyncHandler(postController.share)
 );
 
 router.post('/:id/comment',
