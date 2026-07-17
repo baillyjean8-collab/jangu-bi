@@ -269,14 +269,13 @@ export default function CreatePostPage() {
     setPublishing(true);
     setErreur('');
     try {
-      const premiereUrlValide = mediaItems.length > 0 && !mediaItems[0].local ? mediaItems[0].url : undefined;
-      // (les photos passees par redimensionnerEnBase64 ont local=false : elles sont envoyees normalement)
-
-      await postsApi.create({
-        content: texte.trim(),
-        type: typePub,
-        imageUrl: premiereUrlValide,
-      });
+      const toutesLesUrls = mediaItems.filter(function(m) { return m.kind === 'image' && !m.local; }).map(function(m) { return m.url; });
+await postsApi.create({
+content: texte.trim(),
+type: typePub,
+imageUrl: toutesLesUrls[0],
+imageUrls: toutesLesUrls,
+});
 
       if (aussiEnStory && premiereImage && !premiereImage.local) {
         try {
