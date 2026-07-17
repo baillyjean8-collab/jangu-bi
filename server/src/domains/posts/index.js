@@ -75,13 +75,13 @@ if (!post) throw new NotFoundError('Post');
 return post;
 },
 
-  async addComment(postId, userId, text) {
-    const post = await Post.findById(postId);
-    if (!post) throw new NotFoundError('Post');
-    post.comments.push({ userId, text });
-    await post.save();
-    return post;
-  },
+  async addComment(postId, userId, text, parentId) {
+const post = await Post.findById(postId);
+if (!post) throw new NotFoundError('Post');
+post.comments.push({ userId, text, parentId: parentId || null });
+await post.save();
+return post;
+},
 
   async updateById(postId, parishId, updates, allowAnyParish) {
     const filter = allowAnyParish ? { _id: postId } : { _id: postId, parishId };
@@ -135,7 +135,7 @@ return sendSuccess(res, { sharesCount: post.sharesCount });
 },
 
   async comment(req, res) {
-const post = await postRepo.addComment(req.params.id, req.user.userId, req.body.text);
+const post = await postRepo.addComment(req.params.id, req.user.userId, req.body.text, req.body.parentId);
 return sendSuccess(res, { comments: post.comments });
 },
 
