@@ -138,3 +138,13 @@ export const messagesApi = {
     return apiFetch('/messages/' + id, { method: 'POST', body: JSON.stringify({ text }) });
   },
 };
+
+export const parishEventsApi = {
+  getForParish: function(parishId) { return apiFetch('/parish-events/parish/' + parishId); },
+  create: function(data) {
+    return apiFetch('/parish-events', { method: 'POST', body: JSON.stringify(data) });
+  },
+  remove: function(id) {
+    return apiFetch('/parish-events/' + id, { method: 'DELETE' });
+  },
+};
