@@ -306,7 +306,43 @@ export default function AnnoncesPage() {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {CALENDRIER.map((item, i) => (
+              {eventsAdmin && (
+          <button onClick={() => setShowAjoutEvent(v => !v)} style={{ width: '100%', padding: '10px 14px', borderRadius: 12, border: 'none', background: OR, color: VERT, fontWeight: 700, fontSize: 13, cursor: 'pointer', marginBottom: 12 }}>
+            {showAjoutEvent ? 'Fermer' : '+ Ajouter un evenement paroissial'}
+          </button>
+        )}
+
+        {showAjoutEvent && (
+          <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e4e4e7', padding: 14, marginBottom: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <input value={nouveauTitre} onChange={e => setNouveauTitre(e.target.value)} placeholder="Titre de l'evenement" style={{ padding: 10, borderRadius: 8, border: '1px solid #e4e4e7', fontSize: 13 }} />
+            <input type="date" value={nouvelleDate} onChange={e => setNouvelleDate(e.target.value)} style={{ padding: 10, borderRadius: 8, border: '1px solid #e4e4e7', fontSize: 13 }} />
+            <textarea value={nouvelleDesc} onChange={e => setNouvelleDesc(e.target.value)} placeholder="Description (optionnel)" style={{ padding: 10, borderRadius: 8, border: '1px solid #e4e4e7', fontSize: 13, minHeight: 60 }} />
+            <button onClick={ajouterEvenementParoissial} style={{ padding: 10, borderRadius: 8, border: 'none', background: VERT, color: OR, fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>Enregistrer</button>
+          </div>
+        )}
+
+        {eventsParoisse.length > 0 && (
+          <div style={{ marginBottom: 18 }}>
+            <p style={{ fontSize: 11, fontWeight: 700, color: '#71717A', textTransform: 'uppercase', marginBottom: 8 }}>Evenements de la paroisse</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {eventsParoisse.map(ev => (
+                <div key={ev._id} style={{ background: '#fff', borderRadius: 14, border: '1px solid #e4e4e7', padding: 14, display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{ width: 44, height: 44, borderRadius: 12, flexShrink: 0, background: OR + '25', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>📌</div>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ margin: '0 0 3px', fontSize: 13, fontWeight: 700, color: VERT }}>{ev.title}</p>
+                    <p style={{ margin: 0, fontSize: 11, color: '#71717A' }}>{new Date(ev.date).toLocaleDateString('fr-FR')}{ev.description ? ' - ' + ev.description : ''}</p>
+                  </div>
+                  {eventsAdmin && (
+                    <button onClick={() => supprimerEvenementParoissial(ev._id)} style={{ background: 'none', border: 'none', color: '#c62828', fontSize: 16, cursor: 'pointer' }}>✕</button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <p style={{ fontSize: 11, fontWeight: 700, color: '#71717A', textTransform: 'uppercase', marginBottom: 8 }}>Calendrier universel</p>
+        {CALENDRIER.map((item, i) => (
                 <div key={i} style={{
                   background: '#fff', borderRadius: 14,
                   border: '1px solid #e4e4e7',
