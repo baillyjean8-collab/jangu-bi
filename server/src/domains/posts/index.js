@@ -135,9 +135,15 @@ return sendSuccess(res, { sharesCount: post.sharesCount });
 },
 
   async comment(req, res) {
-    const post = await postRepo.addComment(req.params.id, req.user.userId, req.body.text);
-    return sendSuccess(res, { comments: post.comments });
-  },
+const post = await postRepo.addComment(req.params.id, req.user.userId, req.body.text);
+return sendSuccess(res, { comments: post.comments });
+},
+
+async getOne(req, res) {
+const post = await postRepo.findById(req.params.id);
+if (!post) throw new NotFoundError('Post');
+return sendSuccess(res, { post });
+},
 
   async update(req, res) {
     const allowAny = req.user.role === 'super_admin';
@@ -178,6 +184,10 @@ router.patch('/:id',
   authenticate, requireVerified,
   authorize('parish_admin', 'super_admin'),
   asyncHandler(postController.update)
+);
+
+router.get('/:id',
+asyncHandler(postController.getOne)
 );
 
 router.post('/:id/like',
