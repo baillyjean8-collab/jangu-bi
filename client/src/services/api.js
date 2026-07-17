@@ -44,13 +44,16 @@ export const postsApi = {
   },
   like: function(id) { return apiFetch('/posts/' + id + '/like', { method: 'POST' }); },
 share: function(id) { return apiFetch('/posts/' + id + '/share', { method: 'POST' }); },
-  comment: function(id, text) {
-    // Route reelle cote backend : /posts/:id/comment (singulier), pas /comments
-    return apiFetch('/posts/' + id + '/comment', {
-      method: 'POST', body: JSON.stringify({ text })
-    });
-  },
-};
+  comment: function(id, text, parentId) {
+      // Route reelle cote backend : /posts/:id/comment (singulier), pas /comments
+      return apiFetch('/posts/' + id + '/comment', {
+        method: 'POST', body: JSON.stringify({ text: text, parentId: parentId || null })
+      });
+    },
+    getOne: function(id) {
+      return apiFetch('/posts/' + id);
+    },
+  };
 
 export const parishesApi = {
   getAll: function(params) {
