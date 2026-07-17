@@ -257,20 +257,36 @@ return prev.map(function(p, idx) { return idx === i ? Object.assign({}, p, { lik
       setCommentError('Votre message enfreint nos règles de respect et de bienveillance. Merci de reformuler dans un esprit fraternel.');
       return;
     }
-    setPostsState(prev => prev.map((p, idx) => {
-      if (idx !== openComments) return p;
-      const newComment = {
-        id: Date.now(),
-        auteur: 'Marie Diallo',
-        initiales: 'MD',
-        texte,
-        temps: 'À l\'instant',
-      };
-      return { ...p, commentsList: [...(p.commentsList || []), newComment], comments: (p.comments || 0) + 1 };
-    }));
-    setCommentDraft('');
-    setCommentError('');
-  }
+    const post = postsState[openComments];
+if (post && post._id) {
+import('../../services/api').then(function(mod) {
+mod.postsApi.comment(post._id, texte).then(function(res) {
+const liste = res && res.data && Array.isArray(res.data.comments) ? res.data.comments : null;
+setPostsState(function(prev) {
+return prev.map(function(p, idx) {
+if (idx !== openComments) return p;
+if (liste) {
+const formattee = liste.map(function(c) {
+return {
+id: c._id || Date.now(),
+auteur: (c.userId && (c.userId.firstName || c.userId.lastName)) ? ((c.userId.firstName || '') + ' ' + (c.userId.lastName || '')).trim() : 'Fidele',
+initiales: (c.userId && c.userId.firstName ? c.userId.firstName[0] : 'F').toUpperCase(),
+texte: c.text || c.texte || '',
+temps: 'A l instant',
+};
+});
+return Object.assign({}, p, { commentsList: formattee, comments: formattee.length });
+}
+const newComment = { id: Date.now(), auteur: 'Marie Diallo', initiales: 'MD', texte: texte, temps: 'A l instant' };
+return Object.assign({}, p, { commentsList: (p.commentsList || []).concat([newComment]), comments: (p.comments || 0) + 1 });
+});
+});
+}).catch(function(e) { console.log('Comment:', e.message); });
+});
+}
+setCommentDraft('');
+setCommentError('');
+}
 
   function startRecording() {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
