@@ -821,19 +821,47 @@ return prev.map(function(p, idx) { return idx === i ? Object.assign({}, p, { sha
 
                   {/* Liste des commentaires existants */}
                   {(post.commentsList || []).length > 0 && (
-                    <div style={{ marginBottom: 10 }}>
-                      {post.commentsList.map(cm => (
-                        <div key={cm.id} style={{ display: 'flex', gap: 7, marginBottom: 8 }}>
-                          <div style={{ width: 24, height: 24, borderRadius: '50%', background: '#C8A84B', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8, fontWeight: 700, color: '#1e2d14', flexShrink: 0 }}>{cm.initiales}</div>
-                          <div style={{ flex: 1, background: '#F5F0E8', borderRadius: 10, padding: '6px 10px' }}>
-                            <div style={{ fontSize: 10, fontWeight: 700, color: '#1e2d14' }}>{cm.auteur}</div>
-                            <div style={{ fontSize: 11, color: '#3a3a3a', lineHeight: 1.4 }}>{cm.texte}</div>
-                            <div style={{ fontSize: 8, color: '#aaa', marginTop: 2 }}>{cm.temps}</div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+<div style={{ marginBottom: 10 }}>
+{post.commentsList.filter(function(cm) { return !cm.parentId; }).map(function(cm) {
+const reponses = post.commentsList.filter(function(r) { return String(r.parentId) === String(cm.id); });
+return (
+<div key={cm.id} style={{ marginBottom: 8 }}>
+<div style={{ display: 'flex', gap: 7 }}>
+<div style={{ width: 24, height: 24, borderRadius: '50%', background: '#C8A84B', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8, fontWeight: 700, color: '#1e2d14', flexShrink: 0 }}>{cm.initiales}</div>
+<div style={{ flex: 1 }}>
+<div style={{ background: '#F5F0E8', borderRadius: 10, padding: '6px 10px' }}>
+<div style={{ fontSize: 10, fontWeight: 700, color: '#1e2d14' }}>{cm.auteur}</div>
+<div style={{ fontSize: 11, color: '#3a3a3a', lineHeight: 1.4 }}>{cm.texte}</div>
+</div>
+<div style={{ display: 'flex', gap: 10, marginTop: 3, paddingLeft: 4 }}>
+<span style={{ fontSize: 8, color: '#aaa' }}>{cm.temps}</span>
+<span onClick={function() { setReplyingTo({ id: cm.id, nom: cm.auteur }); }} style={{ fontSize: 8, color: '#8B6020', fontWeight: 700, cursor: 'pointer' }}>Repondre</span>
+</div>
+</div>
+</div>
+{reponses.length > 0 && (
+<div style={{ marginLeft: 30, marginTop: 6 }}>
+{reponses.map(function(rp) {
+return (
+<div key={rp.id} style={{ display: 'flex', gap: 7, marginBottom: 6 }}>
+<div style={{ width: 20, height: 20, borderRadius: '50%', background: '#C8A84B', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 7, fontWeight: 700, color: '#1e2d14', flexShrink: 0 }}>{rp.initiales}</div>
+<div style={{ flex: 1 }}>
+<div style={{ background: '#F5F0E8', borderRadius: 10, padding: '5px 9px' }}>
+<div style={{ fontSize: 9, fontWeight: 700, color: '#1e2d14' }}>{rp.auteur}</div>
+<div style={{ fontSize: 10, color: '#3a3a3a', lineHeight: 1.4 }}>{rp.texte}</div>
+</div>
+<div style={{ fontSize: 7, color: '#aaa', marginTop: 2, paddingLeft: 4 }}>{rp.temps}</div>
+</div>
+</div>
+);
+})}
+</div>
+)}
+</div>
+);
+})}
+</div>
+)}
 
                   {/* Erreur de moderation */}
                   {commentError && (
@@ -843,8 +871,14 @@ return prev.map(function(p, idx) { return idx === i ? Object.assign({}, p, { sha
                     </div>
                   )}
 
-                  {/* Zone de saisie integree, toujours visible en bas */}
-                  <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                  {replyingTo && (
+<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(200,168,75,0.1)', borderRadius: 8, padding: '5px 10px', marginBottom: 6 }}>
+<span style={{ fontSize: 9, color: '#8B6020' }}>Reponse a {replyingTo.nom}</span>
+<span onClick={function() { setReplyingTo(null); }} style={{ fontSize: 9, color: '#999', cursor: 'pointer' }}>Annuler</span>
+</div>
+)}
+{/* Zone de saisie integree, toujours visible en bas */}
+<div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                     <div style={{ width: 24, height: 24, borderRadius: '50%', background: '#C8A84B', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8, fontWeight: 700, color: '#1e2d14', flexShrink: 0 }}>MD</div>
                     <input
                       type="text"
