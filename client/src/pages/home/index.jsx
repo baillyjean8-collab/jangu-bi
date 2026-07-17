@@ -98,7 +98,8 @@ export default function HomePage() {
             // (media, don avec barre de progression) n'existent pas encore
             // sur les vraies publications recuperees depuis l'API.
             const formatted = items.map(p => ({
-              type: 'normal',
+_id: p._id,
+type: 'normal',
               initiales: p.parishId && p.parishId.name ? p.parishId.name.substring(0,2).toUpperCase() : 'SC',
               logo: p.parishId && p.parishId.logoUrl ? p.parishId.logoUrl : null,
               parishId: p.parishId && p.parishId._id ? p.parishId._id : null,
@@ -213,8 +214,20 @@ export default function HomePage() {
   }
 
   function toggleLike(i) {
-    setLiked(l => ({ ...l, [i]: !l[i] }));
-  }
+const post = postsState[i];
+if (!post._id) { setLiked(l => ({ ...l, [i]: !l[i] })); return; }
+setLiked(l => ({ ...l, [i]: !l[i] }));
+import('../../services/api').then(function(mod) {
+mod.postsApi.like(post._id).then(function(res) {
+const nb = res && res.data && typeof res.data.likes === 'number' ? res.data.likes : null;
+if (nb !== null) {
+setPostsState(function(prev) {
+return prev.map(function(p, idx) { return idx === i ? Object.assign({}, p, { likes: nb }) : p; });
+});
+}
+}).catch(function(e) { console.log('Like:', e.message); });
+});
+}
 
   function toggleCommentaires(i) {
     setOpenComments(prev => prev === i ? null : i);
@@ -699,7 +712,7 @@ export default function HomePage() {
               {/* Actions bas de carte */}
               <div style={{ display: 'flex', gap: 14, padding: '8px 12px', borderTop: '1px solid #f0ece4', fontSize: 11, color: '#666' }}>
                 <span onClick={() => toggleLike(i)} style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer', color: liked[i] ? '#C8A84B' : '#666' }}>
-                  <i className={liked[i] ? 'ti ti-heart-filled' : 'ti ti-heart'} style={{ fontSize: 13 }} /> {post.likes + (liked[i] ? 1 : 0)}
+                  <i className={liked[i] ? 'ti ti-heart-filled' : 'ti ti-heart'} style={{ fontSize: 13 }} /> {postsState[i]?.likes ?? post.likes}
                 </span>
                 {post.type !== 'don' && (
                   <span onClick={() => toggleCommentaires(i)} style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}>
