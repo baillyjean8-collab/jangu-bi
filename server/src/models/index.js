@@ -18,6 +18,7 @@ const Group        = require('./Group');
 const GroupMessage = require('./GroupMessage');
 const Invitation   = require('./Invitation');
 const ParishApplication = require('./ParishApplication');
+const ParishEvent = require('./ParishEvent');
 
 module.exports = {
   User,
@@ -36,4 +37,5 @@ module.exports = {
   GroupMessage,
   Invitation,
   ParishApplication,
+  ParishEvent,
 };
