@@ -958,6 +958,39 @@ return prev.map(function(p, idx) { return idx === i ? Object.assign({}, p, { sha
         )}
 
       </div>
-    </AppShell>
-  );
+    {galerieOuverte !== null && postsState[galerieOuverte] && (
+<div onClick={function() { setGalerieOuverte(null); }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.95)', zIndex: 2000, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+<div onClick={function(e) { e.stopPropagation(); }} style={{ position: 'relative', width: '100%', maxWidth: 430, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+<img
+src={(postsState[galerieOuverte].images && postsState[galerieOuverte].images[galerieIndex]) || postsState[galerieOuverte].image}
+alt=""
+style={{ width: '100%', maxHeight: '80vh', objectFit: 'contain' }}
+/>
+{postsState[galerieOuverte].images && postsState[galerieOuverte].images.length > 1 && (
+<>
+{galerieIndex > 0 && (
+<div onClick={function() { setGalerieIndex(function(v) { return v - 1; }); }} style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', width: 36, height: 36, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+<i className="ti ti-chevron-left" style={{ color: '#fff', fontSize: 18 }} />
+</div>
+)}
+{galerieIndex < postsState[galerieOuverte].images.length - 1 && (
+<div onClick={function() { setGalerieIndex(function(v) { return v + 1; }); }} style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', width: 36, height: 36, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+<i className="ti ti-chevron-right" style={{ color: '#fff', fontSize: 18 }} />
+</div>
+)}
+</>
+)}
+</div>
+{postsState[galerieOuverte].images && postsState[galerieOuverte].images.length > 1 && (
+<div style={{ marginTop: 14, fontSize: 12, color: '#fff', fontWeight: 700 }}>
+{galerieIndex + 1} / {postsState[galerieOuverte].images.length}
+</div>
+)}
+<div onClick={function() { setGalerieOuverte(null); }} style={{ position: 'absolute', top: 44, right: 16, width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+<i className="ti ti-x" style={{ color: '#fff', fontSize: 16 }} />
+</div>
+</div>
+)}
+</AppShell>
+);
 }
