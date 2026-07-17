@@ -153,6 +153,52 @@ function construireCalendrierReel() {
 export default function AnnoncesPage() {
   const navigate = useNavigate();
   const [onglet, setOnglet] = useState('annonces');
+  const [eventsAdmin, setEventsAdmin] = useState(false);
+  const [eventsParoisse, setEventsParoisse] = useState([]);
+  const [parishIdCourant, setParishIdCourant] = useState(null);
+  const [showAjoutEvent, setShowAjoutEvent] = useState(false);
+  const [nouveauTitre, setNouveauTitre] = useState('');
+  const [nouvelleDate, setNouvelleDate] = useState('');
+  const [nouvelleDesc, setNouvelleDesc] = useState('');
+
+  useState(function() {
+    import('../../services/api').then(function(mod) {
+      mod.userApi.getMe().then(function(res) {
+        const u = res && res.data && (res.data.user || res.data);
+        const pid = u && u.parish && (u.parish._id || u.parish);
+        setEventsAdmin(u && u.role === 'parish_admin');
+        if (pid) {
+          setParishIdCourant(pid);
+          mod.parishEventsApi.getForParish(pid).then(function(r2) {
+            setEventsParoisse((r2 && r2.data && r2.data.events) || []);
+          }).catch(function(e) { console.log('Events paroisse:', e.message); });
+        }
+      }).catch(function(e) { console.log('User me:', e.message); });
+    });
+    return undefined;
+  });
+
+  function ajouterEvenementParoissial() {
+    if (!nouveauTitre || !nouvelleDate) return;
+    import('../../services/api').then(function(mod) {
+      mod.parishEventsApi.create({ title: nouveauTitre, date: nouvelleDate, description: nouvelleDesc }).then(function(res) {
+        const ev = res && res.data && res.data.event;
+        if (ev) setEventsParoisse(function(prev) { return prev.concat([ev]); });
+        setNouveauTitre('');
+        setNouvelleDate('');
+        setNouvelleDesc('');
+        setShowAjoutEvent(false);
+      }).catch(function(e) { console.log('Ajout evenement:', e.message); });
+    });
+  }
+
+  function supprimerEvenementParoissial(id) {
+    import('../../services/api').then(function(mod) {
+      mod.parishEventsApi.remove(id).then(function() {
+        setEventsParoisse(function(prev) { return prev.filter(function(e) { return e._id !== id; }); });
+      }).catch(function(e) { console.log('Suppression evenement:', e.message); });
+    });
+  }
   const maintenant = new Date();
   const mobilesAnnee = genererAnneeLiturgique(maintenant.getFullYear()).mobiles;
   const saisonActuelle = determinerSaison(maintenant, mobilesAnnee);
