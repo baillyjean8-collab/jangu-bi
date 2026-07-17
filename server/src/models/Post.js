@@ -12,7 +12,8 @@ const postSchema = new mongoose.Schema({
   content:   { type: String, required: true, maxlength: 2000 },
   imageUrl:  { type: String, default: null },
   type:      { type: String, enum: ['NORMAL', 'ANNONCE', 'INSCRIPTION', 'COLLECTE', 'EVENEMENT', 'MEDIA'], default: 'NORMAL' },
-  likes:     [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  likes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+sharesCount: { type: Number, default: 0, min: 0 },
   comments:  [commentSchema],
   isActive:  { type: Boolean, default: true },
 }, { timestamps: true });
