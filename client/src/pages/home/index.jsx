@@ -179,6 +179,8 @@ type: 'normal',
   }, [user]);
 
   const [liked, setLiked] = useState({});
+const [galerieOuverte, setGalerieOuverte] = useState(null);
+const [galerieIndex, setGalerieIndex] = useState(0);
   const [avertissement, setAvertissement] = useState('');
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [liveParishIds, setLiveParishIds] = useState(new Set());
@@ -323,7 +325,35 @@ setCommentError('');
     setRecording(false);
   }
 
-  function matchesSearch(post, query) {
+  function grilleImages(post, i) {
+const imgs = post.images && post.images.length ? post.images : (post.image ? [post.image] : []);
+if (imgs.length === 0) return null;
+if (imgs.length === 1) {
+return (
+<img src={imgs[0]} alt="publication" onClick={function() { setGalerieOuverte(i); setGalerieIndex(0); }} style={{ width: '100%', display: 'block', maxHeight: 420, objectFit: 'cover', cursor: 'pointer' }} />
+);
+}
+const visibles = imgs.slice(0, 4);
+return (
+<div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2 }}>
+{visibles.map(function(url, idx) {
+const dernier = idx === 3 && imgs.length > 4;
+return (
+<div key={idx} onClick={function() { setGalerieOuverte(i); setGalerieIndex(idx); }} style={{ position: 'relative', aspectRatio: '1 / 1', overflow: 'hidden', cursor: 'pointer' }}>
+<img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+{dernier && (
+<div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 22, fontWeight: 700 }}>
++{imgs.length - 4}
+</div>
+)}
+</div>
+);
+})}
+</div>
+);
+}
+
+function matchesSearch(post, query) {
     if (!query) return true;
     const q = query.toLowerCase();
     const haystack = [post.paroisse, post.texte, post.titre, post.mediaTitle].filter(Boolean).join(' ').toLowerCase();
