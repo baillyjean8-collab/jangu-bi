@@ -197,6 +197,7 @@ const [galerieIndex, setGalerieIndex] = useState(0);
   const [avertissementCommentaire, setAvertissementCommentaire] = useState('');
   const [compteurAvertissements, setCompteurAvertissements] = useState(0);
   const [commentDraft, setCommentDraft] = useState('');
+const [replyingTo, setReplyingTo] = useState(null);
   const [commentError, setCommentError] = useState('');
   const [recording, setRecording] = useState(false);
   const recognitionRef = useRef(null);
@@ -233,11 +234,39 @@ return prev.map(function(p, idx) { return idx === i ? Object.assign({}, p, { lik
 }
 
   function toggleCommentaires(i) {
-    setOpenComments(prev => prev === i ? null : i);
-    setCommentDraft('');
-    setCommentError('');
-    stopRecording();
-  }
+const estOuverture = openComments !== i;
+setOpenComments(prev => prev === i ? null : i);
+setCommentDraft('');
+setCommentError('');
+setReplyingTo(null);
+stopRecording();
+if (estOuverture) {
+const post = postsState[i];
+if (post && post._id) {
+import('../../services/api').then(function(mod) {
+mod.postsApi.getOne(post._id).then(function(res) {
+const p2 = res && res.data && res.data.post;
+const liste = p2 && Array.isArray(p2.comments) ? p2.comments : null;
+if (liste) {
+const formattee = liste.map(function(c) {
+return {
+id: c._id || Date.now(),
+parentId: c.parentId || null,
+auteur: (c.userId && (c.userId.firstName || c.userId.lastName)) ? ((c.userId.firstName || '') + ' ' + (c.userId.lastName || '')).trim() : 'Fidele',
+initiales: (c.userId && c.userId.firstName ? c.userId.firstName[0] : 'F').toUpperCase(),
+texte: c.text || c.texte || '',
+temps: 'A l instant',
+};
+});
+setPostsState(function(prev) {
+return prev.map(function(p, idx) { return idx === i ? Object.assign({}, p, { commentsList: formattee }) : p; });
+});
+}
+}).catch(function(e) { console.log('Get comments:', e.message); });
+});
+}
+}
+}
 
   function publierCommentaire() {
   // ── Filtre anti-mots-interdits (module partagé) ──
