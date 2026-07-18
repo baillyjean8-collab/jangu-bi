@@ -110,4 +110,24 @@ router.get('/:cle', async (req, res) => {
   }
 });
 
+router.get('/liste/:cle', async (req, res) => {
+  if (req.params.cle !== CLE_SECRETE) {
+    return res.status(403).json({ error: 'Non autorise' });
+  }
+  try {
+    const parishes = await Parish.find({ diocese: DIOCESE }).populate('adminId', 'email').lean();
+    const liste = parishes.map(function(p) {
+      return {
+        paroisse: p.name,
+        email: p.adminId ? p.adminId.email : null,
+        motDePasse: 'JanguBi2026!',
+        verifiee: p.isVerified,
+      };
+    });
+    return res.json({ total: liste.length, liste: liste });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;
