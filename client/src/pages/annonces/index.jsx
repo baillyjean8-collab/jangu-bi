@@ -569,17 +569,35 @@ export default function AnnoncesPage() {
 
         {/* ── ONGLET LOISIRS ── */}
         {onglet === 'loisirs' && (
-          <div style={{ padding: 16 }}>
-            <div style={{ background: VERT, borderRadius: 14, padding: '14px 16px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span style={{ fontSize: 24 }}>🎉</span>
-              <div>
-                <p style={{ margin: 0, color: '#fff', fontWeight: 700, fontSize: 13 }}>Activités & Événements</p>
-                <p style={{ margin: 0, color: OR, fontSize: 11 }}>Sport, retraites, pèlerinages, concerts</p>
-              </div>
+        <div style={{ padding: 16 }}>
+          <div style={{ background: VERT, borderRadius: 14, padding: '14px 16px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontSize: 24 }}>🎉</span>
+            <div>
+              <p style={{ margin: 0, color: '#fff', fontWeight: 700, fontSize: 13 }}>Activités & Événements</p>
+              <p style={{ margin: 0, color: OR, fontSize: 11 }}>Sport, retraites, pèlerinages, concerts</p>
             </div>
+          </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {LOISIRS.map((item, i) => (
+          {eventsAdmin && (
+            <button onClick={() => setShowAjoutLoisir(v => !v)} style={{ width: '100%', padding: '10px 14px', borderRadius: 12, border: 'none', background: OR, color: VERT, fontWeight: 700, fontSize: 13, cursor: 'pointer', marginBottom: 12 }}>
+              {showAjoutLoisir ? 'Fermer' : '+ Ajouter une activite'}
+            </button>
+          )}
+
+          {showAjoutLoisir && (
+            <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e4e4e7', padding: 14, marginBottom: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <input value={nouveauTitreLoisir} onChange={e => setNouveauTitreLoisir(e.target.value)} placeholder="Titre de l'activite" style={{ padding: 10, borderRadius: 8, border: '1px solid #e4e4e7', fontSize: 13 }} />
+              <input value={nouveauLieuLoisir} onChange={e => setNouveauLieuLoisir(e.target.value)} placeholder="Lieu" style={{ padding: 10, borderRadius: 8, border: '1px solid #e4e4e7', fontSize: 13 }} />
+              <input type="date" value={nouvelleDateLoisir} onChange={e => setNouvelleDateLoisir(e.target.value)} style={{ padding: 10, borderRadius: 8, border: '1px solid #e4e4e7', fontSize: 13 }} />
+              <input value={nouvellesPlacesLoisir} onChange={e => setNouvellesPlacesLoisir(e.target.value)} placeholder="Places (ex: 40 places, Gratuit, Entree libre)" style={{ padding: 10, borderRadius: 8, border: '1px solid #e4e4e7', fontSize: 13 }} />
+              <textarea value={nouvelleDescLoisir} onChange={e => setNouvelleDescLoisir(e.target.value)} placeholder="Description" style={{ padding: 10, borderRadius: 8, border: '1px solid #e4e4e7', fontSize: 13, minHeight: 60 }} />
+              <button onClick={ajouterLoisir} style={{ padding: 10, borderRadius: 8, border: 'none', background: VERT, color: OR, fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>Publier</button>
+            </div>
+          )}
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {annoncesReelles.filter(function(a) { return a.type === 'loisir'; }).map(function(item, i) {
+              return (
                 <div key={i} style={{
                   background: '#fff', borderRadius: 16,
                   border: '1px solid #e4e4e7',
