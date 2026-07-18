@@ -209,6 +209,36 @@ export default function AnnoncesPage() {
     return d;
   }
 
+    const [showAjoutLoisir, setShowAjoutLoisir] = useState(false);
+  const [nouveauTitreLoisir, setNouveauTitreLoisir] = useState('');
+  const [nouveauLieuLoisir, setNouveauLieuLoisir] = useState('');
+  const [nouvelleDateLoisir, setNouvelleDateLoisir] = useState('');
+  const [nouvellesPlacesLoisir, setNouvellesPlacesLoisir] = useState('');
+  const [nouvelleDescLoisir, setNouvelleDescLoisir] = useState('');
+
+  function ajouterLoisir() {
+    if (!nouveauTitreLoisir || !nouvelleDateLoisir) return;
+    import('../../services/api').then(function(mod) {
+      mod.announcementsApi.create({
+        type: 'loisir',
+        title: nouveauTitreLoisir,
+        lieu: nouveauLieuLoisir,
+        date: nouvelleDateLoisir,
+        places: nouvellesPlacesLoisir,
+        description: nouvelleDescLoisir,
+      }).then(function(res) {
+        const a = res && res.data && res.data.announcement;
+        if (a) setAnnoncesReelles(function(prev) { return prev.concat([a]); });
+        setNouveauTitreLoisir('');
+        setNouveauLieuLoisir('');
+        setNouvelleDateLoisir('');
+        setNouvellesPlacesLoisir('');
+        setNouvelleDescLoisir('');
+        setShowAjoutLoisir(false);
+      }).catch(function(e) { console.log('Ajout loisir:', e.message); });
+    });
+  }
+
   function ajouterAnnonce() {
     if (!nouveauTitreAnnonce || !nouvelleDateAnnonce) return;
     import('../../services/api').then(function(mod) {
