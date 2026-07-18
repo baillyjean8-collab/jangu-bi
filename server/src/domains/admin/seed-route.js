@@ -71,6 +71,8 @@ router.get('/:cle', async (req, res) => {
       const email = genererEmail(p.nom, i);
       const phone = genererTelephone(i);
 
+      await User.deleteOne({ email: email });
+
       const admin = await User.create({
         firstName: 'Admin',
         lastName: p.nom.slice(0, 45),
