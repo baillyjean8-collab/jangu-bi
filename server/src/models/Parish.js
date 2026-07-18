@@ -159,10 +159,26 @@ const parishSchema = new mongoose.Schema(
         message: 'Denomination contains invalid characters',
       },
     },
-    diocese: {
+        diocese: {
       type: String,
       trim: true,
       maxlength: [150, 'Diocese name too long'],
+      default: null,
+    },
+    doyenne: {
+      type: String,
+      trim: true,
+      maxlength: [150, 'Doyenne name too long'],
+      default: null,
+    },
+    type: {
+      type: String,
+      enum: ['paroisse', 'chapelle'],
+      default: 'paroisse',
+    },
+    parentParishId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Parish',
       default: null,
     },
     isVerified: {
