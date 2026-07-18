@@ -310,28 +310,88 @@ export default function AnnoncesPage() {
 
         {/* ── ONGLET ANNONCES ── */}
         {onglet === 'annonces' && (
-          <div style={{ padding: 16 }}>
+        <div style={{ padding: 16 }}>
+          <div style={{ background: VERT, borderRadius: 14, padding: '14px 16px', marginBottom: 16 }}>
+            <p style={{ margin: 0, color: '#fff', fontWeight: 700, fontSize: 13 }}>Annonces de la semaine</p>
+            <p style={{ margin: 0, color: OR, fontSize: 11 }}>{debutSemaine().toLocaleDateString('fr-FR')} au {new Date(finSemaine().getTime() - 86400000).toLocaleDateString('fr-FR')}</p>
+          </div>
 
-            {/* Filtres catégories */}
-            <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 8, marginBottom: 16 }}>
-              {CATEGORIES.map(cat => (
-                <button key={cat.id} onClick={() => setCategorie(cat.id)} style={{
-                  padding: '6px 14px', borderRadius: 20, border: 'none', cursor: 'pointer',
-                  background: categorie === cat.id ? cat.color : '#fff',
-                  color: categorie === cat.id ? '#fff' : '#555',
-                  fontWeight: categorie === cat.id ? 700 : 500,
-                  fontSize: 12, whiteSpace: 'nowrap',
-                  border: `1px solid ${categorie === cat.id ? cat.color : '#e4e4e7'}`,
-                  transition: 'all 0.2s',
-                }}>
-                  {cat.label}
-                </button>
-              ))}
+          {eventsAdmin && (
+            <button onClick={() => setShowAjoutAnnonce(v => !v)} style={{ width: '100%', padding: '10px 14px', borderRadius: 12, border: 'none', background: OR, color: VERT, fontWeight: 700, fontSize: 13, cursor: 'pointer', marginBottom: 12 }}>
+              {showAjoutAnnonce ? 'Fermer' : '+ Ajouter une annonce'}
+            </button>
+          )}
+
+          {showAjoutAnnonce && (
+            <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e4e4e7', padding: 14, marginBottom: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <select value={nouveauTypeAnnonce} onChange={e => setNouveauTypeAnnonce(e.target.value)} style={{ padding: 10, borderRadius: 8, border: '1px solid #e4e4e7', fontSize: 13 }}>
+                {CATEGORIES.filter(c => c.id !== 'tous').map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
+              </select>
+              <input value={nouveauTitreAnnonce} onChange={e => setNouveauTitreAnnonce(e.target.value)} placeholder="Titre de l'annonce" style={{ padding: 10, borderRadius: 8, border: '1px solid #e4e4e7', fontSize: 13 }} />
+              <input type="date" value={nouvelleDateAnnonce} onChange={e => setNouvelleDateAnnonce(e.target.value)} style={{ padding: 10, borderRadius: 8, border: '1px solid #e4e4e7', fontSize: 13 }} />
+              <textarea value={nouvelleDescAnnonce} onChange={e => setNouvelleDescAnnonce(e.target.value)} placeholder="Description" style={{ padding: 10, borderRadius: 8, border: '1px solid #e4e4e7', fontSize: 13, minHeight: 60 }} />
+              <button onClick={ajouterAnnonce} style={{ padding: 10, borderRadius: 8, border: 'none', background: VERT, color: OR, fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>Publier</button>
             </div>
+          )}
 
-            {/* Liste annonces */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {filtrees.map(a => (
+          {/* Filtres catégories */}
+          <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 8, marginBottom: 16 }}>
+            {CATEGORIES.map(cat => (
+              <button key={cat.id} onClick={() => setCategorie(cat.id)} style={{
+                padding: '6px 14px', borderRadius: 20, border: 'none', cursor: 'pointer',
+                background: categorie === cat.id ? cat.color : '#fff',
+                color: categorie === cat.id ? '#fff' : '#555',
+                fontWeight: categorie === cat.id ? 700 : 500,
+                fontSize: 12, whiteSpace: 'nowrap',
+                border: `1px solid ${categorie === cat.id ? cat.color : '#e4e4e7'}`,
+                transition: 'all 0.2s',
+              }}>
+                {cat.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Liste annonces reelles, regroupees sur la semaine en cours */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {annoncesReelles
+              .filter(function(a) {
+                const d = new Date(a.date);
+                return d.getTime() >= debutSemaine().getTime() && d.getTime() < finSemaine().getTime();
+              })
+              .filter(function(a) { return categorie === 'tous' || a.type === categorie; })
+              .map(function(a) {
+                return (
+                  <div key={a._id} style={{ background: '#fff', borderRadius: 16, border: '1px solid #e4e4e7', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', padding: 14 }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 10 }}>
+                      <div style={{ width: 44, height: 44, borderRadius: 12, flexShrink: 0, background: catColor(a.type) + '15', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>📢</div>
+                      <div style={{ flex: 1 }}>
+                        <h3 style={{ margin: 0, fontSize: 14, fontWeight: 800, color: VERT, lineHeight: 1.3 }}>{a.title}</h3>
+                        <p style={{ margin: 0, fontSize: 12, color: '#71717A' }}>{a.parishName || (a.parishId && a.parishId.name)}</p>
+                      </div>
+                      <span style={{ fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 10, background: catColor(a.type) + '15', color: catColor(a.type), border: '1px solid ' + catColor(a.type) + '30', whiteSpace: 'nowrap', flexShrink: 0 }}>{catLabel(a.type)}</span>
+                    </div>
+                    {a.description && <p style={{ margin: '0 0 12px', fontSize: 13, color: '#374151', lineHeight: 1.55 }}>{a.description}</p>}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#71717A' }}>
+                        <span>📅</span>
+                        <span style={{ fontWeight: 600 }}>{new Date(a.date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
+                      </div>
+                      {eventsAdmin && (
+                        <button onClick={function() { supprimerAnnonce(a._id); }} style={{ background: 'none', border: 'none', color: '#c62828', fontSize: 16, cursor: 'pointer' }}>✕</button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+          </div>
+          <div style={{ height: 80 }} />
+        </div>
+      )}
+
+      {false && onglet === 'annonces' && (
+        <div style={{ padding: 16 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {filtrees.map(a => (
                 <div key={a.id} style={{
                   background: '#fff', borderRadius: 16,
                   border: `1px solid #e4e4e7`,
