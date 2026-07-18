@@ -178,6 +178,64 @@ export default function AnnoncesPage() {
     return undefined;
   });
 
+    const [annoncesReelles, setAnnoncesReelles] = useState([]);
+  const [showAjoutAnnonce, setShowAjoutAnnonce] = useState(false);
+  const [nouveauTitreAnnonce, setNouveauTitreAnnonce] = useState('');
+  const [nouvelleDescAnnonce, setNouvelleDescAnnonce] = useState('');
+  const [nouvelleDateAnnonce, setNouvelleDateAnnonce] = useState('');
+  const [nouveauTypeAnnonce, setNouveauTypeAnnonce] = useState('messe');
+
+  useState(function() {
+    import('../../services/api').then(function(mod) {
+      mod.announcementsApi.getAll().then(function(res) {
+        setAnnoncesReelles((res && res.data && res.data.announcements) || []);
+      }).catch(function(e) { console.log('Annonces:', e.message); });
+    });
+    return undefined;
+  });
+
+  function debutSemaine() {
+    const d = new Date();
+    const jour = d.getDay();
+    const decalage = jour === 0 ? -6 : 1 - jour;
+    d.setDate(d.getDate() + decalage);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }
+
+  function finSemaine() {
+    const d = debutSemaine();
+    d.setDate(d.getDate() + 7);
+    return d;
+  }
+
+  function ajouterAnnonce() {
+    if (!nouveauTitreAnnonce || !nouvelleDateAnnonce) return;
+    import('../../services/api').then(function(mod) {
+      mod.announcementsApi.create({
+        title: nouveauTitreAnnonce,
+        description: nouvelleDescAnnonce,
+        date: nouvelleDateAnnonce,
+        type: nouveauTypeAnnonce,
+      }).then(function(res) {
+        const a = res && res.data && res.data.announcement;
+        if (a) setAnnoncesReelles(function(prev) { return prev.concat([a]); });
+        setNouveauTitreAnnonce('');
+        setNouvelleDescAnnonce('');
+        setNouvelleDateAnnonce('');
+        setShowAjoutAnnonce(false);
+      }).catch(function(e) { console.log('Ajout annonce:', e.message); });
+    });
+  }
+
+  function supprimerAnnonce(id) {
+    import('../../services/api').then(function(mod) {
+      mod.announcementsApi.remove(id).then(function() {
+        setAnnoncesReelles(function(prev) { return prev.filter(function(a) { return a._id !== id; }); });
+      }).catch(function(e) { console.log('Suppression annonce:', e.message); });
+    });
+  }
+
   function ajouterEvenementParoissial() {
     if (!nouveauTitre || !nouvelleDate) return;
     import('../../services/api').then(function(mod) {
