@@ -139,6 +139,18 @@ export const messagesApi = {
   },
 };
 
+export const announcementsApi = {
+  getAll: function(parishId) {
+    return apiFetch('/announcements' + (parishId ? '?parishId=' + parishId : ''));
+  },
+  create: function(data) {
+    return apiFetch('/announcements', { method: 'POST', body: JSON.stringify(data) });
+  },
+  remove: function(id) {
+    return apiFetch('/announcements/' + id, { method: 'DELETE' });
+  },
+};
+
 export const parishEventsApi = {
   getForParish: function(parishId) { return apiFetch('/parish-events/parish/' + parishId); },
   create: function(data) {
