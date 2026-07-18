@@ -77,7 +77,7 @@ function ParoisseCard({ p, suivi, onToggleSuivi, onClick, enDirect }) {
           )}
         </div>
 
-        <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 2 }}>
             <div style={{ fontSize: 12, fontWeight: 700, color: VERT, fontFamily: 'Georgia,serif', lineHeight: 1.3, marginRight: 6 }}>
               {p.nom}
@@ -86,13 +86,22 @@ function ParoisseCard({ p, suivi, onToggleSuivi, onClick, enDirect }) {
           <div style={{ fontSize: 9, color: '#7A6E5E', marginBottom: 5, fontFamily: 'Georgia,serif' }}>
             {[p.ville, p.pays].filter(Boolean).join(' - ')}
           </div>
-          {p.denomination && (
-            <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+            {p.denomination && (
               <span style={{ background: '#e8f5e9', color: VERT, padding: '2px 7px', borderRadius: 20, fontSize: 8, fontWeight: 700, fontFamily: 'Georgia,serif' }}>
                 {p.denomination}
               </span>
-            </div>
-          )}
+            )}
+            {p.verifiee ? (
+              <span style={{ display: 'flex', alignItems: 'center', gap: 2, background: '#e8f5e9', color: '#2e7d32', padding: '2px 7px', borderRadius: 20, fontSize: 8, fontWeight: 700, fontFamily: 'Georgia,serif' }}>
+                <i className="ti ti-check" style={{ fontSize: 9 }} /> Verifiee
+              </span>
+            ) : (
+              <span style={{ display: 'flex', alignItems: 'center', gap: 2, background: '#ffebee', color: '#c62828', padding: '2px 7px', borderRadius: 20, fontSize: 8, fontWeight: 700, fontFamily: 'Georgia,serif' }}>
+                <i className="ti ti-clock" style={{ fontSize: 9 }} /> En attente
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
@@ -160,11 +169,12 @@ export function ParishesPage() {
             pays: p.location && p.location.country,
             denomination: p.denomination,
             photo: p.logoUrl || null,
-            coords: p.location && p.location.coordinates && p.location.coordinates.coordinates
-              ? { lat: p.location.coordinates.coordinates[1], lng: p.location.coordinates.coordinates[0] }
-              : null,
-          };
-        });
+                          coords: p.location && p.location.coordinates && p.location.coordinates.coordinates
+                ? { lat: p.location.coordinates.coordinates[1], lng: p.location.coordinates.coordinates[0] }
+                : null,
+              verifiee: !!p.isVerified,
+            };
+          });
         setParoisses(mapped);
 
         try {
