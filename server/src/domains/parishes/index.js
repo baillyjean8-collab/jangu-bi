@@ -72,7 +72,7 @@ const parishRepo = {
   },
 
   async findAll({ page, limit, country, city, search }) {
-    const filter = { isActive: true, isVerified: true };
+    const filter = { isActive: true };
     if (country) filter['location.country'] = new RegExp(country, 'i');
     if (city) filter['location.city'] = new RegExp(city, 'i');
     if (search) filter.name = new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
