@@ -20,7 +20,6 @@ services:
         value: 10000
       - key: CLIENT_URL
         value: https://jangu-bi-client.onrender.com
-
       # Ajouter depuis le dashboard Render:
       # MONGODB_URI, JWT_SECRET, JWT_REFRESH_SECRET,
       # REDIS_URL, EMAIL_HOST, EMAIL_USER, EMAIL_PASS
