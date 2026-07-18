@@ -130,4 +130,22 @@ router.get('/liste/:cle', async (req, res) => {
   }
 });
 
+router.get('/nettoyer/:cle', async (req, res) => {
+  if (req.params.cle !== CLE_SECRETE) {
+    return res.status(403).json({ error: 'Non autorise' });
+  }
+  try {
+    const orphelines = await Parish.find({ diocese: DIOCESE, adminId: { $exists: true } })
+      .populate('adminId', 'email')
+      .lean();
+    const aSupprimer = orphelines.filter(function(p) { return !p.adminId; });
+    for (const p of aSupprimer) {
+      await Parish.deleteOne({ _id: p._id });
+    }
+    return res.json({ supprimees: aSupprimer.length, noms: aSupprimer.map(function(p) { return p.name; }) });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;
