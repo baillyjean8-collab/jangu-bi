@@ -35,11 +35,11 @@ const announcementRepo = {
 // ── Controller ─────────────────────────────────
 const announcementController = {
   async create(req, res) {
-    const { type, title, description, date } = req.body;
+    const { type, title, description, date, lieu, places } = req.body;
     const parishId = req.user.parishId;
     if (!parishId) throw new NotFoundError('Parish');
     const announcement = await announcementRepo.create({
-      parishId, type, title, description, date,
+      parishId, type, title, description, date, lieu, places,
     });
     return sendCreated(res, { announcement }, 'Annonce créée');
   },
