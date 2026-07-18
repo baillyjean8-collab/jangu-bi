@@ -81,9 +81,13 @@ router.get('/:cle', async (req, res) => {
         isVerified: true,
       });
 
-      const parish = await Parish.create({
+        const parish = await Parish.create({
         name: p.nom,
-        location: { country: 'Senegal', city: p.ville },
+        location: {
+          country: 'Senegal',
+          city: p.ville,
+          coordinates: { type: 'Point', coordinates: [-17.4467, 14.6928] },
+        },
         adminId: admin._id,
         diocese: DIOCESE,
         doyenne: p.doyenne,
