@@ -537,35 +537,64 @@ export default function AnnoncesPage() {
 
         <p style={{ fontSize: 11, fontWeight: 700, color: '#71717A', textTransform: 'uppercase', marginBottom: 8 }}>Calendrier universel</p>
         {CALENDRIER.map((item, i) => (
-                <div key={i} style={{
-                  background: '#fff', borderRadius: 14,
-                  border: '1px solid #e4e4e7',
-                  padding: 14, display: 'flex', alignItems: 'center', gap: 14,
-                }}>
+                              <div key={item._id} style={{
+                background: '#fff', borderRadius: 16,
+                border: '1px solid #e4e4e7',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                padding: 16,
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
                   <div style={{
-                    width: 52, height: 52, borderRadius: 12, flexShrink: 0,
-                    background: `${item.couleur}15`,
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                    width: 48, height: 48, borderRadius: 12, flexShrink: 0,
+                    background: `${OR}20`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24,
                   }}>
-                    <span style={{ fontSize: 10, fontWeight: 700, color: item.couleur, textTransform: 'uppercase' }}>{item.jour}</span>
-                    <span style={{ fontSize: 18, fontWeight: 800, color: item.couleur, lineHeight: 1 }}>{item.date.split(' ')[0]}</span>
-                    <span style={{ fontSize: 9, color: item.couleur }}>{item.date.split(' ')[1]}</span>
+                    🎉
                   </div>
                   <div style={{ flex: 1 }}>
-                    <p style={{ margin: '0 0 4px', fontSize: 14, fontWeight: 700, color: VERT }}>{item.titre}</p>
-                    <span style={{
-                      fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 10,
-                      background: `${item.couleur}15`, color: item.couleur,
-                    }}>
-                      {item.type}
-                    </span>
+                    <p style={{ margin: 0, fontSize: 14, fontWeight: 800, color: VERT }}>{item.title}</p>
+                    {item.lieu && <p style={{ margin: '2px 0 0', fontSize: 12, color: '#71717A' }}>📍 {item.lieu}</p>}
                   </div>
+                  {item.places && (
+                    <span style={{
+                      fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 10,
+                      background: `${VERT}15`, color: VERT, whiteSpace: 'nowrap', flexShrink: 0,
+                    }}>
+                      {item.places}
+                    </span>
+                  )}
                 </div>
-              ))}
-            </div>
-            <div style={{ height: 80 }} />
+                {item.description && (
+                  <p style={{ margin: '0 0 12px', fontSize: 13, color: '#374151', lineHeight: 1.55 }}>
+                    {item.description}
+                  </p>
+                )}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#71717A', fontWeight: 600 }}>
+                    <span>🗓️</span> {item.date ? new Date(item.date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }) : ''}
+                  </div>
+                  {eventsAdmin ? (
+                    <button onClick={function() { supprimerAnnonce(item._id); }} style={{
+                      padding: '7px 16px', borderRadius: 10, border: 'none', cursor: 'pointer',
+                      background: 'rgba(198,40,40,0.1)', color: '#c62828', fontWeight: 700, fontSize: 12,
+                    }}>
+                      Supprimer
+                    </button>
+                  ) : (
+                    <button style={{
+                      padding: '7px 16px', borderRadius: 10, border: 'none', cursor: 'pointer',
+                      background: VERT, color: OR, fontWeight: 700, fontSize: 12,
+                    }}>
+                      S'inscrire →
+                    </button>
+                  )}
+                </div>
+              </div>
+              );
+            })}
           </div>
-        )}
+          <div style={{ height: 80 }} />
+        </div>
+      )}
 
         {/* ── ONGLET LOISIRS ── */}
         {onglet === 'loisirs' && (
