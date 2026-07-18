@@ -135,14 +135,34 @@ router.get('/nettoyer/:cle', async (req, res) => {
     return res.status(403).json({ error: 'Non autorise' });
   }
   try {
-    const orphelines = await Parish.find({ diocese: DIOCESE, adminId: { $exists: true } })
-      .populate('adminId', 'email')
-      .lean();
-    const aSupprimer = orphelines.filter(function(p) { return !p.adminId; });
-    for (const p of aSupprimer) {
-      await Parish.deleteOne({ _id: p._id });
+    const toutes = await Parish.find({ diocese: DIOCESE }).populate('adminId', 'email').lean();
+    const parNom = {};
+    toutes.forEach(function(p) {
+      if (!parNom[p.name]) parNom[p.name] = [];
+      parNom[p.name].push(p);
+    });
+
+    const supprimees = [];
+    for (const nom of Object.keys(parNom)) {
+      const doublons = parNom[nom];
+      if (doublons.length <= 1) continue;
+      doublons.sort(function(a, b) {
+        const aValide = a.adminId && a.adminId.email ? 1 : 0;
+        const bValide = b.adminId && b.adminId.email ? 1 : 0;
+        return bValide - aValide;
+      });
+      const aGarder = doublons[0];
+      const aEnlever = doublons.slice(1);
+      for (const p of aEnlever) {
+        await Parish.deleteOne({ _id: p._id });
+        if (p.adminId && p.adminId._id) {
+          await User.deleteOne({ _id: p.adminId._id });
+        }
+        supprimees.push(p.name);
+      }
     }
-    return res.json({ supprimees: aSupprimer.length, noms: aSupprimer.map(function(p) { return p.name; }) });
+
+    return res.json({ supprimees: supprimees.length, noms: supprimees });
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
