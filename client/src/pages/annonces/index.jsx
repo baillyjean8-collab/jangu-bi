@@ -656,11 +656,7 @@ export default function AnnoncesPage() {
                     {item.description}
                   </p>
 
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#71717A', fontWeight: 600 }}>
-                      <span>🗓️</span> {item.date}
-                    </div>
-                    <button style={{
+                                      <button style={{
                       padding: '7px 16px', borderRadius: 10, border: 'none', cursor: 'pointer',
                       background: VERT, color: OR, fontWeight: 700, fontSize: 12,
                     }}>
@@ -668,11 +664,12 @@ export default function AnnoncesPage() {
                     </button>
                   </div>
                 </div>
-              ))}
-            </div>
-            <div style={{ height: 80 }} />
+              );
+            })}
           </div>
-        )}
+          <div style={{ height: 80 }} />
+        </div>
+      )}
 
       </div>
     </AppShell>
