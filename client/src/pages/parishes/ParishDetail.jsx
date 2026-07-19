@@ -754,8 +754,12 @@ export default function ParishDetail() {
                   ville ? { icon: "ti-map-pin", label: "Ville", valeur: ville } : null,
                   pays ? { icon: "ti-world", label: "Pays", valeur: pays } : null,
                   paroisse.location && paroisse.location.address ? { icon: "ti-home", label: "Adresse", valeur: paroisse.location.address } : null,
-                  paroisse.createdAt ? { icon: "ti-calendar", label: "Creee le", valeur: formatDateLongue(paroisse.createdAt) } : null,
-                ].filter(Boolean).map(function(item, i, arr) {
+                                paroisse.createdAt ? { icon: "ti-calendar", label: "Creee le", valeur: formatDateLongue(paroisse.createdAt) } : null,
+              paroisse.diocese ? { icon: "ti-building-arch", label: "Diocese", valeur: paroisse.diocese } : null,
+              paroisse.doyenne ? { icon: "ti-map-2", label: "Doyenne", valeur: paroisse.doyenne } : null,
+              paroisse.cure ? { icon: "ti-user", label: "Cure", valeur: paroisse.cure } : null,
+              paroisse.secretaire ? { icon: "ti-user-check", label: "Secretaire", valeur: paroisse.secretaire } : null,
+            ].filter(Boolean).map(function(item, i, arr) {
                   return (
                     <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, paddingBottom: 12, marginBottom: 12, borderBottom: i < arr.length - 1 ? "1px solid #f0ece4" : "none" }}>
                       <div style={{ width: 36, height: 36, borderRadius: 10, background: VERT + "15", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
