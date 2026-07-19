@@ -13,7 +13,11 @@ export default function AdminParoisse() {
   const [diocese, setDiocese]   = useState('');
   const [tel, setTel]           = useState('');
   const [adresse, setAdresse]   = useState('');
-  const [desc, setDesc]         = useState('');
+    const [desc, setDesc] = useState('');
+  const [cure, setCure] = useState('');
+  const [secretaire, setSecretaire] = useState('');
+  const [histoire, setHistoire] = useState('');
+  const [saintPatronBio, setSaintPatronBio] = useState('');
   const [dimanche, setDimanche] = useState('');
   const [semaine, setSemaine]   = useState('');
   const [saved, setSaved]       = useState(false);
@@ -48,6 +52,10 @@ export default function AdminParoisse() {
           setTel(par.phone || par.phoneNumber || '');
           setAdresse((par.location && par.location.address) || par.address || '');
           setDesc(par.description || par.about || '');
+        setCure(par.cure || '');
+        setSecretaire(par.secretaire || '');
+        setHistoire(par.histoire || '');
+        setSaintPatronBio(par.saintPatronBio || '');
           if (par.massTimes) {
             setDimanche(par.massTimes.sunday || par.massTimes.dimanche || '');
             setSemaine(par.massTimes.weekdays || par.massTimes.semaine || '');
@@ -68,7 +76,7 @@ export default function AdminParoisse() {
         await fetch('/api/parishes/' + (parishId._id || parishId), {
           method: 'PATCH',
           headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: nom, diocese, phone: tel, address: adresse, description: desc, massTimes: { sunday: dimanche, weekdays: semaine } }),
+          body: JSON.stringify({ name: nom, diocese, phone: tel, address: adresse, description: desc, cure, secretaire, histoire, saintPatronBio, massTimes: { sunday: dimanche, weekdays: semaine } }),
         });
       }
       setSaved(true);
