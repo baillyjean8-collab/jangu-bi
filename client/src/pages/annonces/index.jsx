@@ -209,7 +209,8 @@ export default function AnnoncesPage() {
     return d;
   }
 
-    const [showAjoutLoisir, setShowAjoutLoisir] = useState(false);
+  const [feteOuverte, setFeteOuverte] = useState(null);
+  const [showAjoutLoisir, setShowAjoutLoisir] = useState(false);
   const [nouveauTitreLoisir, setNouveauTitreLoisir] = useState('');
   const [nouveauLieuLoisir, setNouveauLieuLoisir] = useState('');
   const [nouvelleDateLoisir, setNouvelleDateLoisir] = useState('');
@@ -536,12 +537,13 @@ export default function AnnoncesPage() {
         )}
 
         <p style={{ fontSize: 11, fontWeight: 700, color: '#71717A', textTransform: 'uppercase', marginBottom: 8 }}>Calendrier universel</p>
-        {CALENDRIER.map((item, i) => (
-                              <div key={item._id} style={{
+                {CALENDRIER.map((item, i) => (
+                              <div key={item._id} onClick={function() { setFeteOuverte(feteOuverte === i ? null : i); }} style={{
                 background: '#fff', borderRadius: 16,
                 border: '1px solid #e4e4e7',
                 boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
                 padding: 16,
+                cursor: 'pointer',
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
                   <div style={{
@@ -563,14 +565,16 @@ export default function AnnoncesPage() {
                     </span>
                   )}
                 </div>
-                {item.description && (
-                  <p style={{ margin: '0 0 12px', fontSize: 13, color: '#374151', lineHeight: 1.55 }}>
-                    {item.description}
-                  </p>
+                                {feteOuverte === i && (
+                  <div style={{ background: '#f9f7f2', borderRadius: 10, padding: 12, marginBottom: 12 }}>
+                    <p style={{ margin: 0, fontSize: 12, color: '#374151', lineHeight: 1.6 }}>
+                      {item.bio || "L'histoire de cette fête n'est pas encore renseignee."}
+                    </p>
+                  </div>
                 )}
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#71717A', fontWeight: 600 }}>
-                  <span>🗓️</span> {item.jour} {item.date}
+                    <span>🗓️</span> {item.jour} {item.date}
                   </div>
                   {eventsAdmin ? (
                     <button onClick={function() { supprimerAnnonce(item._id); }} style={{
