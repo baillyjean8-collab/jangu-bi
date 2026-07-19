@@ -159,7 +159,7 @@ export function ParishesPage() {
     async function charger() {
       try {
         const { parishesApi, userApi } = await import('../../services/api');
-        const data = await parishesApi.getAll({ limit: 100 });
+                const data = await parishesApi.getAll({ limit: 200 });
         const items = data && data.data ? (Array.isArray(data.data) ? data.data : (data.data.items || data.data.data || [])) : [];
         const mapped = items.map(function(p) {
           return {
