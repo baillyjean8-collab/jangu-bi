@@ -656,7 +656,11 @@ export default function AnnoncesPage() {
                     {item.description}
                   </p>
 
-                                      <button style={{
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#71717A', fontWeight: 600 }}>
+                      <span>🗓️</span> {item.date}
+                    </div>
+                    <button style={{
                       padding: '7px 16px', borderRadius: 10, border: 'none', cursor: 'pointer',
                       background: VERT, color: OR, fontWeight: 700, fontSize: 12,
                     }}>
