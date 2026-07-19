@@ -176,9 +176,33 @@ const parishSchema = new mongoose.Schema(
       enum: ['paroisse', 'chapelle'],
       default: 'paroisse',
     },
-    parentParishId: {
+        parentParishId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Parish',
+      default: null,
+    },
+    cure: {
+      type: String,
+      trim: true,
+      maxlength: [150, 'Nom du cure trop long'],
+      default: null,
+    },
+    secretaire: {
+      type: String,
+      trim: true,
+      maxlength: [150, 'Nom du secretaire trop long'],
+      default: null,
+    },
+    histoire: {
+      type: String,
+      trim: true,
+      maxlength: [3000, 'Histoire trop longue'],
+      default: null,
+    },
+    saintPatronBio: {
+      type: String,
+      trim: true,
+      maxlength: [2000, 'Biographie trop longue'],
       default: null,
     },
     isVerified: {
