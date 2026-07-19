@@ -139,13 +139,14 @@ function construireCalendrierReel() {
   return tous
     .filter(function(e) { return e.date.getTime() >= maintenant.getTime(); })
     .slice(0, 20)
-    .map(function(e) {
+        .map(function(e) {
       return {
         date: e.date.getDate() + ' ' + NOMS_MOIS[e.date.getMonth()],
         jour: NOMS_JOURS[e.date.getDay()],
         titre: e.titre,
         type: e.type,
         couleur: e.couleur,
+        bio: e.bio,
       };
     });
 }
