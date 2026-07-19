@@ -228,20 +228,32 @@ const parishService = {
     return updated;
   },
 
-  async verify(parishId, superAdminId, req) {
+    async verify(parishId, superAdminId, req) {
     const parish = await parishRepo.findByIdLean(parishId);
     if (!parish) throw new NotFoundError('Parish');
-
     const verified = await parishRepo.setVerified(parishId, true);
-
     await audit.admin(
       AuditLog.ACTIONS.ADMIN_PARISH_VERIFIED,
       superAdminId, parishId, 'Parish',
       { name: parish.name }, req
     );
-
     await cacheInvalidateParish(parishId);
+    return verified;
+  },
 
+  async confirmByOwner(parishId, actorId, actorRole, req) {
+    const parish = await parishRepo.findByIdLean(parishId);
+    if (!parish) throw new NotFoundError('Parish');
+    if (actorRole === 'parish_admin' && parish.adminId.toString() !== actorId) {
+      throw new AuthorizationError('You can only confirm your own parish');
+    }
+    const verified = await parishRepo.setVerified(parishId, true);
+    await audit.admin(
+      AuditLog.ACTIONS.ADMIN_PARISH_VERIFIED,
+      actorId, parishId, 'Parish',
+      { name: parish.name, viaConfirmation: true }, req
+    );
+    await cacheInvalidateParish(parishId);
     return verified;
   },
 };
@@ -273,9 +285,14 @@ const parishController = {
     return sendSuccess(res, { parish }, 'Parish updated successfully');
   },
 
-  async verify(req, res) {
+    async verify(req, res) {
     const parish = await parishService.verify(req.params.id, req.user.userId, req);
     return sendSuccess(res, { parish }, 'Parish verified');
+  },
+
+  async confirm(req, res) {
+    const parish = await parishService.confirmByOwner(req.params.id, req.user.userId, req.user.role, req);
+    return sendSuccess(res, { parish }, 'Informations confirmees');
   },
 };
 
@@ -311,6 +328,13 @@ router.post('/:id/verify',
   authenticate, requireVerified,
   authorize('super_admin'),
   asyncHandler(parishController.verify)
+);
+
+// Confirm — parish_admin (own parish only) or super_admin
+router.post('/:id/confirm',
+  authenticate, requireVerified,
+  authorize('parish_admin', 'super_admin'),
+  asyncHandler(parishController.confirm)
 );
 
 module.exports = { router, parishService, parishRepo };
