@@ -121,9 +121,29 @@ export default function AdminParoisse() {
           );
         })}
 
-        <div style={{ background: 'white', borderRadius: 14, padding: '12px 14px', border: '1px solid rgba(0,0,0,0.06)' }}>
+                <div style={{ background: 'white', borderRadius: 14, padding: '12px 14px', border: '1px solid rgba(0,0,0,0.06)' }}>
           <div style={{ fontSize: 9, color: '#7A6E5E', marginBottom: 4, letterSpacing: '.06em', textTransform: 'uppercase' }}>Description</div>
           <textarea value={desc} onChange={function(e) { setDesc(e.target.value); }} rows={3} style={{ width: '100%', border: 'none', outline: 'none', fontSize: 12, color: VERT, fontFamily: 'Georgia,serif', background: 'transparent', resize: 'none', boxSizing: 'border-box' }} />
+        </div>
+
+        <div style={{ background: 'white', borderRadius: 14, padding: '12px 14px', border: '1px solid rgba(0,0,0,0.06)' }}>
+          <div style={{ fontSize: 9, color: '#7A6E5E', marginBottom: 4, letterSpacing: '.06em', textTransform: 'uppercase' }}>Cure en fonction</div>
+          <input value={cure} onChange={function(e) { setCure(e.target.value); }} placeholder="Ex: Abbe Jean Diouf" style={{ width: '100%', border: 'none', outline: 'none', fontSize: 12, color: VERT, fontFamily: 'Georgia,serif', background: 'transparent', boxSizing: 'border-box' }} />
+        </div>
+
+        <div style={{ background: 'white', borderRadius: 14, padding: '12px 14px', border: '1px solid rgba(0,0,0,0.06)' }}>
+          <div style={{ fontSize: 9, color: '#7A6E5E', marginBottom: 4, letterSpacing: '.06em', textTransform: 'uppercase' }}>Secretaire</div>
+          <input value={secretaire} onChange={function(e) { setSecretaire(e.target.value); }} placeholder="Ex: Marie Ndiaye" style={{ width: '100%', border: 'none', outline: 'none', fontSize: 12, color: VERT, fontFamily: 'Georgia,serif', background: 'transparent', boxSizing: 'border-box' }} />
+        </div>
+
+        <div style={{ background: 'white', borderRadius: 14, padding: '12px 14px', border: '1px solid rgba(0,0,0,0.06)' }}>
+          <div style={{ fontSize: 9, color: '#7A6E5E', marginBottom: 4, letterSpacing: '.06em', textTransform: 'uppercase' }}>Histoire de la paroisse</div>
+          <textarea value={histoire} onChange={function(e) { setHistoire(e.target.value); }} rows={4} placeholder="Racontez l'histoire de votre paroisse..." style={{ width: '100%', border: 'none', outline: 'none', fontSize: 12, color: VERT, fontFamily: 'Georgia,serif', background: 'transparent', resize: 'none', boxSizing: 'border-box' }} />
+        </div>
+
+        <div style={{ background: 'white', borderRadius: 14, padding: '12px 14px', border: '1px solid rgba(0,0,0,0.06)' }}>
+          <div style={{ fontSize: 9, color: '#7A6E5E', marginBottom: 4, letterSpacing: '.06em', textTransform: 'uppercase' }}>Biographie du saint patron</div>
+          <textarea value={saintPatronBio} onChange={function(e) { setSaintPatronBio(e.target.value); }} rows={4} placeholder="Qui etait le saint patron de votre paroisse ?" style={{ width: '100%', border: 'none', outline: 'none', fontSize: 12, color: VERT, fontFamily: 'Georgia,serif', background: 'transparent', resize: 'none', boxSizing: 'border-box' }} />
         </div>
 
         <div style={{ background: 'white', borderRadius: 14, padding: '12px 14px', border: '1px solid rgba(0,0,0,0.06)' }}>
