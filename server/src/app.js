@@ -193,6 +193,7 @@ app.use('/api/parish-events', require('./domains/parish-events'));
 app.use('/api/_seed', require('./domains/admin/seed-route'));
 
 
+
   // ── 11. 404 handler ───────────────────────────────────────────────────────
   app.use(notFoundHandler);
 
