@@ -772,15 +772,30 @@ export default function ParishDetail() {
                     </div>
                   );
                 })}
-                {paroisse.description && (
-                  <p style={{ margin: '12px 0 0', fontSize: 13, color: "#2a2a2a", lineHeight: 1.6 }}>{paroisse.description}</p>
-                )}
-                {isOwner && (
-                  <div onClick={function() { navigate('/parish-admin/paroisse'); }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, background: 'rgba(200,168,75,0.12)', border: '1px solid rgba(200,168,75,0.3)', borderRadius: 10, padding: '9px 0', color: '#8B6020', fontSize: 12, fontWeight: 700, cursor: 'pointer', marginTop: 12 }}>
-                    <i className="ti ti-edit" style={{ fontSize: 13 }} /> Modifier ces informations
-                  </div>
-                )}
+                              {paroisse.description && (
+                <p style={{ margin: '12px 0 0', fontSize: 13, color: "#2a2a2a", lineHeight: 1.6 }}>{paroisse.description}</p>
+              )}
+
+              {isOwner && (
+                <div onClick={function() { navigate('/parish-admin/paroisse'); }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, background: 'rgba(200,168,75,0.12)', border: '1px solid rgba(200,168,75,0.3)', borderRadius: 10, padding: '9px 0', color: '#8B6020', fontSize: 12, fontWeight: 700, cursor: 'pointer', marginTop: 12 }}>
+                  <i className="ti ti-edit" style={{ fontSize: 13 }} /> Modifier ces informations
+                </div>
+              )}
+            </div>
+
+            {paroisse.histoire && (
+              <div style={{ background: "#fff", borderRadius: 16, padding: "16px", border: "1px solid #e8e4dc", marginBottom: 12 }}>
+                <h3 style={{ margin: "0 0 10px", fontSize: 15, fontWeight: 800, color: VERT }}>Histoire de la paroisse</h3>
+                <p style={{ margin: 0, fontSize: 13, color: "#2a2a2a", lineHeight: 1.6, whiteSpace: 'pre-line' }}>{paroisse.histoire}</p>
               </div>
+            )}
+
+            {paroisse.saintPatronBio && (
+              <div style={{ background: "#fff", borderRadius: 16, padding: "16px", border: "1px solid #e8e4dc", marginBottom: 12 }}>
+                <h3 style={{ margin: "0 0 10px", fontSize: 15, fontWeight: 800, color: VERT }}>Le saint patron</h3>
+                <p style={{ margin: 0, fontSize: 13, color: "#2a2a2a", lineHeight: 1.6, whiteSpace: 'pre-line' }}>{paroisse.saintPatronBio}</p>
+              </div>
+            )}
 
               {isOwner && (
                 <button onClick={handleLogout} style={{ width: '100%', padding: 13, background: 'rgba(229,57,53,0.08)', border: '1px solid rgba(229,57,53,0.2)', borderRadius: 14, color: '#e53935', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
