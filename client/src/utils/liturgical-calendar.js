@@ -190,7 +190,7 @@ function fetesFixes(annee) {
     { mois: 11, jour: 25, titre: 'Nativite du Seigneur (Noel)', type: 'Solennite', couleur: COULEURS.blanc },
     { mois: 11, jour: 26, titre: 'Saint Etienne, premier martyr', type: 'Fete', couleur: COULEURS.rouge },
     { mois: 11, jour: 28, titre: 'Saints Innocents, martyrs', type: 'Fete', couleur: COULEURS.rouge },
-  ].map(function(f) { return { date: new Date(annee, f.mois, f.jour), titre: f.titre, type: f.type, couleur: f.couleur }; });
+    ].map(function(f) { return { date: new Date(annee, f.mois, f.jour), titre: f.titre, type: f.type, couleur: f.couleur, bio: f.bio }; });
 }
 
 function determinerSaison(date, fetesMobiles) {
