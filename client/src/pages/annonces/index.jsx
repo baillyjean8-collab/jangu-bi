@@ -551,7 +551,7 @@ export default function AnnoncesPage() {
                     🎉
                   </div>
                   <div style={{ flex: 1 }}>
-                    <p style={{ margin: 0, fontSize: 14, fontWeight: 800, color: VERT }}>{item.title}</p>
+                    <p style={{ margin: 0, fontSize: 14, fontWeight: 800, color: VERT }}>{item.titre}</p>
                     {item.lieu && <p style={{ margin: '2px 0 0', fontSize: 12, color: '#71717A' }}>📍 {item.lieu}</p>}
                   </div>
                   {item.places && (
@@ -570,7 +570,7 @@ export default function AnnoncesPage() {
                 )}
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#71717A', fontWeight: 600 }}>
-                    <span>🗓️</span> {item.date ? new Date(item.date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }) : ''}
+                  <span>🗓️</span> {item.jour} {item.date}
                   </div>
                   {eventsAdmin ? (
                     <button onClick={function() { supprimerAnnonce(item._id); }} style={{
