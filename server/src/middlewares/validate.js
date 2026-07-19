@@ -71,9 +71,9 @@ const JoiFields = {
       .pattern(/^\d{6}$/)
       .messages({ 'string.pattern.base': 'OTP must be exactly 6 digits' }),
 
-  pagination: () => ({
+    pagination: () => ({
     page: Joi.number().integer().min(1).default(1),
-    limit: Joi.number().integer().min(1).max(100).default(20),
+    limit: Joi.number().integer().min(1).max(300).default(20),
   }),
 };
 
