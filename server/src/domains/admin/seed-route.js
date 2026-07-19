@@ -10,20 +10,26 @@ router.get('/:cle', async (req, res) => {
     return res.status(403).json({ error: 'Non autorise' });
   }
   try {
-    const dejaLa = await User.findOne({ email: 'pierre@jangubi.com' });
-    if (dejaLa) {
-      return res.json({ message: 'Le compte pierre@jangubi.com existe deja, rien fait.' });
+        let admin = await User.findOne({ email: 'pierre@jangubi.com' });
+
+    if (admin && admin.parishId) {
+      const parishExiste = await Parish.findById(admin.parishId);
+      if (parishExiste) {
+        return res.json({ message: 'Tout est deja en place, rien a faire.', parishId: parishExiste._id });
+      }
     }
 
-    const admin = await User.create({
-      firstName: 'Pierre',
-      lastName: 'Diallo',
-      email: 'pierre@jangubi.com',
-      phone: '+221990000001',
-      password: 'Admin@2024!',
-      role: 'parish_admin',
-      isVerified: true,
-    });
+    if (!admin) {
+      admin = await User.create({
+        firstName: 'Pierre',
+        lastName: 'Diallo',
+        email: 'pierre@jangubi.com',
+        phone: '+221990000001',
+        password: 'Admin@2024!',
+        role: 'parish_admin',
+        isVerified: true,
+      });
+    }
 
     const parish = await Parish.create({
       name: 'Cathedrale du Souvenir Africain',
