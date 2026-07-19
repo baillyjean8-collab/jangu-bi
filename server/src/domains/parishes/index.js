@@ -28,10 +28,14 @@ const parishSchemas = {
     }).required(),
   }),
 
-  update: Joi.object({
+    update: Joi.object({
     name: Joi.string().trim().min(3).max(100).optional(),
     description: Joi.string().trim().max(1000).allow(null).optional(),
     denomination: Joi.string().trim().max(100).allow(null).optional(),
+    cure: Joi.string().trim().max(150).allow(null).optional(),
+    secretaire: Joi.string().trim().max(150).allow(null).optional(),
+    histoire: Joi.string().trim().max(3000).allow(null).optional(),
+    saintPatronBio: Joi.string().trim().max(2000).allow(null).optional(),
     logoUrl: Joi.alternatives().try(
       Joi.string().uri({ scheme: ['https', 'http'] }),
       Joi.string().pattern(/^data:image\/(jpeg|jpg|png|webp|gif);base64,/)
