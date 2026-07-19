@@ -208,6 +208,21 @@ export default function ParishDetail() {
     } catch (e) { console.log('Demarrer conversation:', e.message); }
   }
 
+    const [confirmationEnCours, setConfirmationEnCours] = useState(false);
+
+  async function confirmerInformations() {
+    setConfirmationEnCours(true);
+    try {
+      const res = await parishesApi.confirm(id);
+      const p = res && res.data && res.data.parish;
+      if (p) setParoisse(p);
+    } catch (e) {
+      console.log('Confirmation:', e.message);
+    } finally {
+      setConfirmationEnCours(false);
+    }
+  }
+
   const toggleLike = function(postId) {
     setLikees(function(prev) { return prev.includes(postId) ? prev.filter(function(i) { return i !== postId; }) : [...prev, postId]; });
     postsApi.like(postId).catch(function(e) { console.log('Like:', e.message); });
@@ -452,7 +467,19 @@ export default function ParishDetail() {
 
   return (
     <AppShell>
-      <div style={{ background: "#f7f5f0", minHeight: "100vh", paddingBottom: 80 }}>
+              <div style={{ background: "#f7f5f0", minHeight: "100vh", paddingBottom: 80 }}>
+        {isOwner && !paroisse.isVerified && (
+          <div style={{ background: '#ffebee', borderBottom: '1px solid rgba(198,40,40,0.2)', padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontSize: 18 }}>⏳</span>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: '#c62828' }}>Fiche en attente de verification</div>
+              <div style={{ fontSize: 10, color: '#8a5252' }}>Confirmez vos informations pour que votre paroisse apparaisse comme verifiee.</div>
+            </div>
+            <button onClick={confirmerInformations} disabled={confirmationEnCours} style={{ padding: '8px 14px', borderRadius: 10, border: 'none', background: '#c62828', color: '#fff', fontWeight: 700, fontSize: 11, cursor: 'pointer', flexShrink: 0, whiteSpace: 'nowrap' }}>
+              {confirmationEnCours ? '...' : 'Confirmer'}
+            </button>
+          </div>
+        )}
 
         {/* PHOTO DE COUVERTURE */}
         <div style={{ position: "relative", height: 180, background: (photoCouverture || paroisse.coverUrl) ? "none" : "linear-gradient(135deg, #1e2d14 0%, #2d4a1e 100%)", overflow: "visible" }}>
