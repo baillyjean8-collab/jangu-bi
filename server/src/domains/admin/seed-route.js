@@ -19,7 +19,7 @@ router.get('/:cle', async (req, res) => {
       firstName: 'Pierre',
       lastName: 'Diallo',
       email: 'pierre@jangubi.com',
-      phone: '+221770000001',
+      phone: '+221990000001',
       password: 'Admin@2024!',
       role: 'parish_admin',
       isVerified: true,
