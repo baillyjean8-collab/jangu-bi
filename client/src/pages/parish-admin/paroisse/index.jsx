@@ -25,12 +25,13 @@ export default function AdminParoisse() {
   const [showLogout, setShowLogout] = useState(false);
   const [commentsOn, setCommentsOn] = useState(true);
   const token = localStorage.getItem('jb_admin_token');
+  const BASE = import.meta.env.VITE_API_URL || '/api';
 
   useEffect(function() {
     async function load() {
       try {
         // Étape 1: récupérer le user et son parishId
-        const userRes = await fetch('/api/users/me', {
+          const userRes = await fetch(BASE + '/users/me', {
           headers: { Authorization: 'Bearer ' + token }
         });
         const userData = await userRes.json();
@@ -40,7 +41,7 @@ export default function AdminParoisse() {
         if (!parishId) { console.log('Pas de parishId'); return; }
 
         // Étape 2: charger les infos de la paroisse
-        const res = await fetch('/api/parishes/' + parishId, {
+        const res = await fetch(BASE + '/parishes/' + parishId, {
           headers: { Authorization: 'Bearer ' + token }
         });
         const data = await res.json();
@@ -69,11 +70,11 @@ export default function AdminParoisse() {
   async function handleSave() {
     setSaving(true);
     try {
-      const userRes = await fetch('/api/users/me', { headers: { Authorization: 'Bearer ' + token } });
+      const userRes = await fetch(BASE + '/users/me', { headers: { Authorization: 'Bearer ' + token } });
       const userData = await userRes.json();
       const u2 = userData.data && (userData.data.user || userData.data); const parishId = u2 && u2.parishId && (u2.parishId._id || u2.parishId);
       if (parishId) {
-        await fetch('/api/parishes/' + (parishId._id || parishId), {
+        await fetch(BASE + '/parishes/' + (parishId._id || parishId), {
           method: 'PATCH',
           headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
           body: JSON.stringify({ name: nom, diocese, phone: tel, address: adresse, description: desc, cure, secretaire, histoire, saintPatronBio, massTimes: { sunday: dimanche, weekdays: semaine } }),
