@@ -587,10 +587,9 @@ export default function AnnoncesPage() {
                       S'inscrire →
                     </button>
                   )}
-                </div>
+                                </div>
               </div>
-              );
-            })}
+            ))}
           </div>
           <div style={{ height: 80 }} />
         </div>
