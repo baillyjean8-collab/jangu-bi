@@ -4,7 +4,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import HomePage from './pages/home';
 import CreatePostPage from './pages/create-post';
 import CreateStoryPage from './pages/create-story';
-import AnnouncementsPage from './pages/announcements';
+import AnnouncementsPage from './pages/annonces';
 import { ParishesPage } from './pages/parishes';
 import ParishDetail from './pages/parishes/ParishDetail';
 import CatechesePage from './pages/catechese';
