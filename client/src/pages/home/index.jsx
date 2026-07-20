@@ -98,9 +98,12 @@ export default function HomePage() {
             // (media, don avec barre de progression) n'existent pas encore
             // sur les vraies publications recuperees depuis l'API.
             const formatted = items.map(p => ({
+
 _id: p._id,
+
 type: 'normal',
-              initiales: p.parishId && p.parishId.name ? p.parishId.name.substring(0,2).toUpperCase() : 'SC',
+
+initiales: p.parishId && p.parishId.name ? p.parishId.name.substring(0,2).toUpperCase() : 'SC',
               logo: p.parishId && p.parishId.logoUrl ? p.parishId.logoUrl : null,
               parishId: p.parishId && p.parishId._id ? p.parishId._id : null,
               bg: '#2E5C3E',
