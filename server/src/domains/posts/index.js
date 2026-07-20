@@ -307,11 +307,7 @@ router.post('/:id/comment/:commentId/report',
   asyncHandler(postController.reportComment)
 );
 
-router.get('/moderation/signales',
-  authenticate, requireVerified,
-  authorize('parish_admin', 'super_admin'),
-  asyncHandler(postController.listReported)
-);
+router.post('/:id/comment/:commentId/resolve',
 
 router.post('/:id/comment/:commentId/resolve',
   authenticate, requireVerified,
