@@ -1,37 +1,54 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+
 import { useNavigate } from 'react-router-dom';
+
 import AdminShell from '../AdminShell';
+
+import { postsApi } from '../../../services/api';
 
 const OR = '#C8A84B';
 const VERT = '#1e2d14';
 const IVOIRE = '#F5F0E8';
 const BD = 'repeating-linear-gradient(0deg,transparent,transparent 8px,rgba(200,168,75,0.07) 8px,rgba(200,168,75,0.07) 9px),repeating-linear-gradient(90deg,transparent,transparent 8px,rgba(200,168,75,0.07) 8px,rgba(200,168,75,0.07) 9px)';
 
-const SIGNALEMENTS_MOCK = [
-  { _id: '1', auteur: 'Moussa Kane', contenu: '[contenu inapproprié masqué par le filtre]', publication: 'Messe des jeunes', date: 'Il y a 2h', type: 'commentaire' },
-  { _id: '2', auteur: 'Ibou Faye', contenu: '[contenu signalé par 3 fidèles]', publication: 'Collecte restauration', date: 'Il y a 5h', type: 'commentaire' },
-];
-const TRAITES_MOCK = [
-  { _id: '3', auteur: 'Awa Diop', contenu: '[contenu traité]', statut: 'supprimé' },
-];
-
 export default function AdminModeration() {
-  const navigate = useNavigate();
-  const [signalements, setSignalements] = useState(SIGNALEMENTS_MOCK);
-  const [traites, setTraites] = useState(TRAITES_MOCK);
-  const token = localStorage.getItem('jb_admin_token');
 
-  function supprimer(id) {
-    const item = signalements.find(function(s) { return s._id === id; });
-    if (item) setTraites(function(prev) { return [...prev, {...item, statut: 'supprimé'}]; });
-    setSignalements(function(prev) { return prev.filter(function(s) { return s._id !== id; }); });
-  }
+const navigate = useNavigate();
 
-  function ignorer(id) {
-    const item = signalements.find(function(s) { return s._id === id; });
-    if (item) setTraites(function(prev) { return [...prev, {...item, statut: 'ignoré'}]; });
-    setSignalements(function(prev) { return prev.filter(function(s) { return s._id !== id; }); });
-  }
+const [signalements, setSignalements] = useState([]);
+
+const [traites, setTraites] = useState([]);
+
+const token = localStorage.getItem('jb_admin_token');
+
+useEffect(function() {
+  postsApi.getReported().then(function(res) {
+    const liste = (res && res.data && res.data.signalements) || [];
+    setSignalements(liste);
+  }).catch(function(e) { console.log('Signalements:', e.message); });
+}, []);
+
+function supprimer(id) {
+
+const item = signalements.find(function(s) { return s.commentId === id; });
+
+postsApi.resolveReported(item.postId, item.commentId, 'supprime').then(function() {
+  if (item) setTraites(function(prev) { return [...prev, {...item, statut: 'supprimé'}]; });
+  setSignalements(function(prev) { return prev.filter(function(s) { return s.commentId !== id; }); });
+}).catch(function(e) { console.log('Resolution:', e.message); });
+
+}
+
+function ignorer(id) {
+
+const item = signalements.find(function(s) { return s.commentId === id; });
+
+postsApi.resolveReported(item.postId, item.commentId, 'ignore').then(function() {
+  if (item) setTraites(function(prev) { return [...prev, {...item, statut: 'ignoré'}]; });
+  setSignalements(function(prev) { return prev.filter(function(s) { return s.commentId !== id; }); });
+}).catch(function(e) { console.log('Resolution:', e.message); });
+
+}
 
   return (
     <AdminShell>
