@@ -78,17 +78,17 @@ postsApi.resolveReported(item.postId, item.commentId, 'ignore').then(function() 
           <div style={{ fontFamily: 'Georgia,serif', fontSize: 10, fontWeight: 700, color: VERT, marginBottom: -4 }}>À traiter</div>
         )}
 
-        {signalements.map(function(item) {
+                {signalements.map(function(item) {
           return (
-            <div key={item._id} style={{ background: 'white', borderRadius: 16, padding: 14, border: '1.5px solid rgba(229,57,53,0.2)', borderLeft: '3px solid #e53935' }}>
+            <div key={item.commentId} style={{ background: 'white', borderRadius: 16, padding: 14, border: '1.5px solid rgba(229,57,53,0.2)', borderLeft: '3px solid #e53935' }}>
               <div style={{ fontSize: 9, color: '#e53935', fontWeight: 700, marginBottom: 5 }}>⚠️ Commentaire signalé</div>
               <div style={{ fontFamily: 'Georgia,serif', fontSize: 12, fontWeight: 700, color: VERT, marginBottom: 2 }}>{item.auteur}</div>
               <div style={{ fontSize: 11, color: '#5A5045', marginBottom: 3, fontStyle: 'italic' }}>"{item.contenu}"</div>
-              <div style={{ fontSize: 9, color: '#9A8E7E', marginBottom: 10 }}>Sur : {item.publication} · {item.date}</div>
+              <div style={{ fontSize: 9, color: '#9A8E7E', marginBottom: 10 }}>Sur : {item.publication}</div>
               <div style={{ display: 'flex', gap: 7 }}>
-                <button onClick={function() { supprimer(item._id); }} style={{ flex: 1, padding: 8, background: 'rgba(229,57,53,0.08)', border: '1px solid rgba(229,57,53,0.2)', borderRadius: 9, fontSize: 9, color: '#e53935', cursor: 'pointer', fontFamily: 'Georgia,serif', fontWeight: 700 }}>🗑️ Supprimer</button>
+                <button onClick={function() { supprimer(item.commentId); }} style={{ flex: 1, padding: 8, background: 'rgba(229,57,53,0.08)', border: '1px solid rgba(229,57,53,0.2)', borderRadius: 9, fontSize: 9, color: '#e53935', cursor: 'pointer', fontFamily: 'Georgia,serif', fontWeight: 700 }}>🗑️ Supprimer</button>
                 <button style={{ flex: 1, padding: 8, background: 'rgba(200,168,75,0.1)', border: '1px solid rgba(200,168,75,0.2)', borderRadius: 9, fontSize: 9, color: '#8B6020', cursor: 'pointer', fontFamily: 'Georgia,serif' }}>💬 Contacter</button>
-                <button onClick={function() { ignorer(item._id); }} style={{ flex: 1, padding: 8, background: 'rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 9, fontSize: 9, color: '#7A6E5E', cursor: 'pointer', fontFamily: 'Georgia,serif' }}>Ignorer</button>
+                <button onClick={function() { ignorer(item.commentId); }} style={{ flex: 1, padding: 8, background: 'rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 9, fontSize: 9, color: '#7A6E5E', cursor: 'pointer', fontFamily: 'Georgia,serif' }}>Ignorer</button>
               </div>
             </div>
           );
