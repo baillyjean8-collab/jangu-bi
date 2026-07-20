@@ -267,6 +267,12 @@ router.patch('/:id',
   asyncHandler(postController.update)
 );
 
+router.get('/moderation/signales',
+  authenticate, requireVerified,
+  authorize('parish_admin', 'super_admin'),
+  asyncHandler(postController.listReported)
+);
+
 router.get('/:id',
 asyncHandler(postController.getOne)
 );
