@@ -5,6 +5,9 @@ parentId: { type: mongoose.Schema.Types.ObjectId, default: null },
   userId:    { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   text:      { type: String, required: true, maxlength: 500 },
   createdAt: { type: Date, default: Date.now },
+  reported:  { type: Boolean, default: false },
+  reportedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  reportStatus: { type: String, enum: ['pending', 'supprime', 'ignore'], default: null },
 });
 const postSchema = new mongoose.Schema({
   parishId:  { type: mongoose.Schema.Types.ObjectId, ref: 'Parish', required: true },
