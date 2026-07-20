@@ -216,12 +216,34 @@ return sendSuccess(res, { post });
     return sendSuccess(res, { post }, 'Publication mise a jour');
   },
 
-  async delete(req, res) {
-    const allowAny = req.user.role === 'super_admin';
-    const post = await postRepo.deleteById(req.params.id, req.user.parishId, allowAny);
-    if (!post) throw new NotFoundError('Post');
-    return sendSuccess(res, {}, 'Publication masquee');
-  },
+    async delete(req, res) {
+
+const allowAny = req.user.role === 'super_admin';
+
+const post = await postRepo.deleteById(req.params.id, req.user.parishId, allowAny);
+
+if (!post) throw new NotFoundError('Post');
+
+return sendSuccess(res, {}, 'Publication masquee');
+
+},
+
+async reportComment(req, res) {
+  const comment = await postRepo.reportComment(req.params.id, req.params.commentId, req.user.userId);
+  return sendSuccess(res, { comment }, 'Commentaire signale');
+},
+
+async listReported(req, res) {
+  const parishId = req.user.role === 'super_admin' ? undefined : req.user.parishId;
+  const signalements = await postRepo.listReportedComments(parishId);
+  return sendSuccess(res, { signalements });
+},
+
+async resolveReported(req, res) {
+  const comment = await postRepo.resolveReportedComment(req.params.id, req.params.commentId, req.body.action);
+  return sendSuccess(res, { comment }, 'Signalement traite');
+},
+
 };
 
 // -- Routes ---------------------------------------------------------
@@ -265,9 +287,30 @@ router.post('/:id/comment',
 );
 
 router.delete('/:id',
+
+authenticate, requireVerified,
+
+authorize('parish_admin', 'super_admin'),
+
+asyncHandler(postController.delete)
+
+);
+
+router.post('/:id/comment/:commentId/report',
+  authenticate,
+  asyncHandler(postController.reportComment)
+);
+
+router.get('/moderation/signales',
   authenticate, requireVerified,
   authorize('parish_admin', 'super_admin'),
-  asyncHandler(postController.delete)
+  asyncHandler(postController.listReported)
+);
+
+router.post('/:id/comment/:commentId/resolve',
+  authenticate, requireVerified,
+  authorize('parish_admin', 'super_admin'),
+  asyncHandler(postController.resolveReported)
 );
 
 module.exports = { router, postRepo };
