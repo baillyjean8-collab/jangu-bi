@@ -75,12 +75,71 @@ if (!post) throw new NotFoundError('Post');
 return post;
 },
 
-  async addComment(postId, userId, text, parentId) {
+    async addComment(postId, userId, text) {
+
 const post = await Post.findById(postId);
+
 if (!post) throw new NotFoundError('Post');
-post.comments.push({ userId, text, parentId: parentId || null });
+
+post.comments.push({ userId, text });
+
 await post.save();
+
 return post;
+
+},
+
+async reportComment(postId, commentId, userId) {
+  const post = await Post.findById(postId);
+  if (!post) throw new NotFoundError('Post');
+  const comment = post.comments.id(commentId);
+  if (!comment) throw new NotFoundError('Comment');
+  comment.reported = true;
+  comment.reportStatus = 'pending';
+  if (!comment.reportedBy.some(function(id) { return id.toString() === userId.toString(); })) {
+    comment.reportedBy.push(userId);
+  }
+  await post.save();
+  return comment;
+},
+
+async listReportedComments(parishId) {
+  const filter = { 'comments.reported': true, 'comments.reportStatus': 'pending' };
+  if (parishId) filter.parishId = parishId;
+  const posts = await Post.find(filter)
+    .populate('comments.userId', 'firstName lastName')
+    .lean();
+  const resultat = [];
+  posts.forEach(function(p) {
+    p.comments.forEach(function(c) {
+      if (c.reported && c.reportStatus === 'pending') {
+        resultat.push({
+          postId: p._id,
+          commentId: c._id,
+          auteur: c.userId ? (c.userId.firstName + ' ' + c.userId.lastName) : 'Utilisateur',
+          contenu: c.text,
+          publication: p.content ? p.content.slice(0, 60) : '',
+          date: c.createdAt,
+        });
+      }
+    });
+  });
+  return resultat;
+},
+
+async resolveReportedComment(postId, commentId, action) {
+  const post = await Post.findById(postId);
+  if (!post) throw new NotFoundError('Post');
+  const comment = post.comments.id(commentId);
+  if (!comment) throw new NotFoundError('Comment');
+  if (action === 'supprime') {
+    comment.text = '[commentaire supprime par la moderation]';
+    comment.reportStatus = 'supprime';
+  } else {
+    comment.reportStatus = 'ignore';
+  }
+  await post.save();
+  return comment;
 },
 
   async updateById(postId, parishId, updates, allowAnyParish) {
