@@ -5,13 +5,14 @@ import { useAuth } from '../context/AuthContext';
 const BOGOLAN_DARK = 'repeating-linear-gradient(0deg,transparent,transparent 8px,rgba(200,168,75,0.05) 8px,rgba(200,168,75,0.05) 9px),repeating-linear-gradient(90deg,transparent,transparent 8px,rgba(200,168,75,0.05) 8px,rgba(200,168,75,0.05) 9px)';
 
 const menuItems = [
-  { icon: 'ti-home',           path: '/' },
+  { icon: 'ti-home', path: '/' },
   { icon: 'ti-building-church',path: '/parishes' },
-  { icon: 'ti-speakerphone',   path: '/announcements' },
-  { icon: 'ti-broadcast',      path: '/live' },
-  { icon: 'ti-cross',          path: '/catechese' },
-  { icon: 'ti-list-check',     path: '/demandes' },
-  { icon: 'ti-user',           path: '/profile' },
+  { icon: 'ti-speakerphone', path: '/announcements' },
+  { icon: 'ti-broadcast', path: '/live' },
+  { icon: 'ti-cross', path: '/catechese' },
+  { icon: 'ti-books', path: '/bibliotheque' },
+  { icon: 'ti-list-check', path: '/demandes' },
+  { icon: 'ti-user', path: '/profile' },
 ];
 
 function AppShell({ children, hideNav }) {
