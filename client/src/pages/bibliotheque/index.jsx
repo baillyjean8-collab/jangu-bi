@@ -9,6 +9,8 @@ const CATEGORIES = [
   { id: 'actualites', label: 'Actualités', icon: '📰' },
   { id: 'senegal', label: 'Sénégal', icon: '🇸🇳' },
   { id: 'vatican', label: 'Vatican', icon: '⛪' },
+  { id: 'bible', label: 'Bible', icon: '📖' },
+  { id: 'saints', label: 'Saints', icon: '✨' },
   { id: 'classiques', label: 'Classiques', icon: '📜' },
   { id: 'temoignages', label: 'Témoignages', icon: '💬' },
 ];
