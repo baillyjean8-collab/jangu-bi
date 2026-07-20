@@ -201,6 +201,16 @@ const [galerieIndex, setGalerieIndex] = useState(0);
   const [compteurAvertissements, setCompteurAvertissements] = useState(0);
   const [commentDraft, setCommentDraft] = useState('');
 const [replyingTo, setReplyingTo] = useState(null);
+const [signales, setSignales] = useState({});
+
+function signalerCommentaire(post, commentId) {
+  if (!post || !post._id) return;
+  import('../../services/api').then(function(mod) {
+    mod.postsApi.reportComment(post._id, commentId).then(function() {
+      setSignales(function(prev) { return Object.assign({}, prev, { [commentId]: true }); });
+    }).catch(function(e) { console.log('Signalement:', e.message); });
+  });
+}
   const [commentError, setCommentError] = useState('');
   const [recording, setRecording] = useState(false);
   const recognitionRef = useRef(null);
@@ -837,6 +847,11 @@ return (
 <div style={{ display: 'flex', gap: 10, marginTop: 3, paddingLeft: 4 }}>
 <span style={{ fontSize: 8, color: '#aaa' }}>{cm.temps}</span>
 <span onClick={function() { setReplyingTo({ id: cm.id, nom: cm.auteur }); }} style={{ fontSize: 8, color: '#8B6020', fontWeight: 700, cursor: 'pointer' }}>Repondre</span>
+{signales[cm.id] ? (
+  <span style={{ fontSize: 8, color: '#999' }}>Signale</span>
+) : (
+  <span onClick={function() { signalerCommentaire(post, cm.id); }} style={{ fontSize: 8, color: '#b71c1c', cursor: 'pointer' }}>Signaler</span>
+)}
 </div>
 </div>
 </div>
