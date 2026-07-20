@@ -44,7 +44,7 @@ export const postsApi = {
   },
   like: function(id) { return apiFetch('/posts/' + id + '/like', { method: 'POST' }); },
 share: function(id) { return apiFetch('/posts/' + id + '/share', { method: 'POST' }); },
-  comment: function(id, text, parentId) {
+    comment: function(id, text, parentId) {
       // Route reelle cote backend : /posts/:id/comment (singulier), pas /comments
       return apiFetch('/posts/' + id + '/comment', {
         method: 'POST', body: JSON.stringify({ text: text, parentId: parentId || null })
@@ -52,6 +52,17 @@ share: function(id) { return apiFetch('/posts/' + id + '/share', { method: 'POST
     },
     getOne: function(id) {
       return apiFetch('/posts/' + id);
+    },
+    reportComment: function(postId, commentId) {
+      return apiFetch('/posts/' + postId + '/comment/' + commentId + '/report', { method: 'POST' });
+    },
+    getReported: function() {
+      return apiFetch('/posts/moderation/signales');
+    },
+    resolveReported: function(postId, commentId, action) {
+      return apiFetch('/posts/' + postId + '/comment/' + commentId + '/resolve', {
+        method: 'POST', body: JSON.stringify({ action: action })
+      });
     },
   };
 
