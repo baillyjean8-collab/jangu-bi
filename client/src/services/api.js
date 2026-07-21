@@ -24,6 +24,39 @@ async function apiFetch(endpoint, options) {
   return data;
 }
 
+export const authApi = {
+  register: function(data) {
+    return apiFetch('/auth/register', { method: 'POST', body: JSON.stringify(data) });
+  },
+  login: function(data) {
+    return apiFetch('/auth/login', { method: 'POST', body: JSON.stringify(data) });
+  },
+  verifyOtp: function(data) {
+    return apiFetch('/auth/verify-otp', { method: 'POST', body: JSON.stringify(data) });
+  },
+  resendOtp: function(data) {
+    return apiFetch('/auth/resend-otp', { method: 'POST', body: JSON.stringify(data) });
+  },
+  refresh: function() {
+    return apiFetch('/auth/refresh', { method: 'POST' });
+  },
+  logout: function() {
+    return apiFetch('/auth/logout', { method: 'POST' });
+  },
+  logoutAll: function() {
+    return apiFetch('/auth/logout-all', { method: 'POST' });
+  },
+  forgotPassword: function(data) {
+    return apiFetch('/auth/forgot-password', { method: 'POST', body: JSON.stringify(data) });
+  },
+  resetPassword: function(data) {
+    return apiFetch('/auth/reset-password', { method: 'POST', body: JSON.stringify(data) });
+  },
+  me: function() {
+    return apiFetch('/auth/me');
+  },
+};
+
 export const postsApi = {
   getAll: function(params) {
     const q = new URLSearchParams(params || {}).toString();
