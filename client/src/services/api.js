@@ -13,6 +13,7 @@ async function apiFetch(endpoint, options) {
   const opts = options || {};
   const res = await fetch(BASE + endpoint, {
     ...opts,
+    credentials: 'include',
     headers: Object.assign(
       { 'Content-Type': 'application/json' },
       token ? { Authorization: 'Bearer ' + token } : {},
