@@ -64,10 +64,13 @@ dispatch({ type: 'SET_USER', payload: profileRes.data.user });
   }, []);
 
   // ── Actions ───────────────────────────────────────────────────────────────
-  const login = useCallback(async (credentials) => {
-    const { data } = await authApi.login(credentials);
-    tokenStore.set(data.data.accessToken);
-    dispatch({ type: 'SET_USER', payload: data.data.user });
+const login = useCallback(async (credentials) => {
+
+const data = await authApi.login(credentials);
+
+tokenStore.set(data.data.accessToken);
+
+dispatch({ type: 'SET_USER', payload: data.data.user });
     // Remplit aussi le stockage historique (jb_admin_token) utilise par les
     // anciennes pages de gestion admin (Fideles, Dons, Demandes, Moderation,
     // Branches, Live, Ma Paroisse), quelle que soit la page de connexion
