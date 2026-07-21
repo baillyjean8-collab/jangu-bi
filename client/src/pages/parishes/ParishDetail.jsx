@@ -302,10 +302,13 @@ export default function ParishDetail() {
     setEditOffsetY(limite.y);
   }
 
-  function ouvrirEditionPhoto(cible, file) {
-    const url = URL.createObjectURL(file);
-    setEditUrl(url);
-    setEditZoom(1);
+function ouvrirEditionPhoto(cible, file) {
+
+const url = URL.createObjectURL(file);
+
+setEditUrl(url);
+
+setEditZoom(1.15);
     setEditOffsetX(0);
     setEditOffsetY(0);
     setEditFiltre('normal');
