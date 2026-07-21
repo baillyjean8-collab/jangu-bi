@@ -6,11 +6,45 @@ import { AuthShell } from '../../components/layout';
 import { Button, Input, useToast } from '../../components/ui';
 
 function extractError(err) {
-  const data = err?.response?.data;
-  if (data?.errors && typeof data.errors === 'object') {
-    return Object.values(data.errors)[0];
-  }
-  return data?.message || 'Une erreur est survenue';
+
+const data = err?.response?.data;
+
+if (data?.errors && typeof data.errors === 'object') {
+
+return Object.values(data.errors)[0];
+
+}
+
+const messageBrut = data?.message || err?.message || '';
+
+const traductions = {
+
+'Invalid credentials': 'Email ou mot de passe incorrect.',
+
+'Invalid email or password': 'Email ou mot de passe incorrect.',
+
+'Account locked': 'Trop de tentatives. Compte bloque 30 minutes, reessayez plus tard.',
+
+'Account is locked': 'Trop de tentatives. Compte bloque 30 minutes, reessayez plus tard.',
+
+'User not found': 'Aucun compte trouve avec cet email.',
+
+'Email already exists': 'Un compte existe deja avec cet email.',
+
+'Failed to fetch': 'Impossible de contacter le serveur. Verifiez votre connexion internet.',
+
+'NetworkError': 'Impossible de contacter le serveur. Verifiez votre connexion internet.',
+
+};
+
+for (const cle in traductions) {
+
+if (messageBrut.toLowerCase().includes(cle.toLowerCase())) return traductions[cle];
+
+}
+
+return messageBrut || 'Une erreur est survenue. Reessayez dans un instant.';
+
 }
 
 // ── Paroisses catholiques du Sénégal (toutes les 7 diocèses) ─────────────────
