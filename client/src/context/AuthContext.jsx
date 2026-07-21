@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useReducer, useCallback } from 'react';
-import { authApi } from '../api';
+import { authApi } from '../services/api';
 import { tokenStore } from '../api/client';
 
 // ── State ─────────────────────────────────────────────────────────────────────
@@ -33,14 +33,20 @@ export function AuthProvider({ children }) {
   // This restores the session after a page reload without requiring login.
   useEffect(() => {
     async function restoreSession() {
-      try {
-        const { data } = await authApi.refresh();
-        tokenStore.set(data.data.accessToken);
 
-        // Fetch full user profile
-        const profileRes = await authApi.me();
-        dispatch({ type: 'SET_USER', payload: profileRes.data.data.user });
-      } catch {
+try {
+
+const data = await authApi.refresh();
+
+tokenStore.set(data.data.accessToken);
+
+// Fetch full user profile
+
+const profileRes = await authApi.me();
+
+dispatch({ type: 'SET_USER', payload: profileRes.data.user });
+
+} catch {
         // No valid refresh token → user is logged out (expected on first visit)
         dispatch({ type: 'CLEAR_USER' });
       }
