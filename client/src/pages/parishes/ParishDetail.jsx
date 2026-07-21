@@ -484,151 +484,154 @@ setEditZoom(1.15);
           </div>
         )}
 
-        {/* PHOTO DE COUVERTURE */}
-        <div style={{ position: "relative", height: 180, background: (photoCouverture || paroisse.coverUrl) ? "none" : "linear-gradient(135deg, #1e2d14 0%, #2d4a1e 100%)", overflow: "visible" }}>
-          {(photoCouverture || paroisse.coverUrl)
-            ? <img src={photoCouverture || paroisse.coverUrl} alt="couverture" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-            : (
-              <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 6 }}>
-                <span style={{ fontSize: 40, opacity: 0.3, color: '#fff' }}>+</span>
-                <span style={{ color: "rgba(255,255,255,0.3)", fontSize: 12 }}>Photo de couverture</span>
-              </div>
-            )
-          }
+        {/* ZONE PHOTO CONTINUE — couverture + identite + gestion en un seul fond */}
+<div style={{ position: "relative", backgroundImage: (photoCouverture || paroisse.coverUrl) ? "url(" + (photoCouverture || paroisse.coverUrl) + ")" : "linear-gradient(155deg, #B8763A 0%, #D4954F 50%, #A8632E 100%)", backgroundSize: "cover", backgroundPosition: "center", overflow: "hidden", paddingBottom: 12 }}>
 
-          <button onClick={function() { navigate(-1); }} style={{ position: "absolute", top: 12, left: 12, background: "rgba(0,0,0,0.4)", border: "none", borderRadius: 10, width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
-            <i className="ti ti-arrow-left" style={{ fontSize: 20, color: "#fff" }} />
-          </button>
+  <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 190, opacity: 0.12, backgroundImage: "repeating-linear-gradient(45deg, transparent, transparent 18px, #C8A84B 18px, #C8A84B 19px), repeating-linear-gradient(-45deg, transparent, transparent 18px, #C8A84B 18px, #C8A84B 19px)", pointerEvents: "none" }} />
 
-          {isOwner && (
-            <label style={{ position: "absolute", bottom: 10, right: 10, background: "rgba(0,0,0,0.5)", borderRadius: 8, padding: "5px 10px", cursor: "pointer", display: "flex", alignItems: "center", gap: 5, color: "#fff", fontSize: 12, fontWeight: 600 }}>
-              <i className="ti ti-camera" style={{ fontSize: 15 }} />
-              Modifier la couverture
-              <input type="file" accept="image/*" onChange={handleCouverture} style={{ display: "none" }} />
-            </label>
+  <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, transparent 22%, rgba(30,45,20,0.5) 48%, rgba(30,45,20,0.88) 75%, rgba(30,45,20,0.96) 100%)", pointerEvents: "none" }} />
+
+  <button onClick={function() { navigate(-1); }} style={{ position: "absolute", top: 12, left: 12, zIndex: 5, background: "rgba(255,255,255,0.1)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 12, width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+    <i className="ti ti-arrow-left" style={{ fontSize: 20, color: "#fff" }} />
+  </button>
+
+  {isOwner && (
+    <label style={{ position: "absolute", top: 12, right: 12, zIndex: 5, background: "rgba(255,255,255,0.1)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 20, padding: "7px 13px", cursor: "pointer", display: "flex", alignItems: "center", gap: 5, color: "#fff", fontSize: 11, fontWeight: 600 }}>
+      <i className="ti ti-camera" style={{ fontSize: 14 }} />
+      Modifier la couverture
+      <input type="file" accept="image/*" onChange={handleCouverture} style={{ display: "none" }} />
+    </label>
+  )}
+
+  <div style={{ position: "absolute", top: 130, left: 20, zIndex: 5 }}>
+    <div style={{ position: "relative", width: 88, height: 88 }}>
+      <div style={{ position: "absolute", inset: -12, borderRadius: "50%", background: "repeating-conic-gradient(from 0deg, rgba(200,168,75,.85) 0deg 0.7deg, transparent 0.7deg 15deg)", WebkitMask: "radial-gradient(circle, transparent 62%, black 63%, black 100%)", mask: "radial-gradient(circle, transparent 62%, black 63%, black 100%)", zIndex: -1 }} />
+      <div onClick={estEnDirect ? function() { navigate('/live/' + liveSessionId); } : undefined} style={{ width: 88, height: 88, borderRadius: "50%", border: estEnDirect ? "3px solid #e53935" : "3px solid " + VERT, overflow: "hidden", background: VERT, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 8px 24px rgba(0,0,0,.4)", fontSize: 26, fontWeight: 700, color: OR, cursor: estEnDirect ? "pointer" : "default" }}>
+        {(photoProfil || paroisse.logoUrl) ? <img src={photoProfil || paroisse.logoUrl} alt="profil" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : initiales2}
+      </div>
+      {estEnDirect && (
+        <div style={{ position: "absolute", bottom: -6, left: "50%", transform: "translateX(-50%)", background: "#e53935", color: "#fff", fontSize: 8, fontWeight: 800, padding: "1px 6px", borderRadius: 6, whiteSpace: "nowrap", zIndex: 2 }}>LIVE</div>
+      )}
+      {isOwner && (
+        <label style={{ position: "absolute", bottom: -2, right: -2, background: VERT, border: "2px solid " + OR, borderRadius: "50%", width: 26, height: 26, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 2 }}>
+          <i className="ti ti-camera" style={{ fontSize: 11, color: OR }} />
+          <input type="file" accept="image/*" onChange={handleProfil} style={{ display: "none" }} />
+        </label>
+      )}
+    </div>
+  </div>
+
+  <div style={{ position: "relative", zIndex: 4, padding: "0 20px 12px 120px", marginTop: 160 }}>
+    <div style={{ height: 14, lineHeight: "14px", fontSize: 10, color: OR, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".15em", display: "flex", alignItems: "center", gap: 6 }}>
+      ◆ {paroisse.denomination || ''}
+    </div>
+    <div style={{ height: 1, margin: 0, background: "linear-gradient(to right, rgba(200,168,75,.85), rgba(200,168,75,.5) 40%, transparent 85%)" }} />
+    <div style={{ fontFamily: "Georgia,serif", fontSize: 20, fontWeight: 600, color: "#fff", lineHeight: 1.15, letterSpacing: "-.01em", marginTop: 8 }}>
+      {paroisse.name}
+    </div>
+  </div>
+
+  <div style={{ position: "relative", zIndex: 4, margin: "0 16px 0", background: "rgba(255,255,255,0.05)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", border: "1px solid rgba(255,255,255,0.14)", borderRadius: 18, padding: 12 }}>
+
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", rowGap: 10, columnGap: 4 }}>
+      <div onClick={hasCoords ? ouvrirItineraire : undefined} style={{ textAlign: "center", cursor: hasCoords ? "pointer" : "default" }}>
+        <div style={{ width: 46, height: 46, borderRadius: "50%", background: "linear-gradient(135deg, rgba(200,168,75,0.28), rgba(200,168,75,0.08))", boxShadow: "inset 0 0 0 1.5px rgba(200,168,75,0.4)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 5px" }}>
+          <i className="ti ti-map-pin" style={{ fontSize: 18, color: OR }} />
+        </div>
+        <div style={{ fontSize: 9, color: "rgba(255,255,255,0.75)", fontWeight: 600 }}>{isOwner ? 'Localisation' : 'Itineraire'}</div>
+      </div>
+
+      {isOwner && (
+        <div onClick={function() { navigate('/parish-admin/branches'); }} style={{ textAlign: "center", cursor: "pointer" }}>
+          <div style={{ position: "relative", width: 46, height: 46, margin: "0 auto 5px" }}>
+            <span style={{ position: "absolute", top: -3, right: -3, background: OR, color: VERT, fontSize: 11, fontWeight: 800, width: 15, height: 15, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", border: "2px solid " + VERT, zIndex: 2 }}>+</span>
+            <div style={{ width: 46, height: 46, borderRadius: "50%", background: "linear-gradient(135deg, rgba(200,168,75,0.28), rgba(200,168,75,0.08))", boxShadow: "inset 0 0 0 1.5px rgba(200,168,75,0.4)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <i className="ti ti-affiliate" style={{ fontSize: 18, color: OR }} />
+            </div>
+          </div>
+          <div style={{ fontSize: 9, color: "rgba(255,255,255,0.75)", fontWeight: 600 }}>Groupes</div>
+        </div>
+      )}
+
+      <div onClick={isOwner ? function() { navigate('/parish-admin/fideles'); } : undefined} style={{ textAlign: "center", cursor: isOwner ? "pointer" : "default" }}>
+        <div style={{ position: "relative", width: 46, height: 46, margin: "0 auto 5px" }}>
+          {isOwner && notifCount.nouveauxFideles > 0 && (
+            <span style={{ position: "absolute", top: -3, right: -3, background: "#E24B4A", color: "#fff", fontSize: 9, fontWeight: 700, minWidth: 16, height: 16, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 4px", border: "2px solid " + VERT, zIndex: 2 }}>{notifCount.nouveauxFideles}</span>
           )}
-
-          <div style={{ position: "absolute", bottom: -40, left: 16 }}>
-            <div style={{ position: "relative", width: 80, height: 80 }}>
-              <div onClick={estEnDirect ? function() { navigate('/live/' + liveSessionId); } : undefined} style={{ width: 80, height: 80, borderRadius: "50%", border: estEnDirect ? "3px solid #e53935" : "3px solid #fff", overflow: "hidden", background: VERT, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 8px rgba(0,0,0,0.2)", fontSize: 28, fontWeight: 700, color: OR, cursor: estEnDirect ? "pointer" : "default" }}>
-                {(photoProfil || paroisse.logoUrl)
-                  ? <img src={photoProfil || paroisse.logoUrl} alt="profil" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                  : initiales2
-                }
-              </div>
-              {estEnDirect && (
-                <div style={{ position: "absolute", bottom: -6, left: "50%", transform: "translateX(-50%)", background: "#e53935", color: "#fff", fontSize: 8, fontWeight: 800, padding: "1px 6px", borderRadius: 6, whiteSpace: "nowrap", boxShadow: "0 1px 3px rgba(0,0,0,0.3)", zIndex: 2 }}>LIVE</div>
-              )}
-              {isOwner && (
-                <label style={{ position: "absolute", bottom: 0, right: 0, background: OR, border: "2px solid #fff", borderRadius: "50%", width: 26, height: 26, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
-                  <i className="ti ti-camera" style={{ fontSize: 13, color: VERT }} />
-                  <input type="file" accept="image/*" onChange={handleProfil} style={{ display: "none" }} />
-                </label>
-              )}
-            </div>
+          <div style={{ width: 46, height: 46, borderRadius: "50%", background: "linear-gradient(135deg, rgba(200,168,75,0.32), rgba(200,168,75,0.1))", boxShadow: "inset 0 0 0 1.5px rgba(200,168,75,0.5)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <i className="ti ti-users" style={{ fontSize: 19, color: OR }} />
           </div>
         </div>
+        <div style={{ fontSize: 12, fontWeight: 700, color: OR, marginBottom: 1 }}>{(paroisse.stats && paroisse.stats.memberCount) || 0}</div>
+        <div style={{ fontSize: 9, color: OR, fontWeight: 700 }}>Fideles</div>
+      </div>
 
-        {/* HEADER INFO */}
-        <div style={{ background: VERT, padding: "44px 16px 0" }}>
-          <div style={{ marginBottom: 12 }}>
-            <div style={{ fontSize: 10, color: OR, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5 }}>{paroisse.denomination || ''}</div>
-            <div style={{ fontSize: 15, fontWeight: 800, color: "#fff", lineHeight: 1.3 }}>{paroisse.name}</div>
-          </div>
-
-          <div style={{ display: "flex", gap: 6, marginBottom: 16, justifyContent: "space-around" }}>
-            <div onClick={hasCoords ? ouvrirItineraire : undefined} style={{ textAlign: "center", flex: 1, cursor: hasCoords ? 'pointer' : 'default' }}>
-              <div style={{ width: 44, height: 44, borderRadius: "50%", background: "linear-gradient(135deg, rgba(200,168,75,0.28), rgba(200,168,75,0.08))", boxShadow: "inset 0 0 0 1.5px rgba(200,168,75,0.4)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 5px" }}>
-                <i className="ti ti-map-pin" style={{ fontSize: 18, color: OR }} />
-              </div>
-              <div style={{ fontSize: 9, color: "rgba(255,255,255,0.7)", fontWeight: 600 }}>{isOwner ? 'Localisation' : 'Itineraire'}</div>
-            </div>
-            {isOwner && (
-              <div onClick={function() { navigate('/parish-admin/branches'); }} style={{ textAlign: "center", flex: 1, cursor: "pointer" }}>
-                <div style={{ position: "relative", width: 44, height: 44, margin: "0 auto 5px" }}>
-                  <span style={{ position: "absolute", top: -3, right: -3, background: OR, color: VERT, fontSize: 11, fontWeight: 800, width: 15, height: 15, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", border: "2px solid " + VERT, zIndex: 2 }}>+</span>
-                  <div style={{ width: 44, height: 44, borderRadius: "50%", background: "linear-gradient(135deg, rgba(200,168,75,0.28), rgba(200,168,75,0.08))", boxShadow: "inset 0 0 0 1.5px rgba(200,168,75,0.4)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <i className="ti ti-affiliate" style={{ fontSize: 18, color: OR }} />
-                  </div>
-                </div>
-                <div style={{ fontSize: 9, color: "rgba(255,255,255,0.7)", fontWeight: 600 }}>Groupes</div>
-              </div>
-            )}
-            <div onClick={isOwner ? function() { navigate('/parish-admin/fideles'); } : undefined} style={{ textAlign: "center", flex: 1, cursor: isOwner ? 'pointer' : 'default' }}>
-              <div style={{ position: "relative", width: 44, height: 44, margin: "0 auto 5px" }}>
-                {isOwner && notifCount.nouveauxFideles > 0 && (
-                  <span style={{ position: "absolute", top: -3, right: -3, background: "#E24B4A", color: "#fff", fontSize: 9, fontWeight: 700, minWidth: 16, height: 16, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 4px", border: "2px solid " + VERT, zIndex: 2 }}>{notifCount.nouveauxFideles}</span>
-                )}
-                <div style={{ width: 44, height: 44, borderRadius: "50%", background: "linear-gradient(135deg, rgba(200,168,75,0.32), rgba(200,168,75,0.1))", boxShadow: "inset 0 0 0 1.5px rgba(200,168,75,0.5)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <i className="ti ti-users" style={{ fontSize: 19, color: OR }} />
-                </div>
-              </div>
-              <div style={{ fontSize: 12, fontWeight: 700, color: OR, marginBottom: 1 }}>{(paroisse.stats && paroisse.stats.memberCount) || 0}</div>
-              <div style={{ fontSize: 9, color: OR, fontWeight: 700 }}>Fideles</div>
-            </div>
-            <div onClick={isOwner ? function() { navigate('/parish-admin/messages'); } : envoyerMessageParoisse} style={{ textAlign: "center", flex: 1, cursor: 'pointer' }}>
-              <div style={{ position: "relative", width: 44, height: 44, margin: "0 auto 5px" }}>
-                {isOwner && notifCount.messagesNonRepondus > 0 && (
-                  <span style={{ position: "absolute", top: -3, right: -3, background: "#E24B4A", color: "#fff", fontSize: 9, fontWeight: 700, minWidth: 16, height: 16, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 4px", border: "2px solid " + VERT, zIndex: 2 }}>{notifCount.messagesNonRepondus}</span>
-                )}
-                <div style={{ width: 44, height: 44, borderRadius: "50%", background: "linear-gradient(135deg, rgba(200,168,75,0.22), rgba(200,168,75,0.06))", boxShadow: "inset 0 0 0 1.5px rgba(200,168,75,0.3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <i className="ti ti-message-circle" style={{ fontSize: 19, color: OR }} />
-                </div>
-              </div>
-              <div style={{ fontSize: 9, color: "rgba(255,255,255,0.7)", fontWeight: 600 }}>{isOwner ? 'Interactions' : 'Message'}</div>
-            </div>
-            {!isOwner && (
-              <div onClick={function() { navigate('/donate'); }} style={{ textAlign: "center", flex: 1, cursor: "pointer" }}>
-                <div style={{ width: 44, height: 44, borderRadius: "50%", background: "linear-gradient(135deg, rgba(200,168,75,0.22), rgba(200,168,75,0.06))", boxShadow: "inset 0 0 0 1.5px rgba(200,168,75,0.3)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 5px" }}>
-                  <i className="ti ti-heart-handshake" style={{ fontSize: 19, color: OR }} />
-                </div>
-                <div style={{ fontSize: 9, color: "rgba(255,255,255,0.7)", fontWeight: 600 }}>Faire un don</div>
-              </div>
-            )}
-          </div>
-
-          <div style={{ display: "flex", gap: 6, marginBottom: 16, justifyContent: "space-around" }}>
-            {isOwner ? (
-              <>
-                <div onClick={function() { navigate('/parish-admin/demandes'); }} style={{ textAlign: "center", flex: 1, cursor: "pointer" }}>
-                  <div style={{ width: 46, height: 46, borderRadius: "50%", background: "linear-gradient(135deg,#e53935,#b71c1c)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 5px", boxShadow: "0 3px 8px rgba(229,57,53,0.3)" }}>
-                    <i className="ti ti-file-description" style={{ fontSize: 19, color: "#fff" }} />
-                  </div>
-                  <div style={{ fontSize: 9, color: "rgba(255,255,255,0.7)", fontWeight: 600 }}>Demandes</div>
-                </div>
-                <div onClick={function() { navigate('/parish-admin/dons'); }} style={{ textAlign: "center", flex: 1, cursor: "pointer" }}>
-                  <div style={{ width: 46, height: 46, borderRadius: "50%", background: "linear-gradient(135deg,#C8A84B,#8B6020)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 5px", boxShadow: "0 3px 8px rgba(200,168,75,0.35)" }}>
-                    <i className="ti ti-heart-handshake" style={{ fontSize: 19, color: VERT }} />
-                  </div>
-                  <div style={{ fontSize: 9, color: "rgba(255,255,255,0.7)", fontWeight: 600 }}>Dons</div>
-                </div>
-                <div onClick={function() { navigate('/create'); }} style={{ textAlign: "center", flex: 1, cursor: "pointer" }}>
-                  <div style={{ width: 46, height: 46, borderRadius: "50%", background: "linear-gradient(135deg,#2E5C3E,#0D3B2E)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 5px", boxShadow: "0 3px 8px rgba(46,92,62,0.3)" }}>
-                    <i className="ti ti-plus" style={{ fontSize: 19, color: "#fff" }} />
-                  </div>
-                  <div style={{ fontSize: 9, color: "rgba(255,255,255,0.7)", fontWeight: 600 }}>Publier</div>
-                </div>
-                <div onClick={function() { navigate('/parish-admin/live'); }} style={{ textAlign: "center", flex: 1, cursor: "pointer" }}>
-                  <div style={{ width: 46, height: 46, borderRadius: "50%", background: "linear-gradient(135deg,#c62828,#8e1616)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 5px", boxShadow: "0 3px 8px rgba(198,40,40,0.3)" }}>
-                    <i className="ti ti-broadcast" style={{ fontSize: 19, color: "#fff" }} />
-                  </div>
-                  <div style={{ fontSize: 9, color: "rgba(255,255,255,0.7)", fontWeight: 600 }}>Live</div>
-                </div>
-              </>
-            ) : null}
-          </div>
-
-          <div style={{ display: "flex", gap: 0 }}>
-            {ONGLETS.map(function(tab) {
-              return (
-                <button key={tab.id} onClick={function() { setOnglet(tab.id); }}
-                  style={{ flex: 1, padding: "10px 0", border: "none", background: "transparent", cursor: "pointer", fontSize: 13, fontWeight: 700, color: onglet === tab.id ? OR : "rgba(255,255,255,0.5)", borderBottom: onglet === tab.id ? "2px solid " + OR : "2px solid transparent", transition: "all 0.2s" }}>
-                  {tab.label}
-                </button>
-              );
-            })}
+      <div onClick={isOwner ? function() { navigate('/parish-admin/messages'); } : envoyerMessageParoisse} style={{ textAlign: "center", cursor: "pointer" }}>
+        <div style={{ position: "relative", width: 46, height: 46, margin: "0 auto 5px" }}>
+          {isOwner && notifCount.messagesNonRepondus > 0 && (
+            <span style={{ position: "absolute", top: -3, right: -3, background: "#E24B4A", color: "#fff", fontSize: 9, fontWeight: 700, minWidth: 16, height: 16, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 4px", border: "2px solid " + VERT, zIndex: 2 }}>{notifCount.messagesNonRepondus}</span>
+          )}
+          <div style={{ width: 46, height: 46, borderRadius: "50%", background: "linear-gradient(135deg, rgba(200,168,75,0.22), rgba(200,168,75,0.06))", boxShadow: "inset 0 0 0 1.5px rgba(200,168,75,0.3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <i className="ti ti-message-circle" style={{ fontSize: 19, color: OR }} />
           </div>
         </div>
+        <div style={{ fontSize: 9, color: "rgba(255,255,255,0.75)", fontWeight: 600 }}>{isOwner ? 'Interactions' : 'Message'}</div>
+      </div>
+
+      {!isOwner && (
+        <div onClick={function() { navigate('/donate'); }} style={{ textAlign: "center", cursor: "pointer" }}>
+          <div style={{ width: 46, height: 46, borderRadius: "50%", background: "linear-gradient(135deg, rgba(200,168,75,0.22), rgba(200,168,75,0.06))", boxShadow: "inset 0 0 0 1.5px rgba(200,168,75,0.3)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 5px" }}>
+            <i className="ti ti-heart-handshake" style={{ fontSize: 19, color: OR }} />
+          </div>
+          <div style={{ fontSize: 9, color: "rgba(255,255,255,0.75)", fontWeight: 600 }}>Faire un don</div>
+        </div>
+      )}
+
+      {isOwner && (
+        <>
+          <div onClick={function() { navigate('/parish-admin/demandes'); }} style={{ textAlign: "center", cursor: "pointer" }}>
+            <div style={{ width: 46, height: 46, borderRadius: "50%", background: "linear-gradient(135deg,#e53935,#b71c1c)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 5px", boxShadow: "0 3px 8px rgba(229,57,53,0.3)" }}>
+              <i className="ti ti-file-description" style={{ fontSize: 19, color: "#fff" }} />
+            </div>
+            <div style={{ fontSize: 9, color: "rgba(255,255,255,0.75)", fontWeight: 600 }}>Demandes</div>
+          </div>
+
+          <div onClick={function() { navigate('/parish-admin/dons'); }} style={{ textAlign: "center", cursor: "pointer" }}>
+            <div style={{ width: 46, height: 46, borderRadius: "50%", background: "linear-gradient(135deg,#C8A84B,#8B6020)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 5px", boxShadow: "0 3px 8px rgba(200,168,75,0.35)" }}>
+              <i className="ti ti-heart-handshake" style={{ fontSize: 19, color: VERT }} />
+            </div>
+            <div style={{ fontSize: 9, color: "rgba(255,255,255,0.75)", fontWeight: 600 }}>Dons</div>
+          </div>
+
+          <div onClick={function() { navigate('/create'); }} style={{ textAlign: "center", cursor: "pointer" }}>
+            <div style={{ width: 46, height: 46, borderRadius: "50%", background: "linear-gradient(135deg,#2E5C3E,#0D3B2E)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 5px", boxShadow: "0 3px 8px rgba(46,92,62,0.3)" }}>
+              <i className="ti ti-plus" style={{ fontSize: 19, color: "#fff" }} />
+            </div>
+            <div style={{ fontSize: 9, color: "rgba(255,255,255,0.75)", fontWeight: 600 }}>Publier</div>
+          </div>
+
+          <div onClick={function() { navigate('/parish-admin/live'); }} style={{ textAlign: "center", cursor: "pointer" }}>
+            <div style={{ width: 46, height: 46, borderRadius: "50%", background: "linear-gradient(135deg,#c62828,#8e1616)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 5px", boxShadow: "0 3px 8px rgba(198,40,40,0.3)" }}>
+              <i className="ti ti-broadcast" style={{ fontSize: 19, color: "#fff" }} />
+            </div>
+            <div style={{ fontSize: 9, color: "rgba(255,255,255,0.75)", fontWeight: 600 }}>Live</div>
+          </div>
+        </>
+      )}
+    </div>
+
+    <div style={{ display: "flex", gap: 0, marginTop: 10, background: "rgba(0,0,0,0.3)", borderRadius: 12, padding: 4 }}>
+      {ONGLETS.map(function(tab) {
+        return (
+          <button key={tab.id} onClick={function() { setOnglet(tab.id); }}
+            style={{ flex: 1, padding: "9px 0", border: "none", background: onglet === tab.id ? OR : "transparent", cursor: "pointer", fontSize: 12, fontWeight: 700, color: onglet === tab.id ? VERT : "rgba(255,255,255,0.5)", borderRadius: 9, transition: "all 0.2s" }}>
+            {tab.label}
+          </button>
+        );
+      })}
+    </div>
+  </div>
+</div>
 
         <div style={{ padding: "16px 16px 0" }}>
 
