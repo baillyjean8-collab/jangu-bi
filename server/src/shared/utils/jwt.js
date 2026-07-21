@@ -99,24 +99,41 @@ function generateFamily() {
 // ─── Cookie options ────────────────────────────────────────────────────────────
 
 function getRefreshCookieOptions() {
-  return {
-    httpOnly: true,                              // JS cannot access
-    secure: config.isProduction,                 // HTTPS only in prod
-    sameSite: config.isProduction ? 'strict' : 'lax',
-    maxAge: 7 * 24 * 60 * 60 * 1000,           // 7 days in ms
-    path: '/',                           // Only sent to auth endpoints
-  };
+
+return {
+
+httpOnly: true, // JS cannot access
+
+secure: config.isProduction, // HTTPS only in prod
+
+sameSite: config.isProduction ? 'none' : 'lax',
+
+maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in ms
+
+path: '/', // Only sent to auth endpoints
+
+};
+
 }
 
 function clearRefreshCookieOptions() {
-  return {
-    httpOnly: true,
-    secure: config.isProduction,
-    sameSite: config.isProduction ? 'strict' : 'lax',
-    path: '/',
-    maxAge: 0,
-    expires: new Date(0),
-  };
+
+return {
+
+httpOnly: true,
+
+secure: config.isProduction,
+
+sameSite: config.isProduction ? 'none' : 'lax',
+
+path: '/',
+
+maxAge: 0,
+
+expires: new Date(0),
+
+};
+
 }
 
 module.exports = {
