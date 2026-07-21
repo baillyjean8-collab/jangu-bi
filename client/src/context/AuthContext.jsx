@@ -34,11 +34,37 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     async function restoreSession() {
 
+const jetonSauvegarde = localStorage.getItem('jb_access_token');
+
+if (jetonSauvegarde) {
+
+try {
+
+tokenStore.set(jetonSauvegarde);
+
+const profileRes = await authApi.me();
+
+dispatch({ type: 'SET_USER', payload: profileRes.data.user });
+
+return;
+
+} catch {
+
+tokenStore.clear();
+
+localStorage.removeItem('jb_access_token');
+
+}
+
+}
+
 try {
 
 const data = await authApi.refresh();
 
 tokenStore.set(data.data.accessToken);
+
+localStorage.setItem('jb_access_token', data.data.accessToken);
 
 // Fetch full user profile
 
@@ -69,6 +95,8 @@ const login = useCallback(async (credentials) => {
 const data = await authApi.login(credentials);
 
 tokenStore.set(data.data.accessToken);
+
+localStorage.setItem('jb_access_token', data.data.accessToken);
 
 dispatch({ type: 'SET_USER', payload: data.data.user });
     // Remplit aussi le stockage historique (jb_admin_token) utilise par les
