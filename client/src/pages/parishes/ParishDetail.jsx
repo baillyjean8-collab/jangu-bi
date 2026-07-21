@@ -338,8 +338,8 @@ setEditZoom(1.15);
     const img = new Image();
     img.crossOrigin = 'anonymous';
     img.onload = async function() {
-      const targetW = cible === 'profil' ? 600 : 1200;
-      const targetH = cible === 'profil' ? 600 : 400;
+      const targetW = cible === 'profil' ? 600 : 900;
+      const targetH = cible === 'profil' ? 600 : 1200;
       const canvas = document.createElement('canvas');
       canvas.width = targetW; canvas.height = targetH;
       const ctx = canvas.getContext('2d');
@@ -485,10 +485,10 @@ setEditZoom(1.15);
         )}
 
         {/* ZONE PHOTO CONTINUE — couverture + identite + gestion en un seul fond */}
-<div style={{ position: "relative", background: "linear-gradient(to bottom, #B8763A 0%, #8B6020 260px, #1e2d14 260px)", overflow: "hidden", paddingBottom: 12 }}>
+<div style={{ position: "relative", background: "linear-gradient(155deg, #B8763A 0%, #D4954F 50%, #A8632E 100%)", overflow: "hidden", paddingBottom: 12 }}>
 
   {(photoCouverture || paroisse.coverUrl) && (
-    <img src={photoCouverture || paroisse.coverUrl} alt="couverture" style={{ position: "absolute", top: 0, left: 0, width: "100%", height: 260, objectFit: "cover", zIndex: 0 }} />
+    <img src={photoCouverture || paroisse.coverUrl} alt="couverture" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", zIndex: 0 }} />
   )}
 
   <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 190, opacity: 0.12, backgroundImage: "repeating-linear-gradient(45deg, transparent, transparent 18px, #C8A84B 18px, #C8A84B 19px), repeating-linear-gradient(-45deg, transparent, transparent 18px, #C8A84B 18px, #C8A84B 19px)", pointerEvents: "none" }} />
@@ -887,7 +887,7 @@ setEditZoom(1.15);
               style={{
                 position: 'relative', overflow: 'hidden', cursor: 'grab',
                 width: editionPhotoOuverte === 'profil' ? 260 : '100%',
-                aspectRatio: editionPhotoOuverte === 'profil' ? '1 / 1' : '3 / 1',
+        aspectRatio: editionPhotoOuverte === 'profil' ? '1 / 1' : '3 / 4',
                 borderRadius: editionPhotoOuverte === 'profil' ? '50%' : 12,
                 background: '#111',
               }}
