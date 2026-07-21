@@ -112,9 +112,12 @@ dispatch({ type: 'SET_USER', payload: data.data.user });
     return data.data;
   }, []);
 
-  const logout = useCallback(async () => {
+    const logout = useCallback(async () => {
     try { await authApi.logout(); } catch { /* ignore */ }
     tokenStore.clear();
+    localStorage.removeItem('jb_access_token');
+    localStorage.removeItem('jb_admin_token');
+    localStorage.removeItem('jb_admin_user');
     dispatch({ type: 'CLEAR_USER' });
   }, []);
 
