@@ -308,8 +308,6 @@ router.post('/:id/comment/:commentId/report',
 );
 
 router.post('/:id/comment/:commentId/resolve',
-
-router.post('/:id/comment/:commentId/resolve',
   authenticate, requireVerified,
   authorize('parish_admin', 'super_admin'),
   asyncHandler(postController.resolveReported)
