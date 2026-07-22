@@ -8,6 +8,24 @@ import { tokenStore } from '../api/client';
 // En prod: utilise VITE_API_URL
 const BASE = import.meta.env.VITE_API_URL || '/api';
 
+let rafraichissementEnCours = null;
+
+async function tenterRafraichirJeton() {
+  if (!rafraichissementEnCours) {
+    rafraichissementEnCours = fetch(BASE + '/auth/refresh', { method: 'POST', credentials: 'include' })
+      .then(function(res) {
+        if (!res.ok) throw new Error('refresh failed');
+        return res.json();
+      })
+      .then(function(data) {
+        tokenStore.set(data.data.accessToken);
+        return data.data.accessToken;
+      })
+      .finally(function() { rafraichissementEnCours = null; });
+  }
+  return rafraichissementEnCours;
+}
+
 async function apiFetch(endpoint, options) {
   const token = tokenStore.get();
   const opts = options || {};
@@ -20,6 +38,21 @@ async function apiFetch(endpoint, options) {
       opts.headers || {}
     ),
   });
+
+  if (res.status === 401 && !opts._dejaReessaye) {
+    try {
+      const nouveauJeton = await tenterRafraichirJeton();
+      return apiFetch(endpoint, Object.assign({}, opts, {
+        _dejaReessaye: true,
+        headers: Object.assign({}, opts.headers, { Authorization: 'Bearer ' + nouveauJeton }),
+      }));
+    } catch (e) {
+      tokenStore.clear();
+      window.dispatchEvent(new CustomEvent('auth:logout'));
+      throw new Error('Session expiree, veuillez vous reconnecter.');
+    }
+  }
+
   const data = await res.json();
   if (!res.ok) throw new Error(data.message || 'Erreur serveur');
   return data;
