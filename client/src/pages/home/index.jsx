@@ -112,6 +112,7 @@ initiales: p.parishId && p.parishId.name ? p.parishId.name.substring(0,2).toUppe
               texte: p.content || p.text || '',
               image: p.image || p.imageUrl || (p.images && p.images[0]) || '',
 images: p.imageUrls && p.imageUrls.length ? p.imageUrls : (p.imageUrl ? [p.imageUrl] : []),
+video: p.videoUrl || p.video || '',
               likes: p.likes ? p.likes.length : 0,
               comments: p.comments ? p.comments.length : 0,
               commentsList: [],
