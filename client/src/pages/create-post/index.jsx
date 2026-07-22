@@ -474,7 +474,7 @@ imageUrls: toutesLesUrls,
               style={{ position: 'relative', borderRadius: 14, overflow: 'hidden', marginBottom: 12, background: '#0C0A06', aspectRatio: ratioEffectif(activeMedia) + ' / 1', cursor: 'pointer' }}
             >
               {activeMedia.kind === 'video' ? (
-                <video src={activeMedia.url} style={{ width: '100%', height: '100%', objectFit: 'cover', transform: transformActif(activeMedia), filter: styleFiltreActif() }} muted loop autoPlay playsInline />
+                <video src={activeMedia.url} onLoadedMetadata={function(e) { enregistrerRatio(e.target.videoWidth, e.target.videoHeight); }} style={{ width: '100%', height: '100%', objectFit: activeMedia.mode === 'cover' ? 'cover' : 'contain', background: '#000', transform: transformActif(activeMedia), filter: styleFiltreActif(), pointerEvents: 'none' }} muted loop autoPlay playsInline />
               ) : (
                 <img src={activeMedia.url} alt="media" style={{ width: '100%', height: '100%', objectFit: 'cover', transform: transformActif(activeMedia), filter: styleFiltreActif() }} />
               )}
