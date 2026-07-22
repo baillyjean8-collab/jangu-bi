@@ -268,13 +268,15 @@ export default function CreatePostPage() {
     }
     setPublishing(true);
     setErreur('');
-    try {
+        try {
       const toutesLesUrls = mediaItems.filter(function(m) { return m.kind === 'image' && !m.local; }).map(function(m) { return m.url; });
+const videoValide = mediaItems.find(function(m) { return m.kind === 'video' && !m.local; });
 await postsApi.create({
 content: texte.trim(),
 type: typePub,
 imageUrl: toutesLesUrls[0],
 imageUrls: toutesLesUrls,
+videoUrl: videoValide ? videoValide.url : undefined,
 });
 
       if (aussiEnStory && premiereImage && !premiereImage.local) {
