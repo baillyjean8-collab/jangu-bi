@@ -321,11 +321,29 @@ export function AdminPage() {
   const [stats, setStats] = useState(null);
   const { toast }         = useToast();
 
-  useEffect(() => {
-    adminApi.dashboard()
-      .then(r => setStats(r.data.data))
-      .catch(() => toast({ message: 'Erreur de chargement du dashboard', type: 'error' }));
-  }, []);
+  const [erreurChargement, setErreurChargement] = useState('');
+
+useEffect(() => {
+
+adminApi.dashboard()
+
+.then(r => setStats(r.data.data))
+
+.catch((err) => {
+
+const msg = err?.response?.status === 403
+
+? 'Acces reserve aux super-administrateurs.'
+
+: 'Erreur de chargement du dashboard.';
+
+setErreurChargement(msg);
+
+toast({ message: msg, type: 'error' });
+
+});
+
+}, []);
 
   return (
     <AppShell>
@@ -350,7 +368,7 @@ export function AdminPage() {
         ))}
       </div>
 
-      {tab === 'overview'  && <OverviewTab stats={stats} />}
+      {tab === 'overview' && (erreurChargement ? <p style={{ textAlign: 'center', color: '#f87171', marginTop: 40 }}>{erreurChargement}</p> : <OverviewTab stats={stats} />)}
       {tab === 'users'     && <UsersTab />}
       {tab === 'donations' && <DonationsTab />}
       {tab === 'audit'     && <AuditTab />}
