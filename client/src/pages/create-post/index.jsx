@@ -134,7 +134,7 @@ export default function CreatePostPage() {
         zoom: 1,
         offsetX: 0,
         offsetY: 0,
-        cadre: 'portrait', // 4:5 par defaut : homogeneite garantie sans que l'admin y pense
+        cadre: 'original', // s'adapte automatiquement a la vraie forme de la photo/video (portrait, paysage, carre...)
         texteAjoute: '',
       };
     });
