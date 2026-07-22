@@ -305,7 +305,7 @@ imageUrls: toutesLesUrls,
     if (!activeMedia) return null;
     return (
       <>
-                        {activeMedia.kind === 'video' ? (
+{activeMedia.kind === 'video' ? (
 
 <video src={activeMedia.url} style={{ width: '100%', height: '100%', objectFit: activeMedia.mode === 'cover' ? 'cover' : 'contain', background: '#000', transform: transformActif(activeMedia), filter: styleFiltreActif() }} muted loop autoPlay playsInline />
 
