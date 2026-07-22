@@ -160,11 +160,11 @@ async resolveReportedComment(postId, commentId, action) {
 
 // -- Controller ---------------------------------------------------
 const postController = {
-  async create(req, res) {
-const { content, imageUrl, imageUrls, type } = req.body;
+async create(req, res) {
+const { content, imageUrl, imageUrls, videoUrl, type } = req.body;
 const parishId = req.user.parishId;
 if (!parishId) throw new AuthorizationError('No parish assigned');
-const post = await postRepo.create({ parishId, content, imageUrl, imageUrls, type });
+const post = await postRepo.create({ parishId, content, imageUrl, imageUrls, videoUrl, type });
 return sendCreated(res, { post }, 'Publication creee');
 },
 
