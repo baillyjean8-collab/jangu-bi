@@ -802,7 +802,7 @@ function matchesSearch(post, query) {
               {post.type === 'normal' && (
                 <div style={{ padding: '0 12px 10px', fontSize: 12, color: '#3a3a3a', lineHeight: 1.5 }}>{post.texte}</div>
               )}
-              {post.image && grilleImages(post, i)}
+              {(post.image || post.video) && grilleImages(post, i)}
               {/* Actions bas de carte */}
               <div style={{ display: 'flex', gap: 14, padding: '8px 12px', borderTop: '1px solid #f0ece4', fontSize: 11, color: '#666' }}>
                 <span onClick={() => toggleLike(i)} style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer', color: liked[i] ? '#C8A84B' : '#666' }}>
