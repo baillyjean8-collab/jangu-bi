@@ -372,6 +372,11 @@ setReplyingTo(null);
   }
 
   function grilleImages(post, i) {
+if (post.video) {
+return (
+<video src={post.video} controls playsInline style={{ width: '100%', display: 'block', maxHeight: 420, background: '#000' }} />
+);
+}
 const imgs = post.images && post.images.length ? post.images : (post.image ? [post.image] : []);
 if (imgs.length === 0) return null;
 if (imgs.length === 1) {
