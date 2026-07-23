@@ -448,7 +448,7 @@ const imgs = post.images && post.images.length ? post.images : (post.image ? [po
 if (imgs.length === 0) return null;
 if (imgs.length === 1) {
 return (
-<img src={imgs[0]} alt="publication" onClick={function() { setGalerieOuverte(i); setGalerieIndex(0); }} style={{ width: '100%', display: 'block', maxHeight: 420, objectFit: 'cover', cursor: 'pointer' }} />
+<img src={imgs[0]} alt="publication" onClick={function() { setGalerieOuverte(i); setGalerieIndex(0); }} style={{ width: '100%', display: 'block', maxHeight: 600, objectFit: 'contain', background: '#000', cursor: 'pointer' }} />
 );
 }
 const visibles = imgs.slice(0, 4);
