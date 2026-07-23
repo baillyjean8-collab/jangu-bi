@@ -6,6 +6,7 @@ import CreatePostPage from './pages/create-post';
 import CreateStoryPage from './pages/create-story';
 import AnnouncementsPage from './pages/annonces';
 import BibliothequePage from './pages/bibliotheque';
+import ReelsPage from './pages/reels';
 import { ParishesPage } from './pages/parishes';
 import ParishDetail from './pages/parishes/ParishDetail';
 import CatechesePage from './pages/catechese';
@@ -68,6 +69,9 @@ export default function App() {
             <Route path="/announcements" element={<ProtectedRoute><AnnouncementsPage /></ProtectedRoute>} />
             <Route path="/annonces"     element={<ProtectedRoute><AnnouncementsPage /></ProtectedRoute>} />
             <Route path="/bibliotheque" element={<ProtectedRoute><BibliothequePage /></ProtectedRoute>} />
+            <Route path="/reels/:postId" element={<ProtectedRoute><ReelsPage /></ProtectedRoute>} />
+            <Route path="/reels" element={<ProtectedRoute><ReelsPage /></ProtectedRoute>} />
+
             <Route path="/live"         element={<ProtectedRoute><LiveListPage /></ProtectedRoute>} />
             <Route path="/live/:id"     element={<ProtectedRoute><LiveScreen /></ProtectedRoute>} />
             <Route path="/catechese"    element={<ProtectedRoute><CatechesePage /></ProtectedRoute>} />
