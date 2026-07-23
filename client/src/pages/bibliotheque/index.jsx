@@ -35,6 +35,14 @@ const ARTICLES = [
     lienExterne: 'https://fr.zenit.org/2023/12/11/consecration-du-nouveau-sanctuaire-marial-au-senegal/',
   },
   {
+        id: 'livre-benoist-histoire-eglise-senegal',
+    categorie: 'senegal',
+    titre: "Histoire de l'Église catholique au Sénégal — l'ouvrage de référence du Père de Benoist",
+    source: 'Sources : Karthala (2008), Seneweb, Amazon, Decitre — verifie juillet 2026',
+    texte: "Publie en 2008 aux editions Karthala, dans la collection Memoire d'Eglises, cet ouvrage de 580 pages reste aujourd'hui la reference historique la plus complete sur le catholicisme senegalais. Il a ete redige a la demande explicite des eveques de la Conference episcopale du Senegal, de la Mauritanie, du Cap-Vert et de la Guinee-Bissau, qui souhaitaient disposer d'une histoire ecrite et rigoureuse de leur Eglise commune.\n\nSon auteur, le Pere Joseph-Roger de Benoist, missionnaire de la Societe des Peres Blancs, connaissait le terrain de premiere main : ordonne pretre en 1950, il fut d'abord redacteur puis directeur de l'hebdomadaire catholique dakarois Afrique Nouvelle a la fin des annees 1950, avant de passer pres de vingt ans en mission au Mali, au Benin et au Burkina Faso. Devenu chercheur a l'IFAN de Dakar, il obtint en 1986 un doctorat d'Etat en histoire africaine.\n\nLe livre se divise en vingt-trois chapitres, en deux grandes parties. La premiere retrace les origines, depuis l'arrivee des tout premiers envoyes portugais en 1444, jusqu'a l'arrivee de quatre congregations missionnaires entre 1819 et 1848 qui donnent a l'Eglise ses racines durables. La seconde partie suit, eveque apres eveque, l'histoire de l'Eglise depuis Mgr Aloys Kobes, premier eveque de Senegambie a partir de 1848, jusqu'au cardinal Hyacinthe Thiandoum, dont les 38 annees d'episcopat (1962-2000) virent l'archidiocese dakarois donner naissance a six nouveaux diocèses suffragants.\n\nL'ouvrage n'evite pas les questions difficiles : il consacre une reflexion approfondie au dialogue islamo-chretien dans la sous-region, notant avec honnetete que les deux religions ont souvent ete plus concurrentes que compagnes de route au long de ces cinq siecles de cohabitation. Cette rigueur en fait aujourd'hui encore la porte d'entree incontournable pour comprendre en profondeur l'histoire du catholicisme senegalais.",
+    lienExterne: 'https://www.seneweb.com/fr/news/Societe/lhistoire-de-leglise-catholique-au-senegal-par-pere-de-benoist-cinq-siecles-de-foi-chretienne-en-terre-senegalaise_n_16861.html',
+  },
+  {
     id: 'popenguine',
     categorie: 'senegal',
     titre: 'Popenguine, le cœur marial du Sénégal',
