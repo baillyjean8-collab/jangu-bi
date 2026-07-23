@@ -82,6 +82,7 @@ function formatTempsPost(date) {
   return 'À l’instant';
 }
 export default function HomePage() {
+const [sonActifGlobal, setSonActifGlobal] = useState(false);
 
   // ── Chargement des vraies publications ───────────────────
   useEffect(() => {
