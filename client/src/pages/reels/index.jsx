@@ -141,8 +141,8 @@ export default function ReelsPage() {
         <div onClick={function() { navigate(-1); }} style={{ position: 'fixed', top: 44, left: 14, zIndex: 10, color: '#fff', fontSize: 20 }}>
           <i className="ti ti-arrow-left" />
         </div>
-                {reels.map(function(post, i) {
-          return <ReelItem key={post._id} post={post} actif={i === indexActif} onLike={function() { aimer(post); }} aimeParMoi={!!mesLikes[post._id]} />;
+                        {reels.map(function(post, i) {
+          return <ReelItem key={post._id} post={post} actif={i === indexActif} onLike={function() { aimer(post); }} aimeParMoi={!!mesLikes[post._id]} onFavori={function() { basculerFavori(post); }} enFavori={!!mesFavoris[post._id]} />;
         })}
         {reels.length === 0 && (
           <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 13 }}>Aucune video pour l'instant.</div>
