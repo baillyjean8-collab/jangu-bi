@@ -34,8 +34,16 @@ const ARTICLES = [
     texte: "Le 9 decembre 2023, le sanctuaire Notre-Dame-de-la-Delivrande de Popenguine a ete officiellement inaugure et reconnu sanctuaire national par la Conference des eveques du Senegal, de la Mauritanie, du Cap-Vert et de la Guinee-Bissau. Mgr Benjamin Ndiaye, alors archeveque de Dakar, presidait la ceremonie, entoure d'eveques de la region et des autorites senegalaises.\n\nLe nouveau sanctuaire s'etend sur plus de 20 000 m2 avec une vue panoramique sur l'ocean. Cette reconnaissance officielle vient couronner plus d'un siecle d'histoire de devotion mariale sur ce site, depuis les origines du pelerinage en 1888.",
     lienExterne: 'https://fr.zenit.org/2023/12/11/consecration-du-nouveau-sanctuaire-marial-au-senegal/',
   },
+    {
+    id: 'missions-catholiques-senegambie-1900',
+    categorie: 'senegal',
+    titre: 'Les débuts difficiles de la mission catholique en Sénégambie (archives 1900)',
+    source: 'Source : Les missions catholiques francaises au XIXe siecle (1900-1903), dir. P. J.-B. Piolet — Gallica, BnF, domaine public',
+    texte: "Cet ouvrage collectif, publie a Paris entre 1900 et 1903 sous la direction du Pere J.-B. Piolet, avec la collaboration de toutes les societes missionnaires francaises de l'epoque, consacre un chapitre entier a la naissance difficile de la mission catholique en Senegambie, aujourd'hui conserve et consultable librement sur Gallica, la bibliotheque numerique de la Bibliotheque nationale de France.\n\nLe texte raconte un episode douloureux et largement oublie aujourd'hui : le 22 septembre 1846, la Senegambie est reunie aux Deux-Guinees, et un jeune missionnaire, Mgr Benoit Truffet, est nomme eveque de Callipoli et vicaire apostolique charge de cette immense region. Sacre le 25 janvier 1847 dans le sanctuaire de Notre-Dame des Victoires, il s'embarque a Bordeaux trois mois plus tard avec six autres missionnaires, plein d'esperance. Etabli a Dakar, sa juridiction s'etend alors sur douze cents lieues de cotes, sans limites precises vers l'interieur des terres.\n\nMais a peine sept mois apres son arrivee, Mgr Truffet meurt deja, epuise par les austerites de sa mission et les rigueurs du climat. Le texte le decrit sobrement comme victime de ses propres austerites. Cette disparition precoce, loin de mettre un terme a l'entreprise missionnaire, ouvre la voie a Mgr Kobes, qui devient alors coadjuteur charge specifiquement de la Senegambie et donnera enfin a cette jeune Eglise la stabilite et les racines locales qui lui manquaient encore, comme le racontent egalement d'autres sources historiques deja presentes dans cette bibliotheque.\n\nCe recit rappelle, avec une grande sobriete d'ecriture propre aux archives de cette epoque, le prix humain considerable paye par les tout premiers missionnaires venus fonder l'Eglise au Senegal, bien avant que celle-ci ne devienne l'institution stable et enracinee que l'on connait aujourd'hui.",
+    lienExterne: 'https://gallica.bnf.fr/ark:/12148/bpt6k6580803m/texteBrut',
+  },
   {
-        id: 'livre-benoist-histoire-eglise-senegal',
+    id: 'livre-benoist-histoire-eglise-senegal',
     categorie: 'senegal',
     titre: "Histoire de l'Église catholique au Sénégal — l'ouvrage de référence du Père de Benoist",
     source: 'Sources : Karthala (2008), Seneweb, Amazon, Decitre — verifie juillet 2026',
