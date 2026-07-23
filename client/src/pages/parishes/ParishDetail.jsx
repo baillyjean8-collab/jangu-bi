@@ -704,7 +704,9 @@ setEditZoom(1.15);
                       </div>
                       <p style={{ margin: 0, fontSize: 14, color: "#2a2a2a", lineHeight: 1.6 }}>{pub.content}</p>
                     </div>
-                    {pub.imageUrl && (
+                    {pub.videoUrl ? (
+                      <video src={pub.videoUrl} controls playsInline preload="metadata" style={{ width: '100%', display: 'block', maxHeight: 600, objectFit: 'contain', background: '#000' }} />
+                    ) : pub.imageUrl && (
                       <img src={pub.imageUrl} alt="publication" style={{ width: '100%', display: 'block', maxHeight: 480, objectFit: 'cover' }} />
                     )}
 
