@@ -76,7 +76,18 @@ export default function ReelsPage() {
   const { postId } = useParams();
   const [reels, setReels] = useState([]);
   const [indexActif, setIndexActif] = useState(0);
-  const [mesLikes, setMesLikes] = useState({});
+    const [mesLikes, setMesLikes] = useState({});
+  const [mesFavoris, setMesFavoris] = useState({});
+
+  function basculerFavori(post) {
+    postsApi.toggleFavori ? postsApi.toggleFavori(post._id).catch(function(e) { console.log('Favori:', e.message); }) : null;
+    setMesFavoris(function(prev) {
+      const next = Object.assign({}, prev);
+      if (next[post._id]) delete next[post._id];
+      else next[post._id] = true;
+      return next;
+    });
+  }
   const conteneurRef = useRef(null);
 
   useEffect(function() {
