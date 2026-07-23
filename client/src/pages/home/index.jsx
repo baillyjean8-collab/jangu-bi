@@ -81,8 +81,84 @@ function formatTempsPost(date) {
   if (min > 0) return 'Il y a ' + min + ' min';
   return 'À l’instant';
 }
+function VideoPublication({ src, sonActifGlobal, setSonActifGlobal }) {
+  const videoRef = useRef(null);
+  const conteneurRef = useRef(null);
+  const [enPause, setEnPause] = useState(false);
+  const [sonLocal, setSonLocal] = useState(sonActifGlobal);
+  const minuteurRef = useRef(null);
+
+  useEffect(function() {
+    setSonLocal(sonActifGlobal);
+  }, [sonActifGlobal]);
+
+  useEffect(function() {
+    const el = conteneurRef.current;
+    if (!el) return undefined;
+    const observateur = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        const v = videoRef.current;
+        if (!v) return;
+        if (entry.isIntersecting && entry.intersectionRatio > 0.6) {
+          v.play().catch(function() {});
+          setEnPause(false);
+          clearTimeout(minuteurRef.current);
+          minuteurRef.current = setTimeout(function() {
+            v.pause();
+            setEnPause(true);
+          }, 12000);
+        } else {
+          v.pause();
+          clearTimeout(minuteurRef.current);
+        }
+      });
+    }, { threshold: [0, 0.6, 1] });
+    observateur.observe(el);
+    return function() {
+      observateur.disconnect();
+      clearTimeout(minuteurRef.current);
+    };
+  }, []);
+
+  function revoir() {
+    const v = videoRef.current;
+    if (!v) return;
+    v.currentTime = 0;
+    v.play().catch(function() {});
+    setEnPause(false);
+    clearTimeout(minuteurRef.current);
+    minuteurRef.current = setTimeout(function() {
+      v.pause();
+      setEnPause(true);
+    }, 12000);
+  }
+
+  function activerSon() {
+    setSonLocal(true);
+    setSonActifGlobal(true);
+  }
+
+  return (
+    <div ref={conteneurRef} style={{ position: 'relative', width: '100%', maxHeight: 600, background: '#000' }}>
+      <video ref={videoRef} src={src} playsInline preload="metadata" muted={!sonLocal} loop={false} style={{ width: '100%', display: 'block', maxHeight: 600, objectFit: 'contain', background: '#000' }} />
+      {!sonLocal && (
+        <button onClick={activerSon} style={{ position: 'absolute', bottom: 10, right: 10, width: 34, height: 34, borderRadius: '50%', background: 'rgba(0,0,0,0.55)', border: 'none', color: '#fff', fontSize: 15, cursor: 'pointer' }}>
+          <i className="ti ti-volume-3" />
+        </button>
+      )}
+      {enPause && (
+        <div onClick={revoir} style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.35)', cursor: 'pointer' }}>
+          <div style={{ background: 'rgba(0,0,0,0.6)', color: '#fff', padding: '10px 18px', borderRadius: 20, fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <i className="ti ti-player-play-filled" /> Revoir
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function HomePage() {
-const [sonActifGlobal, setSonActifGlobal] = useState(false);
+  const [sonActifGlobal, setSonActifGlobal] = useState(false);
 
   // ── Chargement des vraies publications ───────────────────
   useEffect(() => {
