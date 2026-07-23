@@ -84,9 +84,8 @@ function formatTempsPost(date) {
 function VideoPublication({ src, sonActifGlobal, setSonActifGlobal }) {
   const videoRef = useRef(null);
   const conteneurRef = useRef(null);
-  const [enPause, setEnPause] = useState(false);
+  const [termine, setTermine] = useState(false);
   const [sonLocal, setSonLocal] = useState(sonActifGlobal);
-  const minuteurRef = useRef(null);
 
   useEffect(function() {
     setSonLocal(sonActifGlobal);
@@ -101,36 +100,27 @@ function VideoPublication({ src, sonActifGlobal, setSonActifGlobal }) {
         if (!v) return;
         if (entry.isIntersecting && entry.intersectionRatio > 0.6) {
           v.play().catch(function() {});
-          setEnPause(false);
-                    clearTimeout(minuteurRef.current);
-          minuteurRef.current = setTimeout(function() {
-            v.pause();
-            setEnPause(true);
-          }, 10000);
         } else {
           v.pause();
-          clearTimeout(minuteurRef.current);
         }
       });
     }, { threshold: [0, 0.6, 1] });
     observateur.observe(el);
     return function() {
       observateur.disconnect();
-      clearTimeout(minuteurRef.current);
     };
   }, []);
+
+  function surFin() {
+    setTermine(true);
+  }
 
   function revoir() {
     const v = videoRef.current;
     if (!v) return;
     v.currentTime = 0;
-        v.play().catch(function() {});
-    setEnPause(false);
-    clearTimeout(minuteurRef.current);
-    minuteurRef.current = setTimeout(function() {
-      v.pause();
-      setEnPause(true);
-    }, 10000);
+    v.play().catch(function() {});
+    setTermine(false);
   }
 
   function activerSon() {
@@ -140,13 +130,13 @@ function VideoPublication({ src, sonActifGlobal, setSonActifGlobal }) {
 
   return (
     <div ref={conteneurRef} style={{ position: 'relative', width: '100%', maxHeight: 600, background: '#000' }}>
-      <video ref={videoRef} src={src} playsInline preload="metadata" muted={!sonLocal} loop={false} style={{ width: '100%', display: 'block', maxHeight: 600, objectFit: 'contain', background: '#000' }} />
-      {!sonLocal && (
+      <video ref={videoRef} src={src} playsInline preload="metadata" muted={!sonLocal} onEnded={surFin} style={{ width: '100%', display: 'block', maxHeight: 600, objectFit: 'contain', background: '#000' }} />
+      {!sonLocal && !termine && (
         <button onClick={activerSon} style={{ position: 'absolute', bottom: 10, right: 10, width: 34, height: 34, borderRadius: '50%', background: 'rgba(0,0,0,0.55)', border: 'none', color: '#fff', fontSize: 15, cursor: 'pointer' }}>
           <i className="ti ti-volume-3" />
         </button>
       )}
-      {enPause && (
+      {termine && (
         <div onClick={revoir} style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.35)', cursor: 'pointer' }}>
           <div style={{ background: 'rgba(0,0,0,0.6)', color: '#fff', padding: '10px 18px', borderRadius: 20, fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
             <i className="ti ti-player-play-filled" /> Revoir
