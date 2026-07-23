@@ -42,23 +42,23 @@ function ReelItem({ post, actif, onLike, aimeParMoi, onFavori, enFavori }) {
     <div style={{ position: 'relative', width: '100%', height: '100vh', background: '#000', scrollSnapAlign: 'start', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={surTap}>
       <video ref={videoRef} src={post.videoUrl} loop playsInline style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
 
-      {coeurAnime && (
-        <i className="ti ti-heart-filled" style={{ position: 'absolute', fontSize: 90, color: '#fff', opacity: 0.9, pointerEvents: 'none' }} />
+            {coeurAnime && (
+        <i className="ti ti-heart-filled" style={{ position: 'absolute', fontSize: 90, color: '#C8A84B', opacity: 0.95, pointerEvents: 'none' }} />
       )}
 
       {enPause && !coeurAnime && (
         <i className="ti ti-player-play-filled" style={{ position: 'absolute', fontSize: 50, color: 'rgba(255,255,255,0.8)', pointerEvents: 'none' }} />
       )}
 
-      <div style={{ position: 'absolute', left: 14, right: 70, bottom: 90, color: '#fff', pointerEvents: 'none' }}>
-        <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 4 }}>{post.parishId && post.parishId.name}</div>
+            <div style={{ position: 'absolute', left: 14, right: 70, bottom: 90, color: '#fff', pointerEvents: 'none' }}>
+        <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 4, fontFamily: 'Georgia,serif', color: '#C8A84B' }}>{post.parishId && post.parishId.name}</div>
         <div style={{ fontSize: 12, lineHeight: 1.4 }}>{post.content}</div>
       </div>
 
       <div style={{ position: 'absolute', right: 12, bottom: 90, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20 }}>
-        <div onClick={function(e) { e.stopPropagation(); onLike(); }} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer' }}>
-          <i className={aimeParMoi ? 'ti ti-heart-filled' : 'ti ti-heart'} style={{ fontSize: 26, color: aimeParMoi ? '#e53935' : '#fff' }} />
-          <span style={{ color: '#fff', fontSize: 10, fontWeight: 700, marginTop: 2 }}>{(post.likes && post.likes.length) || 0}</span>
+                <div onClick={function(e) { e.stopPropagation(); onLike(); }} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer' }}>
+          <i className={aimeParMoi ? 'ti ti-heart-filled' : 'ti ti-heart'} style={{ fontSize: 26, color: aimeParMoi ? '#C8A84B' : '#fff' }} />
+          <span style={{ color: '#fff', fontSize: 10, fontWeight: 700, marginTop: 2, fontFamily: 'Georgia,serif' }}>{(post.likes && post.likes.length) || 0}</span>
         </div>
                 <div onClick={function(e) { e.stopPropagation(); navigator.share && navigator.share({ title: post.parishId && post.parishId.name, text: post.content }); }} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer' }}>
           <i className="ti ti-share" style={{ fontSize: 24, color: '#fff' }} />
