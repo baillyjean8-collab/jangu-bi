@@ -89,6 +89,31 @@ return post;
 
 },
 
+async toggleFavori(postId, userId) {
+  const { User } = require('../../models');
+  const user = await User.findById(userId);
+  if (!user) throw new NotFoundError('User');
+  const dejaFavori = user.favoris.some(function(id) { return id.toString() === postId.toString(); });
+  if (dejaFavori) {
+    user.favoris = user.favoris.filter(function(id) { return id.toString() !== postId.toString(); });
+  } else {
+    user.favoris.push(postId);
+  }
+  await user.save();
+  return { favori: !dejaFavori };
+},
+
+async listFavoris(userId) {
+  const { User } = require('../../models');
+  const user = await User.findById(userId).populate({
+    path: 'favoris',
+    populate: { path: 'parishId', select: 'name logoUrl' },
+  });
+  if (!user) throw new NotFoundError('User');
+  return user.favoris;
+},
+
+async reportComment(postId, commentId, userId) {
 async reportComment(postId, commentId, userId) {
   const post = await Post.findById(postId);
   if (!post) throw new NotFoundError('Post');
