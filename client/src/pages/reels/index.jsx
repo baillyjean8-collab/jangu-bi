@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import AppShell from '../../components/AppShell';
 import { postsApi } from '../../services/api';
 
-function ReelItem({ post, actif, onLike, aimeParMoi }) {
+function ReelItem({ post, actif, onLike, aimeParMoi, onFavori, enFavori }) {
   const videoRef = useRef(null);
   const [enPause, setEnPause] = useState(false);
   const [coeurAnime, setCoeurAnime] = useState(false);
@@ -60,8 +60,11 @@ function ReelItem({ post, actif, onLike, aimeParMoi }) {
           <i className={aimeParMoi ? 'ti ti-heart-filled' : 'ti ti-heart'} style={{ fontSize: 26, color: aimeParMoi ? '#e53935' : '#fff' }} />
           <span style={{ color: '#fff', fontSize: 10, fontWeight: 700, marginTop: 2 }}>{(post.likes && post.likes.length) || 0}</span>
         </div>
-        <div onClick={function(e) { e.stopPropagation(); navigator.share && navigator.share({ title: post.parishId && post.parishId.name, text: post.content }); }} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer' }}>
+                <div onClick={function(e) { e.stopPropagation(); navigator.share && navigator.share({ title: post.parishId && post.parishId.name, text: post.content }); }} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer' }}>
           <i className="ti ti-share" style={{ fontSize: 24, color: '#fff' }} />
+        </div>
+        <div onClick={function(e) { e.stopPropagation(); onFavori(); }} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer' }}>
+          <i className={enFavori ? 'ti ti-star-filled' : 'ti ti-star'} style={{ fontSize: 24, color: enFavori ? '#C8A84B' : '#fff' }} />
         </div>
       </div>
     </div>
