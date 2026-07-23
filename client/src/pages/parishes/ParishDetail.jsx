@@ -707,7 +707,7 @@ setEditZoom(1.15);
                     {pub.videoUrl ? (
                       <video src={pub.videoUrl} controls playsInline preload="metadata" style={{ width: '100%', display: 'block', maxHeight: 600, objectFit: 'contain', background: '#000' }} />
                     ) : pub.imageUrl && (
-                      <img src={pub.imageUrl} alt="publication" style={{ width: '100%', display: 'block', maxHeight: 480, objectFit: 'cover' }} />
+                      <img src={pub.imageUrl} alt="publication" style={{ width: '100%', display: 'block', maxHeight: 600, objectFit: 'contain', background: '#000' }} />
                     )}
 
                     {isOwner && (
