@@ -451,7 +451,7 @@ setReplyingTo(null);
   function grilleImages(post, i) {
 if (post.video) {
 return (
-<video src={post.video} controls playsInline preload="metadata" muted={false} style={{ width: '100%', display: 'block', maxHeight: 600, objectFit: 'contain', background: '#000' }} onLoadedData={function(e) { e.target.currentTime = 0.1; }} />
+<VideoPublication src={post.video} sonActifGlobal={sonActifGlobal} setSonActifGlobal={setSonActifGlobal} />
 );
 }
 const imgs = post.images && post.images.length ? post.images : (post.image ? [post.image] : []);
