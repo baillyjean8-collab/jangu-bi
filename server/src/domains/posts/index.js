@@ -114,7 +114,6 @@ async listFavoris(userId) {
 },
 
 async reportComment(postId, commentId, userId) {
-async reportComment(postId, commentId, userId) {
   const post = await Post.findById(postId);
   if (!post) throw new NotFoundError('Post');
   const comment = post.comments.id(commentId);
