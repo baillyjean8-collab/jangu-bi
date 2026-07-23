@@ -253,6 +253,16 @@ return sendSuccess(res, {}, 'Publication masquee');
 
 },
 
+async toggleFavori(req, res) {
+  const resultat = await postRepo.toggleFavori(req.params.id, req.user.userId);
+  return sendSuccess(res, resultat, resultat.favori ? 'Ajoute aux favoris' : 'Retire des favoris');
+},
+
+async listFavoris(req, res) {
+  const favoris = await postRepo.listFavoris(req.user.userId);
+  return sendSuccess(res, { favoris });
+},
+
 async reportComment(req, res) {
   const comment = await postRepo.reportComment(req.params.id, req.params.commentId, req.user.userId);
   return sendSuccess(res, { comment }, 'Commentaire signale');
@@ -305,6 +315,16 @@ asyncHandler(postController.getOne)
 router.post('/:id/like',
 authenticate,
 asyncHandler(postController.like)
+);
+
+router.get('/favoris/mes-favoris',
+authenticate,
+asyncHandler(postController.listFavoris)
+);
+
+router.post('/:id/favori',
+authenticate,
+asyncHandler(postController.toggleFavori)
 );
 
 router.post('/:id/share',
