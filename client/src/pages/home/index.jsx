@@ -102,11 +102,11 @@ function VideoPublication({ src, sonActifGlobal, setSonActifGlobal }) {
         if (entry.isIntersecting && entry.intersectionRatio > 0.6) {
           v.play().catch(function() {});
           setEnPause(false);
-          clearTimeout(minuteurRef.current);
+                    clearTimeout(minuteurRef.current);
           minuteurRef.current = setTimeout(function() {
             v.pause();
             setEnPause(true);
-          }, 12000);
+          }, 10000);
         } else {
           v.pause();
           clearTimeout(minuteurRef.current);
@@ -124,13 +124,13 @@ function VideoPublication({ src, sonActifGlobal, setSonActifGlobal }) {
     const v = videoRef.current;
     if (!v) return;
     v.currentTime = 0;
-    v.play().catch(function() {});
+        v.play().catch(function() {});
     setEnPause(false);
     clearTimeout(minuteurRef.current);
     minuteurRef.current = setTimeout(function() {
       v.pause();
       setEnPause(true);
-    }, 12000);
+    }, 10000);
   }
 
   function activerSon() {
