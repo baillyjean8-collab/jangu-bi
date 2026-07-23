@@ -99,6 +99,7 @@ message: 'Phone must be in E.164 format (e.g. +221771234567)',
         message: 'Password must be at least 8 characters and include uppercase, lowercase, and a number',
       },
     },
+        favoris: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Post', default: [] }],
     role: {
       type: String,
       enum: {
