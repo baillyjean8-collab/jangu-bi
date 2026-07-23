@@ -123,7 +123,10 @@ share: function(id) { return apiFetch('/posts/' + id + '/share', { method: 'POST
     reportComment: function(postId, commentId) {
       return apiFetch('/posts/' + postId + '/comment/' + commentId + '/report', { method: 'POST' });
     },
-    getReported: function() {
+       toggleFavori: function(postId) {
+      return apiFetch('/posts/' + postId + '/favori', { method: 'POST' });
+    },
+     getReported: function() {
       return apiFetch('/posts/moderation/signales');
     },
     resolveReported: function(postId, commentId, action) {
