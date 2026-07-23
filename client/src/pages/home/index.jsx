@@ -81,7 +81,7 @@ function formatTempsPost(date) {
   if (min > 0) return 'Il y a ' + min + ' min';
   return 'À l’instant';
 }
-function VideoPublication({ src, sonActifGlobal, setSonActifGlobal }) {
+function VideoPublication({ src, sonActifGlobal, setSonActifGlobal, postId, navigate }) {
   const videoRef = useRef(null);
   const conteneurRef = useRef(null);
   const [termine, setTermine] = useState(false);
@@ -130,7 +130,7 @@ function VideoPublication({ src, sonActifGlobal, setSonActifGlobal }) {
 
   return (
     <div ref={conteneurRef} style={{ position: 'relative', width: '100%', maxHeight: 600, background: '#000' }}>
-      <video ref={videoRef} src={src} playsInline preload="metadata" muted={!sonLocal} onEnded={surFin} style={{ width: '100%', display: 'block', maxHeight: 600, objectFit: 'contain', background: '#000' }} />
+            <video ref={videoRef} src={src} playsInline preload="metadata" muted={!sonLocal} onEnded={surFin} onClick={function() { if (navigate && postId) navigate('/reels/' + postId); }} style={{ width: '100%', display: 'block', maxHeight: 600, objectFit: 'contain', background: '#000', cursor: 'pointer' }} />
       {!sonLocal && !termine && (
         <button onClick={activerSon} style={{ position: 'absolute', bottom: 10, right: 10, width: 34, height: 34, borderRadius: '50%', background: 'rgba(0,0,0,0.55)', border: 'none', color: '#fff', fontSize: 15, cursor: 'pointer' }}>
           <i className="ti ti-volume-3" />
@@ -441,7 +441,7 @@ setReplyingTo(null);
   function grilleImages(post, i) {
 if (post.video) {
 return (
-<VideoPublication src={post.video} sonActifGlobal={sonActifGlobal} setSonActifGlobal={setSonActifGlobal} />
+<VideoPublication src={post.video} sonActifGlobal={sonActifGlobal} setSonActifGlobal={setSonActifGlobal} postId={post._id} navigate={navigate} />
 );
 }
 const imgs = post.images && post.images.length ? post.images : (post.image ? [post.image] : []);
