@@ -369,8 +369,8 @@ export default function AnnoncesPage() {
           {/* Filtres catégories */}
           <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 8, marginBottom: 16 }}>
             {CATEGORIES.map(cat => (
-              <button key={cat.id} onClick={() => setCategorie(cat.id)} style={{
-                padding: '6px 14px', borderRadius: 20, border: 'none', cursor: 'pointer',
+                            <button key={cat.id} onClick={() => setCategorie(cat.id)} style={{
+                padding: '6px 14px', borderRadius: 20, cursor: 'pointer',
                 background: categorie === cat.id ? cat.color : '#fff',
                 color: categorie === cat.id ? '#fff' : '#555',
                 fontWeight: categorie === cat.id ? 700 : 500,
