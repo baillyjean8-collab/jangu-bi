@@ -73,6 +73,7 @@ export default function ReelsPage() {
   const { postId } = useParams();
   const [reels, setReels] = useState([]);
   const [indexActif, setIndexActif] = useState(0);
+  const [mesLikes, setMesLikes] = useState({});
   const conteneurRef = useRef(null);
 
   useEffect(function() {
@@ -101,12 +102,21 @@ export default function ReelsPage() {
     if (idx !== indexActif) setIndexActif(idx);
   }
 
-  function aimer(post) {
+    function aimer(post) {
+    const dejaAime = !!mesLikes[post._id];
     postsApi.like(post._id).catch(function(e) { console.log('Like:', e.message); });
+    setMesLikes(function(prev) {
+      const next = Object.assign({}, prev);
+      if (dejaAime) delete next[post._id];
+      else next[post._id] = true;
+      return next;
+    });
     setReels(function(prev) {
       return prev.map(function(p) {
         if (p._id !== post._id) return p;
-        return { ...p, likes: (p.likes || []).concat(['moi']) };
+        const compteActuel = (p.likes && p.likes.length) || 0;
+        const nouveauCompte = dejaAime ? Math.max(0, compteActuel - 1) : compteActuel + 1;
+        return { ...p, likes: new Array(nouveauCompte).fill('x') };
       });
     });
   }
@@ -117,8 +127,8 @@ export default function ReelsPage() {
         <div onClick={function() { navigate(-1); }} style={{ position: 'fixed', top: 44, left: 14, zIndex: 10, color: '#fff', fontSize: 20 }}>
           <i className="ti ti-arrow-left" />
         </div>
-        {reels.map(function(post, i) {
-          return <ReelItem key={post._id} post={post} actif={i === indexActif} onLike={function() { aimer(post); }} aimeParMoi={false} />;
+                {reels.map(function(post, i) {
+          return <ReelItem key={post._id} post={post} actif={i === indexActif} onLike={function() { aimer(post); }} aimeParMoi={!!mesLikes[post._id]} />;
         })}
         {reels.length === 0 && (
           <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 13 }}>Aucune video pour l'instant.</div>
