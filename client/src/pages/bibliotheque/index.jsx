@@ -127,7 +127,7 @@ const ARTICLES = [
     categorie: 'classiques',
     titre: 'Les Exercices spirituels de saint Ignace de Loyola',
     source: 'Domaine public — Christian Classics Ethereal Library (ccel.org)',
-    texte: "Rediges par saint Ignace de Loyola au XVIe siecle, les Exercices spirituels sont nes de sa propre experience de conversion apres sa blessure de guerre en 1521. Ce petit livre n'est pas destine a etre simplement lu, mais pratique : il propose un parcours de priere en quatre etapes, appelees semaines, pour aider une personne a discerner la volonte de Dieu dans sa vie et a se detacher de ce qui l'eloigne de lui.\n\nCe texte est devenu la base de la formation spirituelle de tous les Jesuites a travers le monde, et reste aujourd'hui propose sous forme de retraites a des laics de toutes conditions, bien au-dela de la seule Compagnie de Jesus.",
+    texte: "Rédigés par saint Ignace de Loyola au XVIᵉ siècle, les Exercices spirituels sont nés de sa propre expérience de conversion après sa blessure de guerre en 1521. Ce petit livre n'est pas destiné à être simplement lu, mais pratiqué : il propose un parcours de prière en quatre étapes, appelées semaines, pour aider une personne à discerner la volonté de Dieu dans sa vie et à se détacher de ce qui l'éloigne de lui.\n\nCe texte est devenu la base de la formation spirituelle de tous les Jésuites à travers le monde, et reste aujourd'hui proposé sous forme de retraites à des laïcs de toutes conditions, bien au-delà de la seule Compagnie de Jésus.",
     lienExterne: 'https://ccel.org/ccel/ignatius/exercises',
   },
       {
@@ -1058,7 +1058,7 @@ const ARTICLES = [
     categorie: 'classiques',
     titre: 'Les Confessions de saint Augustin',
     source: 'Domaine public — Christian Classics Ethereal Library (ccel.org)',
-    texte: "Ecrites vers 397-400, les Confessions de saint Augustin sont considerees comme l'une des toutes premieres autobiographies spirituelles de l'histoire occidentale. Augustin y raconte sans complaisance sa jeunesse dissipee, ses annees d'errance intellectuelle, puis sa conversion bouleversante au christianisme, en grande partie grace aux prieres inlassables de sa mere, sainte Monique.\n\nL'ouvrage se termine par une longue meditation sur la creation et le sens du temps, mais c'est surtout sa premiere partie, le recit intime d'un homme en quete de verite, qui continue de toucher des lecteurs de toutes les generations.",
+    texte: "Écrites vers 397-400, les Confessions de saint Augustin sont considérées comme l'une des toutes premières autobiographies spirituelles de l'histoire occidentale. Augustin y raconte sans complaisance sa jeunesse dissipée, ses années d'errance intellectuelle, puis sa conversion bouleversante au christianisme, en grande partie grâce aux prières inlassables de sa mère, sainte Monique.\n\nL'ouvrage se termine par une longue méditation sur la création et le sens du temps, mais c'est surtout sa première partie, le récit intime d'un homme en quête de vérité, qui continue de toucher des lecteurs de toutes les générations.",
     lienExterne: 'https://ccel.org/ccel/augustine/confessions',
   },
 ];
