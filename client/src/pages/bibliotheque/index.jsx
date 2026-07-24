@@ -1247,29 +1247,105 @@ export default function BibliothequePage() {
           <div style={{ height: 80 }} />
         </div>
 
-        {articleOuvert && (function() {
+               {articleOuvert && (function() {
           const a = ARTICLES.find(function(x) { return x.id === articleOuvert; });
           if (!a) return null;
+          const pages = decouperEnPages(a.texte);
+          const derniere = pageActuelle === pages.length - 1;
+
+          function pageSuivante() {
+            if (pageActuelle >= pages.length - 1 || pageEnTransition !== null) return;
+            setDirectionAnimation('suivant');
+            setPageEnTransition(pageActuelle);
+            setTimeout(function() {
+              setPageActuelle(function(p) { return p + 1; });
+              setPageEnTransition(null);
+            }, 750);
+          }
+          function pagePrecedente() {
+            if (pageActuelle <= 0 || pageEnTransition !== null) return;
+            setDirectionAnimation('precedent');
+            setPageEnTransition(pageActuelle);
+            setTimeout(function() {
+              setPageActuelle(function(p) { return p - 1; });
+              setPageEnTransition(null);
+            }, 750);
+          }
+
+          const contenuPage = function(numeroPage, estEnTete) {
+            return (
+              <div style={{ position: 'absolute', inset: 0, background: '#fdfaf3', borderRadius: '2px 8px 8px 2px', boxShadow: '2px 4px 14px rgba(0,0,0,0.35)', overflow: 'hidden' }}>
+                <div style={{ position: 'absolute', inset: 10, pointerEvents: 'none', opacity: 0.5, color: '#8B6020', backgroundImage: 'repeating-linear-gradient(to right, currentColor 0, currentColor 1.3px, transparent 1.3px, transparent 8px), repeating-linear-gradient(to right, transparent 0, transparent 3px, currentColor 3px, currentColor 4.3px, transparent 4.3px, transparent 8px)', backgroundSize: '8px 1px, 8px 5px', backgroundRepeat: 'repeat-x', backgroundPosition: 'top left' }} />
+                <div style={{ position: 'relative', height: '100%', padding: '26px 20px 20px', boxSizing: 'border-box', fontFamily: 'Georgia,serif', fontSize: 13, color: '#333', lineHeight: 1.6, overflow: 'hidden' }}>
+                  {numeroPage === 0 && (
+                    <>
+                      <h1 style={{ fontSize: 16, fontWeight: 800, color: VERT, lineHeight: 1.3, margin: '0 0 4px' }}>{a.titre}</h1>
+                      <p style={{ fontSize: 9, color: '#8B6020', fontStyle: 'italic', marginBottom: 10 }}>{a.source}</p>
+                    </>
+                  )}
+                  <p style={{ margin: 0, whiteSpace: 'pre-line' }}>{pages[numeroPage]}</p>
+                  {numeroPage === pages.length - 1 && a.lienExterne && (
+                    <a href={a.lienExterne} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', marginTop: 14, padding: '8px 14px', borderRadius: 8, background: VERT, color: OR, fontWeight: 700, fontSize: 10, textDecoration: 'none' }}>
+                      Continuer la lecture ↗
+                    </a>
+                  )}
+                </div>
+                <div style={{ position: 'absolute', left: 0, right: 0, bottom: 10, textAlign: 'center', fontSize: 9, color: '#8B6020', fontWeight: 700 }}>
+                  — {numeroPage + 1} / {pages.length} —
+                </div>
+              </div>
+            );
+          };
+
           return (
-            <div style={{ position: 'fixed', inset: 0, background: CREME, zIndex: 200, overflowY: 'auto' }}>
-              <div style={{ position: 'sticky', top: 0, background: '#fff', borderBottom: '1px solid #e4e4e7', padding: '44px 16px 12px', display: 'flex', alignItems: 'center', gap: 10, zIndex: 2 }}>
-                <div onClick={function() { setArticleOuvert(null); }} style={{ cursor: 'pointer', fontSize: 20, color: VERT }}>
+            <div style={{ position: 'fixed', inset: 0, background: '#1a1a1a', zIndex: 200, display: 'flex', flexDirection: 'column' }}>
+              <div style={{ padding: '44px 16px 10px', display: 'flex', alignItems: 'center', gap: 10, zIndex: 3 }}>
+                <div onClick={function() { setArticleOuvert(null); }} style={{ cursor: 'pointer', fontSize: 20, color: '#fff' }}>
                   <i className="ti ti-arrow-left" />
                 </div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: VERT }}>Retour à la bibliothèque</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#fff', opacity: 0.7 }}>Retour à la bibliothèque</div>
               </div>
-              <div style={{ padding: 20 }}>
-                <h1 style={{ fontFamily: 'Georgia,serif', fontSize: 20, fontWeight: 800, color: VERT, lineHeight: 1.3, margin: 0 }}>{a.titre}</h1>
-                <p style={{ fontSize: 11, color: '#8B6020', fontStyle: 'italic', marginTop: 8 }}>{a.source}</p>
-                <div style={{ height: 1, background: '#e4e4e7', margin: '16px 0' }} />
-                <p style={{ fontSize: 14, color: '#374151', lineHeight: 1.75, whiteSpace: 'pre-line', fontFamily: 'Georgia,serif' }}>{a.texte}</p>
-                {a.lienExterne && (
-                  <a href={a.lienExterne} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', marginTop: 20, padding: '10px 18px', borderRadius: 10, background: VERT, color: OR, fontWeight: 700, fontSize: 12, textDecoration: 'none' }}>
-                    Continuer la lecture ↗
-                  </a>
-                )}
-                <div style={{ height: 60 }} />
+
+              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+                <div style={{ position: 'relative', width: '100%', maxWidth: 340, aspectRatio: '2/3', perspective: 1200 }}>
+                  {contenuPage(pageActuelle, true)}
+
+                  {pageEnTransition !== null && (
+                    <div className="page-en-tournage" style={{
+                      position: 'absolute', inset: 0, transformStyle: 'preserve-3d', backfaceVisibility: 'hidden',
+                      transformOrigin: directionAnimation === 'suivant' ? 'left center' : 'right center',
+                    }}>
+                      {contenuPage(directionAnimation === 'suivant' ? pageEnTransition : pageEnTransition, true)}
+                    </div>
+                  )}
+                </div>
               </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 20px 40px' }}>
+                <button onClick={pagePrecedente} disabled={pageActuelle === 0} style={{ padding: '10px 16px', borderRadius: 20, background: pageActuelle === 0 ? 'rgba(255,255,255,0.1)' : '#fff', color: pageActuelle === 0 ? 'rgba(255,255,255,0.3)' : VERT, border: 'none', fontWeight: 700, fontSize: 12, opacity: pageActuelle === 0 ? 0.4 : 1 }}>
+                  ← Précédent
+                </button>
+                <div style={{ color: '#fff', fontSize: 11, opacity: 0.6 }}>{pageActuelle + 1} / {pages.length}</div>
+                <button onClick={pageSuivante} disabled={derniere} style={{ padding: '10px 16px', borderRadius: 20, background: derniere ? 'rgba(255,255,255,0.1)' : OR, color: derniere ? 'rgba(255,255,255,0.3)' : VERT, border: 'none', fontWeight: 700, fontSize: 12, opacity: derniere ? 0.4 : 1 }}>
+                  📖 Tourner la page
+                </button>
+              </div>
+
+              <style>{`
+                @keyframes tournage-onde-suivant {
+                  0%   { transform: perspective(1200px) rotateY(0deg); }
+                  50%  { transform: perspective(1200px) rotateY(-90deg); }
+                  100% { transform: perspective(1200px) rotateY(-165deg); opacity: 0; }
+                }
+                @keyframes tournage-onde-precedent {
+                  0%   { transform: perspective(1200px) rotateY(0deg); }
+                  50%  { transform: perspective(1200px) rotateY(90deg); }
+                  100% { transform: perspective(1200px) rotateY(165deg); opacity: 0; }
+                }
+                .page-en-tournage {
+                  animation: ${directionAnimation === 'suivant' ? 'tournage-onde-suivant' : 'tournage-onde-precedent'} 0.75s cubic-bezier(.4,.1,.4,1) forwards;
+                }
+              `}</style>
             </div>
           );
         })()}
