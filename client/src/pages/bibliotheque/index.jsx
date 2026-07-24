@@ -1193,7 +1193,7 @@ function SymboleParDefaut({ categorieId, couleur }) {
 }
 
 function decouperEnPages(texte) {
-  const LIMITE_PAGE = 900;
+  const LIMITE_PAGE = 800;
   const mots = texte.split(' ');
   const pages = [];
   let pageActuelle = '';
