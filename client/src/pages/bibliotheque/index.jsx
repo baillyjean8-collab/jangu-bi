@@ -1080,6 +1080,60 @@ const FONDS_PAR_CATEGORIE = {
   temoignages: ['linear-gradient(160deg, #C8A84B, #8B6020)', '#1e2d14'],
 };
 
+function SymboleCouverture({ id, couleur }) {
+  const s = COUVERTURES_SAINTS[id];
+  const symbole = s ? s.symbole : null;
+  const c = couleur;
+  if (symbole === 'rita') {
+    return (
+      <svg width="22" height="22" viewBox="0 0 40 40">
+        <circle cx="20" cy="16" r="9" fill="none" stroke={c} strokeWidth="1.3"/>
+        <line x1="20" y1="7" x2="20" y2="11" stroke={c} strokeWidth="1.5"/>
+        <circle cx="20" cy="9" r="1" fill={c}/>
+        <path d="M14 26 Q11 22 14 20 Q17 22 14 26 Z" fill={c}/>
+      </svg>
+    );
+  }
+  if (symbole === 'rose') {
+    return (
+      <svg width="22" height="22" viewBox="0 0 40 40">
+        <circle cx="20" cy="16" r="6" fill="none" stroke={c} strokeWidth="1.2"/>
+        <circle cx="20" cy="16" r="3" fill="none" stroke={c} strokeWidth="1.2"/>
+        <path d="M20 22 L20 34 M20 27 Q15 27 14 31 M20 30 Q25 30 26 34" stroke={c} strokeWidth="1.2" fill="none"/>
+      </svg>
+    );
+  }
+  if (symbole === 'francois') {
+    return (
+      <svg width="22" height="22" viewBox="0 0 40 40">
+        <path d="M20 10 L20 30 M14 16 L26 16" stroke={c} strokeWidth="1.5"/>
+        <circle cx="20" cy="10" r="1.3" fill={c}/>
+        <circle cx="20" cy="30" r="1.3" fill={c}/>
+        <circle cx="14" cy="16" r="1.3" fill={c}/>
+        <circle cx="26" cy="16" r="1.3" fill={c}/>
+      </svg>
+    );
+  }
+  if (symbole === 'ihs') {
+    return (
+      <svg width="22" height="22" viewBox="0 0 40 40">
+        <circle cx="20" cy="18" r="12" fill="none" stroke={c} strokeWidth="0.6" opacity="0.6"/>
+        <text x="20" y="23" fontFamily="Georgia,serif" fontSize="14" fontWeight="700" fill={c} textAnchor="middle">IHS</text>
+      </svg>
+    );
+  }
+  if (symbole === 'catherine') {
+    return (
+      <svg width="22" height="22" viewBox="0 0 40 40">
+        <path d="M12 20 L28 20 L28 30 L12 30 Z" fill="none" stroke={c} strokeWidth="1.2"/>
+        <line x1="20" y1="20" x2="20" y2="30" stroke={c} strokeWidth="1"/>
+        <path d="M20 8 L20 18 M15 13 L25 13" stroke={c} strokeWidth="1.3"/>
+      </svg>
+    );
+  }
+  return null;
+}
+
 function SymboleParDefaut({ categorieId, couleur }) {
   if (categorieId === 'senegal') {
     return (
