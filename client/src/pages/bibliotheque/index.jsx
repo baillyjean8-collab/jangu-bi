@@ -1134,10 +1134,29 @@ function SymboleCouverture({ id, couleur }) {
   return null;
 }
 
+function decouperEnPages(texte) {
+  const paragraphes = texte.split('\n\n');
+  const pages = [];
+  let pageActuelle = '';
+  paragraphes.forEach(function(p) {
+    if ((pageActuelle + p).length > 550 && pageActuelle.length > 0) {
+      pages.push(pageActuelle.trim());
+      pageActuelle = p;
+    } else {
+      pageActuelle = pageActuelle ? pageActuelle + '\n\n' + p : p;
+    }
+  });
+  if (pageActuelle.trim()) pages.push(pageActuelle.trim());
+  return pages.length > 0 ? pages : [texte];
+}
+
 export default function BibliothequePage() {
   const [categorie, setCategorie] = useState('actualites');
   const [articleOuvert, setArticleOuvert] = useState(null);
   const [recherche, setRecherche] = useState('');
+  const [pageActuelle, setPageActuelle] = useState(0);
+  const [pageEnTransition, setPageEnTransition] = useState(null);
+  const [directionAnimation, setDirectionAnimation] = useState('suivant');
 
   const filtres = ARTICLES
     .filter(function(a) { return a.categorie === categorie; })
