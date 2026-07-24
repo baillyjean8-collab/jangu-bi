@@ -1336,20 +1336,20 @@ export default function BibliothequePage() {
             return (
               <div style={{ position: 'absolute', inset: 0, background: '#fdfaf3', borderRadius: '2px 8px 8px 2px', boxShadow: '2px 4px 14px rgba(0,0,0,0.35)', overflow: 'hidden' }}>
                 <div style={{ position: 'absolute', inset: 10, pointerEvents: 'none', opacity: 0.5, color: '#8B6020', backgroundImage: 'repeating-linear-gradient(to right, currentColor 0, currentColor 1.3px, transparent 1.3px, transparent 8px), repeating-linear-gradient(to right, transparent 0, transparent 3px, currentColor 3px, currentColor 4.3px, transparent 4.3px, transparent 8px)', backgroundSize: '8px 1px, 8px 5px', backgroundRepeat: 'repeat-x', backgroundPosition: 'top left' }} />
-                <div style={{ position: 'relative', height: '100%', padding: '26px 20px 20px', boxSizing: 'border-box', fontFamily: 'Georgia,serif', fontSize: 13, color: '#333', lineHeight: 1.6, overflow: 'hidden' }}>
+                                <div style={{ position: 'relative', height: '100%', padding: '26px 20px 34px', boxSizing: 'border-box', fontFamily: 'Georgia,serif', fontSize: 13, color: '#333', lineHeight: 1.6, overflow: 'hidden' }}>
                   {numeroPage === 0 && (
                     <>
                       <h1 style={{ fontSize: 16, fontWeight: 800, color: VERT, lineHeight: 1.3, margin: '0 0 4px' }}>{a.titre}</h1>
                       <p style={{ fontSize: 9, color: '#8B6020', fontStyle: 'italic', marginBottom: 10 }}>{a.source}</p>
                     </>
                   )}
-                                    {pages[numeroPage].split('\n\n').map(function(paragraphe, i) {
+                  {pages[numeroPage].split('\n\n').map(function(paragraphe, i) {
                     return (
                       <p key={i} style={{ margin: '0 0 8px', textAlign: 'justify', textIndent: '1.2em' }}>{paragraphe}</p>
                     );
                   })}
                   {numeroPage === pages.length - 1 && a.lienExterne && (
-                    <a href={a.lienExterne} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', marginTop: 14, padding: '8px 14px', borderRadius: 8, background: VERT, color: OR, fontWeight: 700, fontSize: 10, textDecoration: 'none' }}>
+                    <a href={a.lienExterne} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', marginTop: 6, padding: '8px 14px', borderRadius: 8, background: VERT, color: OR, fontWeight: 700, fontSize: 10, textDecoration: 'none' }}>
                       Continuer la lecture ↗
                     </a>
                   )}
@@ -1357,7 +1357,6 @@ export default function BibliothequePage() {
                 <div style={{ position: 'absolute', left: 0, right: 0, bottom: 10, textAlign: 'center', fontSize: 9, color: '#8B6020', fontWeight: 700 }}>
                   — {numeroPage + 1} / {pages.length} —
                 </div>
-              </div>
             );
           };
 
