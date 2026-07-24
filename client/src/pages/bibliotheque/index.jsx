@@ -1178,37 +1178,68 @@ export default function BibliothequePage() {
               );
             })}
           </div>
-        </div>
-
-        <div style={{ padding: 16 }}>
+                <div style={{ padding: 16 }}>
           {filtres.length === 0 && (
             <p style={{ textAlign: 'center', color: '#71717A', fontSize: 13, marginTop: 40 }}>Aucun contenu pour l'instant dans cette categorie.</p>
           )}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
             {filtres.map(function(a) {
-              const ouvert = articleOuvert === a.id;
+              const perso = COUVERTURES_SAINTS[a.id];
+              const parCategorie = FONDS_PAR_CATEGORIE[a.categorie] || FONDS_PAR_CATEGORIE.classiques;
+              const fond = perso ? perso.fond : parCategorie[0];
+              const couleurTexte = perso ? perso.texte : parCategorie[1];
+              const mots = a.titre.split(' ');
+              const titreCourt = mots.length > 4 ? mots.slice(0, 4).join(' ') + '…' : a.titre;
               return (
-                <div key={a.id} style={{ background: '#fff', borderRadius: 16, border: '1px solid #e4e4e7', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', padding: 16 }}>
-                  <div onClick={function() { setArticleOuvert(ouvert ? null : a.id); }} style={{ cursor: 'pointer' }}>
-                    <h3 style={{ margin: 0, fontSize: 15, fontWeight: 800, color: VERT, lineHeight: 1.3 }}>{a.titre}</h3>
-                    <p style={{ margin: '4px 0 0', fontSize: 11, color: '#8B6020', fontStyle: 'italic' }}>{a.source}</p>
+                <div key={a.id} onClick={function() { setArticleOuvert(a.id); }} style={{ cursor: 'pointer' }}>
+                  <div style={{
+                    background: fond, borderRadius: '3px 9px 9px 3px', aspectRatio: '2/3',
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                    padding: '8px 6px', textAlign: 'center', position: 'relative', overflow: 'hidden',
+                    boxShadow: '-4px 4px 0 rgba(0,0,0,0.18), 3px 5px 14px rgba(0,0,0,0.3)',
+                  }}>
+                    <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 6, background: 'rgba(0,0,0,0.3)' }} />
+                    <div style={{ position: 'absolute', inset: 5, border: '0.5px solid rgba(255,255,255,0.25)', borderRadius: 2, pointerEvents: 'none' }} />
+                    {perso ? (
+                      <div style={{ marginBottom: 4 }}><SymboleCouverture id={a.id} couleur={couleurTexte} /></div>
+                    ) : (
+                      <div style={{ fontSize: 22, marginBottom: 4 }}>{(CATEGORIES.find(function(c) { return c.id === a.categorie; }) || {}).icon}</div>
+                    )}
+                    <div style={{ fontFamily: 'Georgia,serif', fontSize: 9.5, fontWeight: 700, lineHeight: 1.2, color: couleurTexte, position: 'relative', zIndex: 2 }}>{titreCourt}</div>
                   </div>
-                  {ouvert && (
-                    <div style={{ marginTop: 12 }}>
-                      <p style={{ margin: 0, fontSize: 13, color: '#374151', lineHeight: 1.65, whiteSpace: 'pre-line' }}>{a.texte}</p>
-                      {a.lienExterne && (
-                        <a href={a.lienExterne} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', marginTop: 12, padding: '8px 16px', borderRadius: 10, background: VERT, color: OR, fontWeight: 700, fontSize: 12, textDecoration: 'none' }}>
-                          Continuer la lecture ↗
-                        </a>
-                      )}
-                    </div>
-                  )}
                 </div>
               );
             })}
           </div>
           <div style={{ height: 80 }} />
         </div>
+
+        {articleOuvert && (function() {
+          const a = ARTICLES.find(function(x) { return x.id === articleOuvert; });
+          if (!a) return null;
+          return (
+            <div style={{ position: 'fixed', inset: 0, background: CREME, zIndex: 200, overflowY: 'auto' }}>
+              <div style={{ position: 'sticky', top: 0, background: '#fff', borderBottom: '1px solid #e4e4e7', padding: '44px 16px 12px', display: 'flex', alignItems: 'center', gap: 10, zIndex: 2 }}>
+                <div onClick={function() { setArticleOuvert(null); }} style={{ cursor: 'pointer', fontSize: 20, color: VERT }}>
+                  <i className="ti ti-arrow-left" />
+                </div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: VERT }}>Retour à la bibliothèque</div>
+              </div>
+              <div style={{ padding: 20 }}>
+                <h1 style={{ fontFamily: 'Georgia,serif', fontSize: 20, fontWeight: 800, color: VERT, lineHeight: 1.3, margin: 0 }}>{a.titre}</h1>
+                <p style={{ fontSize: 11, color: '#8B6020', fontStyle: 'italic', marginTop: 8 }}>{a.source}</p>
+                <div style={{ height: 1, background: '#e4e4e7', margin: '16px 0' }} />
+                <p style={{ fontSize: 14, color: '#374151', lineHeight: 1.75, whiteSpace: 'pre-line', fontFamily: 'Georgia,serif' }}>{a.texte}</p>
+                {a.lienExterne && (
+                  <a href={a.lienExterne} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', marginTop: 20, padding: '10px 18px', borderRadius: 10, background: VERT, color: OR, fontWeight: 700, fontSize: 12, textDecoration: 'none' }}>
+                    Continuer la lecture ↗
+                  </a>
+                )}
+                <div style={{ height: 60 }} />
+              </div>
+            </div>
+          );
+        })()}
       </div>
     </AppShell>
   );
