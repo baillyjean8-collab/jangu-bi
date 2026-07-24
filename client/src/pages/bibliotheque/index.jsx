@@ -1190,18 +1190,18 @@ function SymboleParDefaut({ categorieId, couleur }) {
     );
   }
   return null;
-}
-
 function decouperEnPages(texte) {
-  const paragraphes = texte.split('\n\n');
+  const LIMITE_PAGE = 900;
+  const mots = texte.split(' ');
   const pages = [];
   let pageActuelle = '';
-  paragraphes.forEach(function(p) {
-    if ((pageActuelle + p).length > 550 && pageActuelle.length > 0) {
+  mots.forEach(function(mot) {
+    const candidat = pageActuelle ? pageActuelle + ' ' + mot : mot;
+    if (candidat.length > LIMITE_PAGE) {
       pages.push(pageActuelle.trim());
-      pageActuelle = p;
+      pageActuelle = mot;
     } else {
-      pageActuelle = pageActuelle ? pageActuelle + '\n\n' + p : p;
+      pageActuelle = candidat;
     }
   });
   if (pageActuelle.trim()) pages.push(pageActuelle.trim());
