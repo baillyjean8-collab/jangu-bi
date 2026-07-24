@@ -307,9 +307,7 @@ const ARTICLES = [
     lienExterne: 'https://fr.wikipedia.org/wiki/Dioc%C3%A8se_de_Ziguinchor',
   },
   {
-    id: 'saint-ignace-loyola-biographie',
-    categorie: 'saints',
-    yola-biographie',
+        id: 'saint-ignace-loyola-biographie',
     categorie: 'saints',
     titre: 'Saint Ignace de Loyola — biographie complète',
     source: 'Sources : audiences pontificales, Vatican News — verifie juillet 2026',
