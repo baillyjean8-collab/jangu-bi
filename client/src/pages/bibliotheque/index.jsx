@@ -1194,21 +1194,32 @@ export default function BibliothequePage() {
               const mots = a.titre.split(' ');
               const titreCourt = mots.length > 4 ? mots.slice(0, 4).join(' ') + '…' : a.titre;
               return (
-                <div key={a.id} onClick={function() { setArticleOuvert(a.id); }} style={{ cursor: 'pointer' }}>
+                                <div key={a.id} onClick={function() { setArticleOuvert(a.id); setPageActuelle(0); }} style={{ cursor: 'pointer' }}>
                   <div style={{
-                    background: fond, borderRadius: '3px 9px 9px 3px', aspectRatio: '2/3',
+                    background: fond, borderRadius: '2px 8px 8px 2px', aspectRatio: '2/3',
                     display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                    padding: '8px 6px', textAlign: 'center', position: 'relative', overflow: 'hidden',
-                    boxShadow: '-4px 4px 0 rgba(0,0,0,0.18), 3px 5px 14px rgba(0,0,0,0.3)',
+                    padding: '14px 10px', textAlign: 'center', position: 'relative', overflow: 'hidden',
+                    boxShadow: '-2px 0 0 rgba(0,0,0,0.28), -5px 3px 0 rgba(0,0,0,0.14), 6px 10px 22px rgba(0,0,0,0.45)',
                   }}>
-                    <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 6, background: 'rgba(0,0,0,0.3)' }} />
-                    <div style={{ position: 'absolute', inset: 5, border: '0.5px solid rgba(255,255,255,0.25)', borderRadius: 2, pointerEvents: 'none' }} />
-                    {perso ? (
-                      <div style={{ marginBottom: 4 }}><SymboleCouverture id={a.id} couleur={couleurTexte} /></div>
-                    ) : (
-                      <div style={{ fontSize: 22, marginBottom: 4 }}>{(CATEGORIES.find(function(c) { return c.id === a.categorie; }) || {}).icon}</div>
-                    )}
-                    <div style={{ fontFamily: 'Georgia,serif', fontSize: 9.5, fontWeight: 700, lineHeight: 1.2, color: couleurTexte, position: 'relative', zIndex: 2 }}>{titreCourt}</div>
+                    <div style={{ position: 'absolute', inset: 0, opacity: 0.06, pointerEvents: 'none', backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 7px, currentColor 7px, currentColor 7.6px), repeating-linear-gradient(-45deg, transparent, transparent 7px, currentColor 7px, currentColor 7.6px)', color: couleurTexte }} />
+                    <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'radial-gradient(ellipse at 25% 15%, rgba(255,255,255,0.28), transparent 55%), linear-gradient(160deg, transparent 55%, rgba(0,0,0,0.28) 100%)' }} />
+                    <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 11, background: 'linear-gradient(to right, rgba(0,0,0,0.6), rgba(0,0,0,0.2) 65%, transparent)' }} />
+                    <div style={{ position: 'absolute', right: 0, top: 3, bottom: 3, width: 4, background: 'repeating-linear-gradient(to bottom, rgba(255,255,255,0.4) 0px, rgba(255,255,255,0.4) 1px, transparent 1px, transparent 3px)' }} />
+                    <div style={{ position: 'absolute', top: -3, right: 11, width: 9, height: 24, clipPath: 'polygon(0 0, 100% 0, 100% 100%, 50% 78%, 0 100%)', opacity: 0.92, background: couleurTexte, boxShadow: '1px 0 3px rgba(0,0,0,0.3)' }} />
+                    <div style={{ width: 40, height: 40, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 8, position: 'relative', zIndex: 2, background: 'radial-gradient(circle at 35% 30%, rgba(255,255,255,0.22), rgba(255,255,255,0.02) 65%)', boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.35), inset 0 1px 4px rgba(0,0,0,0.3)' }}>
+                      {perso ? (
+                        <SymboleCouverture id={a.id} couleur={couleurTexte} />
+                      ) : (
+                        <div style={{ fontSize: 20 }}>{(CATEGORIES.find(function(c) { return c.id === a.categorie; }) || {}).icon}</div>
+                      )}
+                    </div>
+                    <div style={{ width: 16, height: 1, background: couleurTexte, opacity: 0.6, margin: '5px 0', position: 'relative', zIndex: 2 }} />
+                    <div style={{
+                      fontFamily: 'Georgia,serif', fontWeight: 700, lineHeight: 1.28, position: 'relative', zIndex: 2,
+                      fontSize: 8, maxWidth: '100%', wordBreak: 'break-word', color: couleurTexte,
+                      display: '-webkit-box', WebkitLineClamp: 4, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+                      textShadow: '0 1px 2px rgba(0,0,0,0.25)',
+                    }}>{titreCourt}</div>
                   </div>
                 </div>
               );
