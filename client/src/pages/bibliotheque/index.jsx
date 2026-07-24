@@ -16,13 +16,13 @@ const CATEGORIES = [
 ];
 
 const ARTICLES = [
-  {
+    {
     id: 'popenguine-138-ans',
     categorie: 'actualites',
     date: '2026-05-24',
     titre: 'Popenguine : 138 ans de marche, entre foi et mémoire',
     source: 'Source : Tambacounda.info, 24 mai 2026',
-    texte: "Chaque annee a la Pentecote, des dizaines de milliers de pelerins rallient a pied le sanctuaire de Popenguine. Ne en 1888, relance en 1981 apres une periode d'interruption, ce rendez-vous est devenu le coeur battant du catholicisme senegalais.\n\nCette annee encore, des fideles venus de tous les diocese du pays (Dakar, Thies, Kaolack, Saint-Louis, Ziguinchor, Kolda et Tambacounda) ont marche, certains depuis Dakar, Thies ou Mbour, dans un esprit de sacrifice et de fraternite. Les jeunes delegations diocesaines vivent cette marche comme un veritable chemin spirituel avant d'arriver au sanctuaire. L'Eglise a profite de ce rassemblement pour appeler les fideles a prier pour la paix au Senegal et dans la sous-region.",
+    texte: "Chaque année, à la Pentecôte, des dizaines de milliers de pèlerins rallient à pied le sanctuaire de Popenguine. Né en 1888, relancé en 1981 après une période d'interruption, ce rendez-vous est devenu le cœur battant du catholicisme sénégalais.\n\nCette année encore, des fidèles venus de tous les diocèses du pays (Dakar, Thiès, Kaolack, Saint-Louis, Ziguinchor, Kolda et Tambacounda) ont marché, certains depuis Dakar, Thiès ou Mbour, dans un esprit de sacrifice et de fraternité. Les jeunes délégations diocésaines vivent cette marche comme un véritable chemin spirituel avant d'arriver au sanctuaire. L'Église a profité de ce rassemblement pour appeler les fidèles à prier pour la paix au Sénégal et dans la sous-région.",
     lienExterne: 'https://www.tambacounda.info/2026/05/24/popenguine-138-ans-de-marche-entre-foi-et-memoire/',
   },
   {
@@ -30,8 +30,8 @@ const ARTICLES = [
     categorie: 'actualites',
     date: '2023-12-09',
     titre: 'Popenguine reconnu sanctuaire marial national',
-    source: 'Source : ZENIT, 11 decembre 2023',
-    texte: "Le 9 decembre 2023, le sanctuaire Notre-Dame-de-la-Delivrande de Popenguine a ete officiellement inaugure et reconnu sanctuaire national par la Conference des eveques du Senegal, de la Mauritanie, du Cap-Vert et de la Guinee-Bissau. Mgr Benjamin Ndiaye, alors archeveque de Dakar, presidait la ceremonie, entoure d'eveques de la region et des autorites senegalaises.\n\nLe nouveau sanctuaire s'etend sur plus de 20 000 m2 avec une vue panoramique sur l'ocean. Cette reconnaissance officielle vient couronner plus d'un siecle d'histoire de devotion mariale sur ce site, depuis les origines du pelerinage en 1888.",
+    source: 'Source : ZENIT, 11 décembre 2023',
+    texte: "Le 9 décembre 2023, le sanctuaire Notre-Dame-de-la-Délivrande de Popenguine a été officiellement inauguré et reconnu sanctuaire national par la Conférence des évêques du Sénégal, de la Mauritanie, du Cap-Vert et de la Guinée-Bissau. Mgr Benjamin Ndiaye, alors archevêque de Dakar, présidait la cérémonie, entouré d'évêques de la région et des autorités sénégalaises.\n\nLe nouveau sanctuaire s'étend sur plus de 20 000 m² avec une vue panoramique sur l'océan. Cette reconnaissance officielle vient couronner plus d'un siècle d'histoire de dévotion mariale sur ce site, depuis les origines du pèlerinage en 1888.",
     lienExterne: 'https://fr.zenit.org/2023/12/11/consecration-du-nouveau-sanctuaire-marial-au-senegal/',
   },
     {
