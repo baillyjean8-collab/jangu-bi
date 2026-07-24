@@ -1175,10 +1175,12 @@ export default function BibliothequePage() {
                 }}>
                   {cat.icon} {cat.label}
                 </button>
-              );
+                            );
             })}
           </div>
-                <div style={{ padding: 16 }}>
+        </div>
+
+        <div style={{ padding: 16 }}>
           {filtres.length === 0 && (
             <p style={{ textAlign: 'center', color: '#71717A', fontSize: 13, marginTop: 40 }}>Aucun contenu pour l'instant dans cette categorie.</p>
           )}
