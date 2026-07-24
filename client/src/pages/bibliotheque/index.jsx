@@ -1230,10 +1230,10 @@ export default function BibliothequePage() {
                     <div style={{ position: 'absolute', right: 0, top: 3, bottom: 3, width: 4, background: 'repeating-linear-gradient(to bottom, rgba(255,255,255,0.4) 0px, rgba(255,255,255,0.4) 1px, transparent 1px, transparent 3px)' }} />
                     <div style={{ position: 'absolute', top: -3, right: 11, width: 9, height: 24, clipPath: 'polygon(0 0, 100% 0, 100% 100%, 50% 78%, 0 100%)', opacity: 0.92, background: couleurTexte, boxShadow: '1px 0 3px rgba(0,0,0,0.3)' }} />
                     <div style={{ width: 40, height: 40, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 8, position: 'relative', zIndex: 2, background: 'radial-gradient(circle at 35% 30%, rgba(255,255,255,0.22), rgba(255,255,255,0.02) 65%)', boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.35), inset 0 1px 4px rgba(0,0,0,0.3)' }}>
-                      {perso ? (
+                                            {perso ? (
                         <SymboleCouverture id={a.id} couleur={couleurTexte} />
                       ) : (
-                        <div style={{ fontSize: 20 }}>{(CATEGORIES.find(function(c) { return c.id === a.categorie; }) || {}).icon}</div>
+                        <SymboleParDefaut categorieId={a.categorie} couleur={couleurTexte} />
                       )}
                     </div>
                     <div style={{ width: 16, height: 1, background: couleurTexte, opacity: 0.6, margin: '5px 0', position: 'relative', zIndex: 2 }} />
