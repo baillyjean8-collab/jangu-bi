@@ -1190,6 +1190,8 @@ function SymboleParDefaut({ categorieId, couleur }) {
     );
   }
   return null;
+}
+
 function decouperEnPages(texte) {
   const LIMITE_PAGE = 900;
   const mots = texte.split(' ');
