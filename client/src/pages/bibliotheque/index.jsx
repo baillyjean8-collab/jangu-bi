@@ -1283,7 +1283,11 @@ export default function BibliothequePage() {
                       <p style={{ fontSize: 9, color: '#8B6020', fontStyle: 'italic', marginBottom: 10 }}>{a.source}</p>
                     </>
                   )}
-                  <p style={{ margin: 0, whiteSpace: 'pre-line' }}>{pages[numeroPage]}</p>
+                                    {pages[numeroPage].split('\n\n').map(function(paragraphe, i) {
+                    return (
+                      <p key={i} style={{ margin: '0 0 8px', textAlign: 'justify', textIndent: '1.2em' }}>{paragraphe}</p>
+                    );
+                  })}
                   {numeroPage === pages.length - 1 && a.lienExterne && (
                     <a href={a.lienExterne} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', marginTop: 14, padding: '8px 14px', borderRadius: 8, background: VERT, color: OR, fontWeight: 700, fontSize: 10, textDecoration: 'none' }}>
                       Continuer la lecture ↗
