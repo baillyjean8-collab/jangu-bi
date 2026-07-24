@@ -337,9 +337,17 @@ const ARTICLES = [
     titre: "Sainte Claire d'Assise — biographie complète",
     source: 'Sources : audiences pontificales, Vatican News — vérifié juillet 2026',
     texte: "Claire naît en 1194 à Assise, dans une famille noble italienne. Profondément marquée, adolescente, par la prédication de François d'Assise, alors déjà engagé dans sa vie de pauvreté radicale, elle décide en 1212, à l'âge de dix-huit ans, de fuir en secret le domicile familial la nuit du dimanche des Rameaux pour rejoindre François et ses frères, malgré l'opposition prévisible de sa famille, qui espérait pour elle un mariage avantageux.\n\nFrançois lui-même lui coupe les cheveux en signe de consécration et l'installe d'abord chez des religieuses bénédictines, avant de lui trouver un lieu propre, la petite église de San Damiano à Assise, même lieu où François avait reçu son propre appel spirituel des années plus tôt. Claire y fonde ce qui deviendra l'Ordre des Pauvres Dames, aujourd'hui appelées Clarisses, adoptant une règle de pauvreté encore plus stricte que celle des Franciscains masculins, ce qui lui vaudra de devoir se battre pendant des années, y compris directement auprès de plusieurs papes successifs, pour obtenir le droit de vivre sans aucune possession, même collective, un privilège alors jugé trop radical pour un ordre féminin.\n\nElle dirigea sa communauté pendant plus de quarante ans depuis San Damiano, y compris durant de très longues périodes de maladie grave qui l'immobilisèrent alitée. La tradition rapporte un épisode célèbre survenu en 1240, lorsque des soldats musulmans au service de l'empereur Frédéric II menacèrent d'attaquer le monastère : Claire, trop malade pour se lever, se serait fait porter jusqu'à la porte avec le Saint-Sacrement exposé, provoquant la retraite miraculeuse des assaillants.\n\nElle meurt en 1253, seulement deux jours après avoir enfin reçu du pape Innocent IV l'approbation définitive de sa règle de pauvreté absolue, rédigée par elle-même, une première pour une femme dans l'histoire de l'Église. Sa réputation de sainteté était telle qu'elle fut canonisée seulement deux ans après sa mort, en 1255, par le pape Alexandre IV. Elle est aujourd'hui la sainte patronne de la télévision, en raison d'une vision qu'elle aurait eue, alors alitée, de la messe de Noël célébrée loin d'elle dans la basilique d'Assise.",
+        lienExterne: null,
+  },
+  {
+    id: 'saint-maximilien-kolbe-biographie',
+    categorie: 'saints',
+    titre: 'Saint Maximilien Kolbe — biographie complète',
+    source: 'Sources : audiences pontificales, Vatican News — vérifié juillet 2026',
+    texte: "Prêtre franciscain polonais, Maximilien Kolbe fut déporté au camp de concentration d'Auschwitz pendant la Seconde Guerre mondiale. Lorsqu'un prisonnier fut condamné à mourir de faim en punition d'une évasion, Kolbe se porta volontaire pour prendre sa place, laissant cet homme retrouver sa famille après la guerre. Il mourut en 1941, après deux semaines de privation. Le pape Jean-Paul II le canonisa en 1982 et le proclama martyr de la charité, symbole du don total de soi pour autrui.",
     lienExterne: null,
   },
-    {
+  {
     id: 'saint-thomas-aquin-biographie',
     categorie: 'saints',
     titre: "Saint Thomas d'Aquin — biographie complète",
