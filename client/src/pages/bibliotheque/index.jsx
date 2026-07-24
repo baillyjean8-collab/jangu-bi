@@ -59,11 +59,11 @@ const ARTICLES = [
     lienExterne: null,
   },
   {
-    id: 'archidiocese-dakar',
+        id: 'archidiocese-dakar',
     categorie: 'senegal',
     titre: "L'Archidiocèse de Dakar, une histoire de plus d'un siècle",
-    source: 'Source : Wikipedia, verifie juillet 2026',
-        texte: "L'histoire de l'Eglise catholique organisee au Senegal remonte a 1842, avec la creation de la prefecture apostolique des Deux Guinees et Senegambie. Il faudra attendre le 14 septembre 1955 pour que le pape Pie XII erige canoniquement l'Archidiocese de Dakar tel qu'on le connait aujourd'hui.\n\nLa cathedrale Notre-Dame-des-Victoires de Dakar en est l'eglise principale. L'archidiocese est aujourd'hui dirige par Mgr Andre Gueye, et regroupe plus d'une cinquantaine de paroisses reparties en plusieurs doyennes, couvrant Dakar, Pikine, Guediawaye, Rufisque et une partie des regions de Thies et Fatick.",
+    source: 'Source : Wikipédia, vérifié juillet 2026',
+    texte: "L'histoire de l'Église catholique organisée au Sénégal remonte à 1842, avec la création de la préfecture apostolique des Deux-Guinées et de la Sénégambie. Il faudra attendre le 14 septembre 1955 pour que le pape Pie XII érige canoniquement l'Archidiocèse de Dakar tel qu'on le connaît aujourd'hui.\n\nLa cathédrale Notre-Dame-des-Victoires de Dakar en est l'église principale. L'archidiocèse est aujourd'hui dirigé par Mgr André Gueye, et regroupe plus d'une cinquantaine de paroisses réparties en plusieurs doyennés, couvrant Dakar, Pikine, Guédiawaye, Rufisque et une partie des régions de Thiès et de Fatick.",
     lienExterne: null,
   },
   {
