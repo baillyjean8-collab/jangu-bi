@@ -1080,54 +1080,58 @@ const FONDS_PAR_CATEGORIE = {
   temoignages: ['linear-gradient(160deg, #C8A84B, #8B6020)', '#1e2d14'],
 };
 
-function SymboleCouverture({ id, couleur }) {
-  const s = COUVERTURES_SAINTS[id];
-  const symbole = s ? s.symbole : null;
-  const c = couleur;
-  if (symbole === 'rita') {
+function SymboleParDefaut({ categorieId, couleur }) {
+  if (categorieId === 'senegal') {
     return (
-      <svg width="38" height="38" viewBox="0 0 40 40">
-        <circle cx="20" cy="16" r="9" fill="none" stroke={c} strokeWidth="1.3"/>
-        <line x1="20" y1="7" x2="20" y2="11" stroke={c} strokeWidth="1.5"/>
-        <circle cx="20" cy="9" r="1" fill={c}/>
-        <path d="M14 26 Q11 22 14 20 Q17 22 14 26 Z" fill={c}/>
+      <svg width="30" height="30" viewBox="0 0 40 40">
+        <path d="M20 6 L20 14 M16 9 L24 9" stroke={couleur} strokeWidth="1.8"/>
+        <path d="M12 18 L20 11 L28 18 L28 33 L12 33 Z" fill="none" stroke={couleur} strokeWidth="1.5"/>
+        <path d="M17 33 L17 25 Q17 22 20 22 Q23 22 23 25 L23 33" fill={couleur}/>
       </svg>
     );
   }
-  if (symbole === 'rose') {
+  if (categorieId === 'vatican') {
     return (
-      <svg width="38" height="38" viewBox="0 0 40 40">
-        <circle cx="20" cy="16" r="6" fill="none" stroke={c} strokeWidth="1.2"/>
-        <circle cx="20" cy="16" r="3" fill="none" stroke={c} strokeWidth="1.2"/>
-        <path d="M20 22 L20 34 M20 27 Q15 27 14 31 M20 30 Q25 30 26 34" stroke={c} strokeWidth="1.2" fill="none"/>
+      <svg width="30" height="30" viewBox="0 0 40 40">
+        <circle cx="14" cy="12" r="5" fill="none" stroke={couleur} strokeWidth="1.6"/>
+        <line x1="14" y1="17" x2="14" y2="30" stroke={couleur} strokeWidth="1.6"/>
+        <line x1="14" y1="26" x2="19" y2="26" stroke={couleur} strokeWidth="1.6"/>
+        <line x1="14" y1="30" x2="21" y2="30" stroke={couleur} strokeWidth="1.6"/>
       </svg>
     );
   }
-  if (symbole === 'francois') {
+  if (categorieId === 'bible') {
     return (
-      <svg width="38" height="38" viewBox="0 0 40 40">
-        <path d="M20 10 L20 30 M14 16 L26 16" stroke={c} strokeWidth="1.5"/>
-        <circle cx="20" cy="10" r="1.3" fill={c}/>
-        <circle cx="20" cy="30" r="1.3" fill={c}/>
-        <circle cx="14" cy="16" r="1.3" fill={c}/>
-        <circle cx="26" cy="16" r="1.3" fill={c}/>
+      <svg width="30" height="30" viewBox="0 0 40 40">
+        <path d="M12 12 L12 30 Q20 26 28 30 L28 12 Q20 8 12 12 Z" fill="none" stroke={couleur} strokeWidth="1.4"/>
+        <line x1="20" y1="10" x2="20" y2="28" stroke={couleur} strokeWidth="1.2"/>
+        <path d="M20 12 L20 20 M17 15 L23 15" stroke={couleur} strokeWidth="1.4"/>
       </svg>
     );
   }
-  if (symbole === 'ihs') {
+  if (categorieId === 'classiques') {
     return (
-      <svg width="38" height="38" viewBox="0 0 40 40">
-        <circle cx="20" cy="18" r="12" fill="none" stroke={c} strokeWidth="0.6" opacity="0.6"/>
-        <text x="20" y="23" fontFamily="Georgia,serif" fontSize="14" fontWeight="700" fill={c} textAnchor="middle">IHS</text>
+      <svg width="30" height="30" viewBox="0 0 40 40">
+        <path d="M10 14 Q10 10 14 10 L26 10 Q30 10 30 14 L30 26 Q30 30 26 30 L14 30 Q10 30 10 26 Z" fill="none" stroke={couleur} strokeWidth="1.4"/>
+        <line x1="14" y1="16" x2="26" y2="16" stroke={couleur} strokeWidth="1"/>
+        <line x1="14" y1="21" x2="26" y2="21" stroke={couleur} strokeWidth="1"/>
+        <line x1="14" y1="26" x2="22" y2="26" stroke={couleur} strokeWidth="1"/>
       </svg>
     );
   }
-  if (symbole === 'catherine') {
+  if (categorieId === 'actualites') {
     return (
-      <svg width="38" height="38" viewBox="0 0 40 40">
-        <path d="M12 20 L28 20 L28 30 L12 30 Z" fill="none" stroke={c} strokeWidth="1.2"/>
-        <line x1="20" y1="20" x2="20" y2="30" stroke={c} strokeWidth="1"/>
-        <path d="M20 8 L20 18 M15 13 L25 13" stroke={c} strokeWidth="1.3"/>
+      <svg width="30" height="30" viewBox="0 0 40 40">
+        <path d="M20 8 Q26 8 26 16 L26 24 L28 27 L12 27 L14 24 L14 16 Q14 8 20 8 Z" fill="none" stroke={couleur} strokeWidth="1.4"/>
+        <path d="M17 27 Q17 30 20 30 Q23 30 23 27" fill="none" stroke={couleur} strokeWidth="1.4"/>
+      </svg>
+    );
+  }
+  if (categorieId === 'temoignages') {
+    return (
+      <svg width="30" height="30" viewBox="0 0 40 40">
+        <path d="M20 12 L20 28 M13 17 L27 17" stroke={couleur} strokeWidth="1.6"/>
+        <path d="M20 21 C15 17 13 12 17 10 Q20 8 20 12 Q20 8 23 10 C27 12 25 17 20 21 Z" fill="none" stroke={couleur} strokeWidth="1.1"/>
       </svg>
     );
   }
