@@ -1354,9 +1354,10 @@ export default function BibliothequePage() {
                     </a>
                   )}
                 </div>
-                <div style={{ position: 'absolute', left: 0, right: 0, bottom: 10, textAlign: 'center', fontSize: 9, color: '#8B6020', fontWeight: 700 }}>
+                                <div style={{ position: 'absolute', left: 0, right: 0, bottom: 10, textAlign: 'center', fontSize: 9, color: '#8B6020', fontWeight: 700 }}>
                   — {numeroPage + 1} / {pages.length} —
                 </div>
+              </div>
             );
           };
 
