@@ -1298,7 +1298,7 @@ export default function BibliothequePage() {
           };
 
           return (
-            <div style={{ position: 'fixed', inset: 0, background: '#1a1a1a', zIndex: 200, display: 'flex', flexDirection: 'column' }}>
+              <div style={{ position: 'fixed', inset: 0, background: '#1a1a1a', zIndex: 9999, display: 'flex', flexDirection: 'column' }}>
               <div style={{ padding: '44px 16px 10px', display: 'flex', alignItems: 'center', gap: 10, zIndex: 3 }}>
                 <div onClick={function() { setArticleOuvert(null); }} style={{ cursor: 'pointer', fontSize: 20, color: '#fff' }}>
                   <i className="ti ti-arrow-left" />
