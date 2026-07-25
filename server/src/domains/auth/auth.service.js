@@ -228,8 +228,12 @@ async function forgotPassword({ email }, req) {
 
   if (!user) return genericResponse;
 
-  const { otp } = await issueOTP(user._id, 'password_reset');
+    const { otp } = await issueOTP(user._id, 'password_reset');
   console.log(`[OTP-DEV] Password reset OTP for ${user._id}: ${'*'.repeat(4)}${otp.slice(-2)}`);
+
+  envoyerCodeReinitialisation(user.email, otp).catch(function(e) {
+    console.log('Envoi email reinitialisation:', e.message);
+  });
 
   await audit.auth(AuditLog.ACTIONS.AUTH_OTP_SENT, user._id, req, { purpose: 'password_reset' });
 
