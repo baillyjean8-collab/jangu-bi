@@ -1,6 +1,6 @@
 import { useState, useLocation, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { authApi } from '../../api';
+import { authApi } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { AuthShell } from '../../components/layout';
 import { Button, Input, useToast } from '../../components/ui';
