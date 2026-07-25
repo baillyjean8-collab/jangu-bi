@@ -13,7 +13,7 @@ import CatechesePage from './pages/catechese';
 import DemandesPage from './pages/demandes';
 import LiveListPage from './pages/live';
 import LiveScreen from './pages/live/LiveScreen';
-import { LoginPage, RegisterPage, VerifyOtpPage } from './pages/auth';
+import { LoginPage, RegisterPage, VerifyOtpPage, ForgotPasswordPage } from './pages/auth';
 import InscriptionParoissePage from './pages/inscription-paroisse';
 import DonatePage from './pages/donate';
 import ProfilePage from './pages/profile';
