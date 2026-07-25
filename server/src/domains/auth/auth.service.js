@@ -8,6 +8,7 @@ const { generateOTP } = require('../../shared/utils/otp');
 const { signAccessToken, signRefreshToken, hashToken, generateFamily } = require('../../shared/utils/jwt');
 const { OTP: OTPModel } = require('../../models');
 const { audit } = require('../../shared/utils/auditLogger');
+const { envoyerCodeReinitialisation } = require('../../shared/utils/emailService');
 const { AuditLog } = require('../../models');
 const {
   ConflictError,
