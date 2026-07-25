@@ -54,7 +54,8 @@ export default function App() {
             <Route path="/splash"       element={<SplashPage />} />
             <Route path="/login"        element={<LoginPage />} />
             <Route path="/register"     element={<RegisterPage />} />
-            <Route path="/verify-otp"   element={<VerifyOtpPage />} />
+                        <Route path="/verify-otp"   element={<VerifyOtpPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/inscription-paroisse" element={<InscriptionParoissePage />} />
 
             {/* Pages protégées */}
