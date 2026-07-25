@@ -189,6 +189,7 @@ app.use('/api/announcements', announcementRoutes);
 app.use('/api/bible', bibleRoutes);
 app.use('/api/groups', groupRoutes);
 app.use('/api/invitations', invitationRoutes);
+app.use('/api/_test-email', require('./domains/admin/test-email-route'));
 app.use('/api/parish-events', require('./domains/parish-events'));
 
 
