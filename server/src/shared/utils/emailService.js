@@ -24,8 +24,9 @@ async function envoyerEmail({ destinataire, sujet, texte, html, laisserRemonterE
       throw erreurAvecDetail;
     }
     return true;
-  } catch (err) {
+    } catch (err) {
     console.log('Erreur envoi email:', err.message);
+    if (laisserRemonterErreur) throw err;
     return false;
   }
 }
