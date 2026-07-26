@@ -18,6 +18,9 @@ const postSchema = new mongoose.Schema({
   imageUrls: { type: [String], default: [] },
   videoUrl: { type: String, default: null },
   type:      { type: String, enum: ['NORMAL', 'ANNONCE', 'INSCRIPTION', 'COLLECTE', 'EVENEMENT', 'MEDIA'], default: 'NORMAL' },
+  // Nombre maximum de places pour un evenement (type EVENEMENT). null = illimite.
+  // Utilise uniquement pour les evenements gratuits pour l'instant (pas de paiement).
+  eventCapacity: { type: Number, default: null, min: 1 },
   likes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
 sharesCount: { type: Number, default: 0, min: 0 },
   comments:  [commentSchema],
