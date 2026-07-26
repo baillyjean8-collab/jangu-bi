@@ -1,36 +1,26 @@
 'use strict';
 
-const nodemailer = require('nodemailer');
-const config = require('../../config/env');
-
-let transporteur = null;
-
-function getTransporteur() {
-  if (!transporteur) {
-        transporteur = nodemailer.createTransport({
-      host: config.email.host,
-      port: config.email.port,
-      auth: {
-        user: config.email.user,
-        pass: config.email.password,
-      },
-      connectionTimeout: 10000,
-      greetingTimeout: 10000,
-      socketTimeout: 10000,
-    });
-  }
-  return transporteur;
-}
-
 async function envoyerEmail({ destinataire, sujet, texte, html }) {
   try {
-    await getTransporteur().sendMail({
-      from: config.email.from,
-      to: destinataire,
-      subject: sujet,
-      text: texte,
-      html: html || texte,
+    const reponse = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'api-key': process.env.BREVO_API_KEY,
+      },
+      body: JSON.stringify({
+        sender: { name: 'Jangu Bi', email: 'noreply@jangu-bi.sn' },
+        to: [{ email: destinataire }],
+        subject: sujet,
+        textContent: texte,
+        htmlContent: html || texte,
+      }),
     });
+    if (!reponse.ok) {
+      const erreurTexte = await reponse.text();
+      console.log('Erreur envoi email Brevo:', erreurTexte);
+      return false;
+    }
     return true;
   } catch (err) {
     console.log('Erreur envoi email:', err.message);
