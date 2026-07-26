@@ -7,13 +7,16 @@ let transporteur = null;
 
 function getTransporteur() {
   if (!transporteur) {
-    transporteur = nodemailer.createTransport({
+        transporteur = nodemailer.createTransport({
       host: config.email.host,
       port: config.email.port,
       auth: {
         user: config.email.user,
         pass: config.email.password,
       },
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 10000,
     });
   }
   return transporteur;
