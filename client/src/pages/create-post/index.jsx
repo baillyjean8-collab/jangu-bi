@@ -71,16 +71,13 @@ export default function CreatePostPage() {
     return m.ratio || 1;
   }
 
-  function limiterOffset(offsetX, offsetY, zoom) {
-    const el = conteneurMediaRef.current;
-    if (!el) return { x: offsetX, y: offsetY };
-    const rect = el.getBoundingClientRect();
-    const maxX = (rect.width * (zoom - 1)) / 2;
-    const maxY = (rect.height * (zoom - 1)) / 2;
-    return {
-      x: Math.max(-maxX, Math.min(maxX, offsetX)),
-      y: Math.max(-maxY, Math.min(maxY, offsetY)),
-    };
+  // offsetX/offsetY sont exprimes en FRACTION du cadre (ex: 0.2 = 20% de la largeur),
+  // pas en pixels bruts. Ainsi le meme recadrage se reproduit a l'identique sur l'image
+  // finale envoyee au serveur, quelle que soit la taille de l'ecran du telephone.
+  function limiterOffset(offsetXFrac, offsetYFrac, zoom) {
+    const marge = Math.max(zoom - 1, 0) / 2;
+    const clamp = function(v) { return Math.max(-marge, Math.min(marge, v)); };
+    return { x: clamp(offsetXFrac), y: clamp(offsetYFrac) };
   }
 
   function ouvrirSelecteurFichiers() {
@@ -204,13 +201,16 @@ export default function CreatePostPage() {
 
   function bougerGlisser(e) {
     if (!dragRef.current.actif) return;
+    const el = conteneurMediaRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
     const point = e.touches ? e.touches[0] : e;
-    const dx = point.clientX - dragRef.current.startX;
-    const dy = point.clientY - dragRef.current.startY;
+    const dxFrac = (point.clientX - dragRef.current.startX) / rect.width;
+    const dyFrac = (point.clientY - dragRef.current.startY) / rect.height;
     setMediaItems(function(prev) {
       return prev.map(function(m, i) {
         if (i !== activeIndex) return m;
-        const limite = limiterOffset(dragRef.current.baseX + dx, dragRef.current.baseY + dy, Math.max(m.zoom, 1));
+        const limite = limiterOffset(dragRef.current.baseX + dxFrac, dragRef.current.baseY + dyFrac, Math.max(m.zoom, 1));
         return { ...m, offsetX: limite.x, offsetY: limite.y };
       });
     });
@@ -239,13 +239,101 @@ export default function CreatePostPage() {
     });
   }
 
-  function styleFiltreActif() {
-    if (!activeMedia) return 'none';
+  function calculerFiltreCss(m) {
+    if (!m) return 'none';
     const parts = [];
-    if (activeMedia.auto) parts.push(AUTO_ADJUST_CSS);
-    const f = FILTRES.find(function(x) { return x.id === activeMedia.filtre; });
+    if (m.auto) parts.push(AUTO_ADJUST_CSS);
+    const f = FILTRES.find(function(x) { return x.id === m.filtre; });
     if (f && f.css !== 'none') parts.push(f.css);
     return parts.length ? parts.join(' ') : 'none';
+  }
+
+  function styleFiltreActif() {
+    return calculerFiltreCss(activeMedia);
+  }
+
+  // ── Grave reellement le filtre + le recadrage/zoom + le texte dans l'image ──
+  // avant l'envoi, pour que ce que voient les fideles corresponde exactement a
+  // ce que l'admin a compose a l'ecran (avant cette fonction, ces reglages
+  // restaient uniquement visuels et n'etaient jamais envoyes avec la photo).
+  function graverImageFinale(m) {
+    return new Promise(function(resolve, reject) {
+      if (m.kind !== 'image') { resolve(m.url); return; } // les videos ne sont pas gravees cote client
+      const img = new Image();
+      img.onload = function() {
+        const naturalW = img.naturalWidth, naturalH = img.naturalHeight;
+        const cadreFixe = ratioEffectif(m) !== (m.ratio || (naturalW / naturalH));
+        const doitRogner = m.mode === 'cover' || cadreFixe;
+
+        let outputW, outputH;
+        if (doitRogner) {
+          const r = ratioEffectif(m);
+          outputW = 1080;
+          outputH = Math.round(outputW / r);
+        } else {
+          outputW = naturalW;
+          outputH = naturalH;
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = outputW;
+        canvas.height = outputH;
+        const ctx = canvas.getContext('2d');
+        ctx.filter = calculerFiltreCss(m);
+
+        if (doitRogner) {
+          const echelleCouverture = Math.max(outputW / naturalW, outputH / naturalH);
+          const zoomSupp = Math.max(m.zoom, 1);
+          const echelle = echelleCouverture * zoomSupp;
+          const drawW = naturalW * echelle;
+          const drawH = naturalH * echelle;
+          const baseX = (outputW - drawW) / 2;
+          const baseY = (outputH - drawH) / 2;
+          const panX = (m.offsetX || 0) * outputW;
+          const panY = (m.offsetY || 0) * outputH;
+          ctx.drawImage(img, baseX + panX, baseY + panY, drawW, drawH);
+        } else {
+          ctx.drawImage(img, 0, 0, outputW, outputH);
+        }
+
+        if (m.texteAjoute) {
+          ctx.filter = 'none'; // le texte ne doit pas subir le filtre couleur
+          const tailleFonte = Math.round(outputW * 0.06);
+          ctx.font = tailleFonte + 'px Georgia, serif';
+          ctx.fillStyle = '#ffffff';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.shadowColor = 'rgba(0,0,0,0.6)';
+          ctx.shadowBlur = 8;
+          ctx.shadowOffsetY = 2;
+
+          const maxLargeur = outputW * 0.82;
+          const mots = m.texteAjoute.split(' ');
+          const lignes = [];
+          let ligneActuelle = '';
+          mots.forEach(function(mot) {
+            const test = ligneActuelle ? ligneActuelle + ' ' + mot : mot;
+            if (ctx.measureText(test).width > maxLargeur && ligneActuelle) {
+              lignes.push(ligneActuelle);
+              ligneActuelle = mot;
+            } else {
+              ligneActuelle = test;
+            }
+          });
+          if (ligneActuelle) lignes.push(ligneActuelle);
+
+          const interligne = tailleFonte * 1.25;
+          const departY = outputH / 2 - ((lignes.length - 1) * interligne) / 2;
+          lignes.forEach(function(ligne, i) {
+            ctx.fillText(ligne, outputW / 2, departY + i * interligne);
+          });
+        }
+
+        resolve(canvas.toDataURL('image/jpeg', 0.88));
+      };
+      img.onerror = function() { reject(new Error("Impossible de graver l'image.")); };
+      img.src = m.url;
+    });
   }
 
   function enregistrerRatio(largeur, hauteur) {
@@ -269,19 +357,22 @@ export default function CreatePostPage() {
     setPublishing(true);
     setErreur('');
         try {
-      const toutesLesUrls = mediaItems.filter(function(m) { return m.kind === 'image' && !m.local; }).map(function(m) { return m.url; });
-const videoValide = mediaItems.find(function(m) { return m.kind === 'video' && !m.local; });
-await postsApi.create({
-content: texte.trim(),
-type: typePub,
-imageUrl: toutesLesUrls[0],
-imageUrls: toutesLesUrls,
-videoUrl: videoValide ? videoValide.url : undefined,
-});
+      const imagesAEnvoyer = mediaItems.filter(function(m) { return m.kind === 'image' && !m.local; });
+      const imagesGravees = await Promise.all(imagesAEnvoyer.map(graverImageFinale));
+      const videoValide = mediaItems.find(function(m) { return m.kind === 'video' && !m.local; });
+
+      await postsApi.create({
+        content: texte.trim(),
+        type: typePub,
+        imageUrl: imagesGravees[0],
+        imageUrls: imagesGravees,
+        videoUrl: videoValide ? videoValide.url : undefined,
+      });
 
       if (aussiEnStory && premiereImage && !premiereImage.local) {
         try {
-          await storiesApi.create({ imageUrl: premiereImage.url, caption: texte.trim() });
+          const imageStoryGravee = await graverImageFinale(premiereImage);
+          await storiesApi.create({ imageUrl: imageStoryGravee, caption: texte.trim() });
         } catch (e) {
           console.log('Story:', e.message);
         }
@@ -298,7 +389,7 @@ videoUrl: videoValide ? videoValide.url : undefined,
   function transformActif(m) {
     const cadreFixe = ratioEffectif(m) !== (m.ratio || 1);
     if (m.mode === 'cover' || cadreFixe) {
-      return 'translate(' + m.offsetX + 'px,' + m.offsetY + 'px) scale(' + Math.max(m.zoom, 1) + ')';
+      return 'translate(' + ((m.offsetX || 0) * 100) + '%,' + ((m.offsetY || 0) * 100) + '%) scale(' + Math.max(m.zoom, 1) + ')';
     }
     return 'none';
   }
