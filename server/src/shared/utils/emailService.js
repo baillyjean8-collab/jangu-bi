@@ -1,6 +1,6 @@
 'use strict';
 
-async function envoyerEmail({ destinataire, sujet, texte, html }) {
+async function envoyerEmail({ destinataire, sujet, texte, html, laisserRemonterErreur }) {
   try {
     const reponse = await fetch('https://api.brevo.com/v3/smtp/email', {
       method: 'POST',
