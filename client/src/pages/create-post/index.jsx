@@ -56,6 +56,7 @@ export default function CreatePostPage() {
   const [showTexteInput, setShowTexteInput] = useState(false);
   const [texteTemp, setTexteTemp] = useState('');
   const [editionOuverte, setEditionOuverte] = useState(false);
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
 
   const initiales = ((user?.firstName?.[0] || '') + (user?.lastName?.[0] || '')).toUpperCase() || 'MD';
   const activeMedia = mediaItems[activeIndex] || null;
@@ -87,6 +88,14 @@ export default function CreatePostPage() {
     const marge = Math.max(zoom - 1, 0) / 2;
     const clamp = function(v) { return Math.max(-marge, Math.min(marge, v)); };
     return { x: clamp(offsetXFrac), y: clamp(offsetYFrac) };
+  }
+
+  function demanderQuitter() {
+    if (texte.trim() || mediaItems.length > 0) {
+      setShowLeaveConfirm(true);
+    } else {
+      navigate(-1);
+    }
   }
 
   function ouvrirSelecteurFichiers() {
@@ -561,7 +570,7 @@ export default function CreatePostPage() {
         />
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '44px 16px 16px', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
-          <button onClick={() => navigate(-1)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+          <button onClick={demanderQuitter} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
             <i className="ti ti-arrow-left" style={{ fontSize: 20, color: VERT }} />
           </button>
           <div style={{ fontFamily: 'Georgia,serif', fontSize: 17, fontWeight: 700, color: VERT }}>Nouvelle publication</div>
@@ -598,6 +607,25 @@ export default function CreatePostPage() {
           />
 
           <div style={{ fontSize: 11, color: '#9A8E7E', fontWeight: 700, marginBottom: 8, letterSpacing: '.04em' }}>MEDIA (OPTIONNEL)</div>
+
+          {mediaItems.length > 0 && (
+            <div style={{ display: 'flex', gap: 8, overflowX: 'auto', marginBottom: 10 }}>
+              {mediaItems.map(function(m, i) {
+                return (
+                  <div key={i} onClick={function() { setActiveIndex(i); }} style={{ position: 'relative', flexShrink: 0, width: 56, height: 56, borderRadius: 10, overflow: 'hidden', border: i === activeIndex ? '2px solid ' + OR : '1.5px solid rgba(0,0,0,0.08)', cursor: 'pointer' }}>
+                    {m.kind === 'video' ? (
+                      <video src={m.url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} muted />
+                    ) : (
+                      <img src={m.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    )}
+                  </div>
+                );
+              })}
+              <div onClick={ouvrirSelecteurFichiers} style={{ flexShrink: 0, width: 56, height: 56, borderRadius: 10, border: '1.5px dashed rgba(200,168,75,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: OR, fontSize: 20 }}>
+                +
+              </div>
+            </div>
+          )}
 
           {mediaItems.length === 0 && (
             <div onClick={ouvrirSelecteurFichiers} style={{ background: 'rgba(200,168,75,0.06)', border: '1.5px dashed rgba(200,168,75,0.35)', borderRadius: 14, padding: '34px 16px', textAlign: 'center', marginBottom: 12, cursor: 'pointer' }}>
@@ -695,6 +723,23 @@ export default function CreatePostPage() {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {showLeaveConfirm && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1200, padding: 24 }}>
+          <div style={{ background: '#fff', borderRadius: 16, padding: '20px 18px', width: '100%', maxWidth: 340, textAlign: 'center' }}>
+            <div style={{ fontFamily: 'Georgia,serif', fontSize: 15, fontWeight: 700, color: VERT, marginBottom: 6 }}>Quitter sans publier ?</div>
+            <div style={{ fontSize: 12, color: '#7A6E5E', marginBottom: 18, lineHeight: 1.5 }}>Le texte et les photos ajoutes seront perdus.</div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button onClick={function() { setShowLeaveConfirm(false); }} style={{ flex: 1, padding: 11, background: 'linear-gradient(135deg,#1e2d14,#0a140a)', border: 'none', borderRadius: 10, color: OR, fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>
+                Continuer la publication
+              </button>
+              <button onClick={function() { navigate(-1); }} style={{ flex: 1, padding: 11, background: 'none', border: '1.5px solid #e5e0d5', borderRadius: 10, color: '#b71c1c', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>
+                Quitter
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </AppShell>
