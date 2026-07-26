@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppShell from '../../components/AppShell';
 import { useAuth } from '../../context/AuthContext';
@@ -52,11 +52,10 @@ export default function CreatePostPage() {
 
   const [mediaItems, setMediaItems] = useState([]);
   const [activeIndex, setActiveIndex] = useState(0);
-  const [activePanel, setActivePanel] = useState(null); // 'filtres' | 'ajuster' | 'recadrer' | null
-  const [showTexteInput, setShowTexteInput] = useState(false);
-  const [texteTemp, setTexteTemp] = useState('');
+  const [activePanel, setActivePanel] = useState(null); // 'filtres' | 'ajuster' | 'recadrer' | 'texte' | null
   const [editionOuverte, setEditionOuverte] = useState(false);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+  const texteRef = useRef(null);
 
   const initiales = ((user?.firstName?.[0] || '') + (user?.lastName?.[0] || '')).toUpperCase() || 'MD';
   const activeMedia = mediaItems[activeIndex] || null;
@@ -213,15 +212,32 @@ export default function CreatePostPage() {
     });
   }
 
-  function validerTexte() {
+  // Texte ecrit directement sur la photo (au lieu d'un modal separe).
+  // On ne "controle" pas le contenu a chaque frappe (ce qui casserait le
+  // curseur avec un div contentEditable + React) : on lit le texte final
+  // seulement a la sortie du champ (onBlur), et on ne remet a jour l'affichage
+  // que lors du changement de media ou de l'ouverture de l'outil.
+  function surTexteBlur(e) {
+    const nouveauTexte = e.target.textContent;
     setMediaItems(function(prev) {
       return prev.map(function(m, i) {
         if (i !== activeIndex) return m;
-        return { ...m, texteAjoute: texteTemp };
+        return { ...m, texteAjoute: nouveauTexte };
       });
     });
-    setShowTexteInput(false);
   }
+
+  useEffect(function() {
+    if (texteRef.current) {
+      texteRef.current.textContent = (activeMedia && activeMedia.texteAjoute) || '';
+    }
+  }, [activeIndex, editionOuverte]);
+
+  useEffect(function() {
+    if (activePanel === 'texte' && texteRef.current) {
+      texteRef.current.focus();
+    }
+  }, [activePanel]);
 
   function demarrerGlisser(e) {
     if (!activeMedia) return;
@@ -439,9 +455,23 @@ export default function CreatePostPage() {
           <img src={activeMedia.url} alt="media" style={{ width: '100%', height: '100%', objectFit: fit, background: '#000', transform: transformActif(activeMedia), filter: styleFiltreActif() }} />
         )}
 
-        {activeMedia.texteAjoute && (
-          <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', color: '#fff', fontWeight: 700, fontSize: 22, textAlign: 'center', textShadow: '0 2px 8px rgba(0,0,0,0.6)', padding: '0 20px', zIndex: 2, pointerEvents: 'none', fontFamily: 'Georgia,serif' }}>
-            {activeMedia.texteAjoute}
+        <div
+          ref={texteRef}
+          contentEditable
+          suppressContentEditableWarning
+          onBlur={surTexteBlur}
+          style={{
+            position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
+            color: '#fff', fontWeight: 700, fontSize: 22, textAlign: 'center', minWidth: 30,
+            textShadow: '0 2px 8px rgba(0,0,0,0.6)', padding: '8px 20px', zIndex: 4,
+            fontFamily: 'Georgia,serif', outline: 'none', cursor: 'text',
+            border: activePanel === 'texte' ? '1.5px dashed rgba(255,255,255,0.5)' : 'none',
+            borderRadius: 8,
+          }}
+        />
+        {!activeMedia.texteAjoute && activePanel === 'texte' && (
+          <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', color: 'rgba(255,255,255,0.55)', fontWeight: 700, fontSize: 22, fontFamily: 'Georgia,serif', pointerEvents: 'none', zIndex: 3 }}>
+            Ecrire un texte…
           </div>
         )}
 
@@ -457,6 +487,21 @@ export default function CreatePostPage() {
               );
             })}
           </div>
+        )}
+
+        {mediaItems.length > 1 && (
+          <>
+            <button
+              onClick={function() { if (activeIndex > 0) setActiveIndex(activeIndex - 1); }}
+              disabled={activeIndex === 0}
+              style={{ position: 'absolute', top: '50%', left: 8, transform: 'translateY(-50%)', width: 30, height: 30, borderRadius: '50%', background: 'rgba(0,0,0,0.35)', border: 'none', color: '#fff', fontSize: 16, zIndex: 3, opacity: activeIndex === 0 ? 0.3 : 1 }}
+            >‹</button>
+            <button
+              onClick={function() { if (activeIndex < mediaItems.length - 1) setActiveIndex(activeIndex + 1); }}
+              disabled={activeIndex === mediaItems.length - 1}
+              style={{ position: 'absolute', top: '50%', right: 8, transform: 'translateY(-50%)', width: 30, height: 30, borderRadius: '50%', background: 'rgba(0,0,0,0.35)', border: 'none', color: '#fff', fontSize: 16, zIndex: 3, opacity: activeIndex === mediaItems.length - 1 ? 0.3 : 1 }}
+            >›</button>
+          </>
         )}
 
         <button onClick={ouvrirSelecteurFichiers} style={{ position: 'absolute', top: 12, right: 56, width: 34, height: 34, borderRadius: '50%', background: 'rgba(0,0,0,0.45)', border: 'none', color: '#fff', fontSize: 16, cursor: 'pointer', zIndex: 3 }}>
@@ -479,8 +524,8 @@ export default function CreatePostPage() {
             <span style={{ fontSize: 9, color: '#fff', fontWeight: 700 }}>Ajuster</span>
           </div>
 
-          <div onClick={function() { setTexteTemp(activeMedia.texteAjoute || ''); setShowTexteInput(true); }} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, cursor: 'pointer' }}>
-            <div style={{ width: 38, height: 38, borderRadius: '50%', border: 'none', background: activeMedia.texteAjoute ? OR : 'rgba(0,0,0,0.45)', color: activeMedia.texteAjoute ? VERT : '#fff', fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div onClick={function() { setActivePanel(activePanel === 'texte' ? null : 'texte'); }} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, cursor: 'pointer' }}>
+            <div style={{ width: 38, height: 38, borderRadius: '50%', border: 'none', background: activeMedia.texteAjoute || activePanel === 'texte' ? OR : 'rgba(0,0,0,0.45)', color: activeMedia.texteAjoute || activePanel === 'texte' ? VERT : '#fff', fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               Aa
             </div>
             <span style={{ fontSize: 9, color: '#fff', fontWeight: 700 }}>Texte</span>
@@ -705,24 +750,6 @@ export default function CreatePostPage() {
               {rendreMedia()}
             </div>
           </div>
-
-          {showTexteInput && (
-            <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100, padding: 20 }}>
-              <div style={{ background: '#F5F0E8', borderRadius: 16, padding: 18, width: '100%', maxWidth: 360 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: VERT, marginBottom: 10, fontFamily: 'Georgia,serif' }}>Texte sur l'image</div>
-                <textarea
-                  value={texteTemp}
-                  onChange={function(e) { setTexteTemp(e.target.value); }}
-                  placeholder="Ecrivez votre texte..."
-                  style={{ width: '100%', height: 70, border: '1.5px solid rgba(200,168,75,0.25)', borderRadius: 10, padding: 10, fontSize: 13, color: VERT, fontFamily: 'Georgia,serif', resize: 'none', boxSizing: 'border-box', marginBottom: 12 }}
-                />
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <button onClick={function() { setShowTexteInput(false); }} style={{ flex: 1, padding: 10, background: 'none', border: '1.5px solid #e5e0d5', borderRadius: 10, color: '#7A6E5E', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>Annuler</button>
-                  <button onClick={validerTexte} style={{ flex: 1, padding: 10, background: 'linear-gradient(135deg,#1e2d14,#0a140a)', border: 'none', borderRadius: 10, color: OR, fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>Valider</button>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       )}
 
