@@ -149,7 +149,7 @@ export default function CreatePostPage() {
         zoom: 1,
         offsetX: 0,
         offsetY: 0,
-        cadre: 'original', // s'adapte automatiquement a la vraie forme de la photo/video (portrait, paysage, carre...)
+        cadre: 'original',
         texteAjoute: '',
       };
     });
@@ -189,8 +189,6 @@ export default function CreatePostPage() {
     });
   }
 
-  // Raccourci "Auto" : applique en un seul geste un reglage equilibre
-  // (equivalent a l'ancien bouton "ajustement automatique").
   function appliquerAjustementAuto() {
     setMediaItems(function(prev) {
       return prev.map(function(m, i) { return i !== activeIndex ? m : { ...m, brightness: 104, contrast: 112, saturation: 118 }; });
@@ -212,11 +210,6 @@ export default function CreatePostPage() {
     });
   }
 
-  // Texte ecrit directement sur la photo (au lieu d'un modal separe).
-  // On ne "controle" pas le contenu a chaque frappe (ce qui casserait le
-  // curseur avec un div contentEditable + React) : on lit le texte final
-  // seulement a la sortie du champ (onBlur), et on ne remet a jour l'affichage
-  // que lors du changement de media ou de l'ouverture de l'outil.
   function surTexteBlur(e) {
     const nouveauTexte = e.target.textContent;
     setMediaItems(function(prev) {
@@ -304,13 +297,9 @@ export default function CreatePostPage() {
     return calculerFiltreCss(activeMedia);
   }
 
-  // ── Grave reellement le filtre + le recadrage/zoom + le texte dans l'image ──
-  // avant l'envoi, pour que ce que voient les fideles corresponde exactement a
-  // ce que l'admin a compose a l'ecran (avant cette fonction, ces reglages
-  // restaient uniquement visuels et n'etaient jamais envoyes avec la photo).
   function graverImageFinale(m) {
     return new Promise(function(resolve, reject) {
-      if (m.kind !== 'image') { resolve(m.url); return; } // les videos ne sont pas gravees cote client
+      if (m.kind !== 'image') { resolve(m.url); return; }
       const img = new Image();
       img.onload = function() {
         const naturalW = img.naturalWidth, naturalH = img.naturalHeight;
@@ -348,7 +337,7 @@ export default function CreatePostPage() {
         }
 
         if (m.texteAjoute) {
-          ctx.filter = 'none'; // le texte ne doit pas subir le filtre couleur
+          ctx.filter = 'none';
           const tailleFonte = Math.round(outputW * 0.06);
           ctx.font = tailleFonte + 'px Georgia, serif';
           ctx.fillStyle = '#ffffff';
@@ -392,7 +381,7 @@ export default function CreatePostPage() {
     setMediaItems(function(prev) {
       return prev.map(function(m, i) {
         if (i !== activeIndex) return m;
-        if (m.ratio) return m; // deja mesure, ne pas ecraser
+        if (m.ratio) return m;
         return { ...m, ratio: largeur / hauteur };
       });
     });
@@ -407,7 +396,7 @@ export default function CreatePostPage() {
     }
     setPublishing(true);
     setErreur('');
-        try {
+    try {
       const imagesAEnvoyer = mediaItems.filter(function(m) { return m.kind === 'image' && !m.local; });
       const imagesGravees = await Promise.all(imagesAEnvoyer.map(graverImageFinale));
       const videoValide = mediaItems.find(function(m) { return m.kind === 'video' && !m.local; });
@@ -480,16 +469,6 @@ export default function CreatePostPage() {
         </button>
 
         {mediaItems.length > 1 && (
-          <div style={{ position: 'absolute', top: 16, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 4, zIndex: 3 }}>
-            {mediaItems.map(function(_, i) {
-              return (
-                <div key={i} onClick={function() { setActiveIndex(i); }} style={{ width: i === activeIndex ? 16 : 6, height: 6, borderRadius: 3, background: i === activeIndex ? '#fff' : 'rgba(255,255,255,0.4)', cursor: 'pointer', transition: 'all .2s' }} />
-              );
-            })}
-          </div>
-        )}
-
-        {mediaItems.length > 1 && (
           <>
             <button
               onClick={function() { if (activeIndex > 0) setActiveIndex(activeIndex - 1); }}
@@ -508,7 +487,6 @@ export default function CreatePostPage() {
           +
         </button>
 
-        {/* Barre d'outils : 4 boutons avec libelle visible, comme sur la maquette validee */}
         <div style={{ position: 'absolute', top: 56, right: 12, display: 'flex', flexDirection: 'column', gap: 16, zIndex: 3 }}>
           <div onClick={function() { setActivePanel(activePanel === 'filtres' ? null : 'filtres'); }} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, cursor: 'pointer' }}>
             <div style={{ width: 38, height: 38, borderRadius: '50%', border: 'none', background: activePanel === 'filtres' ? OR : 'rgba(0,0,0,0.45)', color: activePanel === 'filtres' ? VERT : '#fff', fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -735,10 +713,16 @@ export default function CreatePostPage() {
 
       {editionOuverte && activeMedia && (
         <div style={{ position: 'fixed', top: 0, bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: 430, background: '#000', zIndex: 1000, display: 'flex', flexDirection: 'column' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '44px 16px 12px' }}>
-            <div onClick={function() { setEditionOuverte(false); }} style={{ color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>Annuler</div>
-            <div style={{ color: '#fff', fontSize: 13, fontWeight: 700 }}>Modifier</div>
-            <div onClick={function() { setEditionOuverte(false); }} style={{ color: OR, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>Termine</div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '44px 16px 6px', position: 'relative', zIndex: 20 }}>
+            <button onClick={function() { setEditionOuverte(false); }} style={{ width: 34, height: 34, borderRadius: '50%', background: 'rgba(0,0,0,0.45)', border: 'none', color: '#fff', fontSize: 17, cursor: 'pointer' }}>‹</button>
+            {mediaItems.length > 1 ? (
+              <div style={{ display: 'flex', gap: 5 }}>
+                {mediaItems.map(function(_, i) {
+                  return <span key={i} onClick={function() { setActiveIndex(i); }} style={{ width: i === activeIndex ? 16 : 6, height: 6, borderRadius: 3, background: i === activeIndex ? '#fff' : 'rgba(255,255,255,0.35)', transition: 'all .2s', cursor: 'pointer' }} />;
+                })}
+              </div>
+            ) : <span />}
+            <span style={{ width: 34 }} />
           </div>
           <div
             ref={conteneurMediaRef}
@@ -749,6 +733,10 @@ export default function CreatePostPage() {
             <div style={{ position: 'relative', width: '100%', maxHeight: '100%', aspectRatio: ratioEffectif(activeMedia) + ' / 1', overflow: 'hidden', borderRadius: 4, cursor: doitRemplirLeCadre(activeMedia) ? 'grab' : 'default' }}>
               {rendreMedia()}
             </div>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 16px 22px', position: 'relative', zIndex: 20 }}>
+            <button onClick={function() { setEditionOuverte(false); }} style={{ background: 'rgba(255,255,255,0.12)', color: '#fff', border: 'none', padding: '10px 20px', borderRadius: 999, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Annuler</button>
+            <button onClick={function() { setEditionOuverte(false); }} style={{ background: OR, color: VERT, border: 'none', padding: '10px 22px', borderRadius: 999, fontSize: 13.5, fontWeight: 700, cursor: 'pointer' }}>Termine</button>
           </div>
         </div>
       )}
