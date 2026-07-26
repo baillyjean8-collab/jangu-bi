@@ -129,10 +129,20 @@ share: function(id) { return apiFetch('/posts/' + id + '/share', { method: 'POST
      getReported: function() {
       return apiFetch('/posts/moderation/signales');
     },
-    resolveReported: function(postId, commentId, action) {
+        resolveReported: function(postId, commentId, action) {
       return apiFetch('/posts/' + postId + '/comment/' + commentId + '/resolve', {
         method: 'POST', body: JSON.stringify({ action: action })
       });
+    },
+    // ── Inscriptions aux evenements (gratuit, sans paiement pour l'instant) ──
+    inscrireEvenement: function(postId, data) {
+      return apiFetch('/posts/' + postId + '/inscription', { method: 'POST', body: JSON.stringify(data) });
+    },
+    getInscriptions: function(postId) {
+      return apiFetch('/posts/' + postId + '/inscriptions');
+    },
+    getMonInscription: function(postId) {
+      return apiFetch('/posts/' + postId + '/inscriptions/moi');
     },
   };
 
