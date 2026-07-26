@@ -705,10 +705,10 @@ setEditZoom(1.15);
                       <p style={{ margin: 0, fontSize: 14, color: "#2a2a2a", lineHeight: 1.6 }}>{pub.content}</p>
                     </div>
                     {pub.videoUrl ? (
-                      <video src={pub.videoUrl} controls playsInline preload="metadata" style={{ width: '100%', display: 'block', maxHeight: 600, objectFit: 'contain', background: '#000' }} />
-                    ) : pub.imageUrl && (
-                      <img src={pub.imageUrl} alt="publication" style={{ width: '100%', display: 'block', maxHeight: 600, objectFit: 'contain', background: '#000' }} />
-                    )}
+  <video src={pub.videoUrl} controls playsInline preload="metadata" style={{ width: '100%', display: 'block', maxHeight: 600, objectFit: 'cover', background: '#000' }} />
+) : pub.imageUrl && (
+  <img src={pub.imageUrl} alt="publication" style={{ width: '100%', display: 'block', maxHeight: 600, objectFit: 'cover', background: '#000' }} />
+)}
 
                     {isOwner && (
                       <div style={{ display: 'flex', gap: 6, padding: '0 14px 10px' }}>
