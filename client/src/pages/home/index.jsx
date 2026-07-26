@@ -130,7 +130,7 @@ function VideoPublication({ src, sonActifGlobal, setSonActifGlobal, postId, navi
 
   return (
     <div ref={conteneurRef} style={{ position: 'relative', width: '100%', maxHeight: 600, background: '#000' }}>
-            <img src={imgs[0]} alt="publication" onClick={function() { setGalerieOuverte(i); setGalerieIndex(0); }} style={{ width: '100%', display: 'block', maxHeight: 600, objectFit: 'cover', background: '#000', cursor: 'pointer' }} />
+    <video ref={videoRef} src={src} playsInline preload="metadata" muted={!sonLocal} onEnded={surFin} onClick={function() { if (navigate && postId) navigate('/reels/' + postId); }} style={{ width: '100%', display: 'block', maxHeight: 600, objectFit: 'cover', background: '#000', cursor: 'pointer' }} />
       {!sonLocal && !termine && (
         <button onClick={activerSon} style={{ position: 'absolute', bottom: 10, right: 10, width: 34, height: 34, borderRadius: '50%', background: 'rgba(0,0,0,0.55)', border: 'none', color: '#fff', fontSize: 15, cursor: 'pointer' }}>
           <i className="ti ti-volume-3" />
