@@ -479,6 +479,7 @@ export default function CreatePostPage() {
         imageUrl: imagesGravees[0],
         imageUrls: imagesGravees,
         videoUrl: videoValide ? videoValide.url : undefined,
+        eventCapacity: (typePub === 'EVENEMENT' && placesLimitees) ? capaciteMax : null,
       });
 
       if (aussiEnStory && premiereImage && !premiereImage.local) {
