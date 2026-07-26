@@ -26,8 +26,6 @@ const FILTRES = [
   { id: 'contraste',  label: 'Contraste',  css: 'contrast(1.4)' },
 ];
 
-// Formats standards, comme sur Facebook/Instagram/TikTok/Snap : donnent une
-// homogeneite visuelle dans le fil, quelle que soit la photo/video importee.
 const CADRES = [
   { id: 'original', label: 'Original', ratio: null },
   { id: 'carre',    label: '1:1',      ratio: 1 },
@@ -52,7 +50,7 @@ export default function CreatePostPage() {
 
   const [mediaItems, setMediaItems] = useState([]);
   const [activeIndex, setActiveIndex] = useState(0);
-  const [activePanel, setActivePanel] = useState(null); // 'filtres' | 'ajuster' | 'recadrer' | 'texte' | null
+  const [activePanel, setActivePanel] = useState(null);
   const [editionOuverte, setEditionOuverte] = useState(false);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const texteRef = useRef(null);
@@ -68,8 +66,6 @@ export default function CreatePostPage() {
     return m.ratio || 1;
   }
 
-  // Une photo remplit tout le cadre (cover) des qu'on zoome dessus ou qu'on choisit
-  // un format autre que "Original". Sinon elle reste entiere, sans etre coupee (contain).
   function doitRemplirLeCadre(m) {
     if (!m) return false;
     const cadreFixe = ratioEffectif(m) !== (m.ratio || 1);
@@ -80,9 +76,6 @@ export default function CreatePostPage() {
     return doitRemplirLeCadre(m) ? 'cover' : 'contain';
   }
 
-  // offsetX/offsetY sont exprimes en FRACTION du cadre (ex: 0.2 = 20% de la largeur),
-  // pas en pixels bruts. Ainsi le meme recadrage se reproduit a l'identique sur l'image
-  // finale envoyee au serveur, quelle que soit la taille de l'ecran du telephone.
   function limiterOffset(offsetXFrac, offsetYFrac, zoom) {
     const marge = Math.max(zoom - 1, 0) / 2;
     const clamp = function(v) { return Math.max(-marge, Math.min(marge, v)); };
@@ -297,6 +290,83 @@ export default function CreatePostPage() {
     return calculerFiltreCss(activeMedia);
   }
 
+  function clamp255(v) { return v < 0 ? 0 : v > 255 ? 255 : v; }
+
+  // Les fonctions ci-dessous appliquent chaque effet directement sur les pixels
+  // de l'image, au lieu de s'appuyer sur ctx.filter (le filtre integre du canevas),
+  // qui n'est pas fiable sur tous les telephones/navigateurs. C'est plus de code,
+  // mais ca garantit que le filtre choisi se retrouve reellement sur la photo
+  // publiee, quel que soit l'appareil de l'admin.
+  function appliquerBrightnessSurPixels(data, facteur) {
+    for (let i = 0; i < data.length; i += 4) {
+      data[i] = clamp255(data[i] * facteur);
+      data[i + 1] = clamp255(data[i + 1] * facteur);
+      data[i + 2] = clamp255(data[i + 2] * facteur);
+    }
+  }
+  function appliquerContrasteSurPixels(data, facteur) {
+    for (let i = 0; i < data.length; i += 4) {
+      data[i] = clamp255((data[i] - 128) * facteur + 128);
+      data[i + 1] = clamp255((data[i + 1] - 128) * facteur + 128);
+      data[i + 2] = clamp255((data[i + 2] - 128) * facteur + 128);
+    }
+  }
+  function appliquerSaturationSurPixels(data, facteur) {
+    for (let i = 0; i < data.length; i += 4) {
+      const r = data[i], g = data[i + 1], b = data[i + 2];
+      const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+      data[i] = clamp255(lum + (r - lum) * facteur);
+      data[i + 1] = clamp255(lum + (g - lum) * facteur);
+      data[i + 2] = clamp255(lum + (b - lum) * facteur);
+    }
+  }
+  function appliquerGrayscaleSurPixels(data, facteur) {
+    for (let i = 0; i < data.length; i += 4) {
+      const r = data[i], g = data[i + 1], b = data[i + 2];
+      const gris = 0.299 * r + 0.587 * g + 0.114 * b;
+      data[i] = clamp255(r + (gris - r) * facteur);
+      data[i + 1] = clamp255(g + (gris - g) * facteur);
+      data[i + 2] = clamp255(b + (gris - b) * facteur);
+    }
+  }
+  function appliquerSepiaSurPixels(data, facteur) {
+    for (let i = 0; i < data.length; i += 4) {
+      const r = data[i], g = data[i + 1], b = data[i + 2];
+      const sr = 0.393 * r + 0.769 * g + 0.189 * b;
+      const sg = 0.349 * r + 0.686 * g + 0.168 * b;
+      const sb = 0.272 * r + 0.534 * g + 0.131 * b;
+      data[i] = clamp255(r + (sr - r) * facteur);
+      data[i + 1] = clamp255(g + (sg - g) * facteur);
+      data[i + 2] = clamp255(b + (sb - b) * facteur);
+    }
+  }
+
+  function appliquerFiltresSurCanvas(ctx, largeur, hauteur, m) {
+    const imageData = ctx.getImageData(0, 0, largeur, hauteur);
+    const data = imageData.data;
+
+    if (m.filtre === 'vif') {
+      appliquerSaturationSurPixels(data, 1.6);
+      appliquerContrasteSurPixels(data, 1.05);
+    } else if (m.filtre === 'chaleureux') {
+      appliquerSepiaSurPixels(data, 0.35);
+      appliquerSaturationSurPixels(data, 1.2);
+    } else if (m.filtre === 'nb') {
+      appliquerGrayscaleSurPixels(data, 1);
+    } else if (m.filtre === 'contraste') {
+      appliquerContrasteSurPixels(data, 1.4);
+    }
+
+    const b = m.brightness != null ? m.brightness : 100;
+    const c = m.contrast != null ? m.contrast : 100;
+    const s = m.saturation != null ? m.saturation : 100;
+    if (b !== 100) appliquerBrightnessSurPixels(data, b / 100);
+    if (c !== 100) appliquerContrasteSurPixels(data, c / 100);
+    if (s !== 100) appliquerSaturationSurPixels(data, s / 100);
+
+    ctx.putImageData(imageData, 0, 0);
+  }
+
   function graverImageFinale(m) {
     return new Promise(function(resolve, reject) {
       if (m.kind !== 'image') { resolve(m.url); return; }
@@ -319,7 +389,6 @@ export default function CreatePostPage() {
         canvas.width = outputW;
         canvas.height = outputH;
         const ctx = canvas.getContext('2d');
-        ctx.filter = calculerFiltreCss(m);
 
         if (doitRogner) {
           const echelleCouverture = Math.max(outputW / naturalW, outputH / naturalH);
@@ -336,8 +405,9 @@ export default function CreatePostPage() {
           ctx.drawImage(img, 0, 0, outputW, outputH);
         }
 
+        appliquerFiltresSurCanvas(ctx, outputW, outputH, m);
+
         if (m.texteAjoute) {
-          ctx.filter = 'none';
           const tailleFonte = Math.round(outputW * 0.06);
           ctx.font = tailleFonte + 'px Georgia, serif';
           ctx.fillStyle = '#ffffff';
