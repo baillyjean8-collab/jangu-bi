@@ -2,14 +2,13 @@
 
 const Joi = require('joi');
 const router = require('express').Router();
-const { Post } = require('../../models');
+const { Post, EventRegistration } = require('../../models');
 const { authenticate, requireVerified } = require('../../middlewares/authenticate');
 const { authorize } = require('../../middlewares/authorize');
 const { asyncHandler } = require('../../middlewares/errorHandler');
 const { sendSuccess, sendCreated } = require('../../shared/utils/response');
-const { NotFoundError, AuthorizationError } = require('../../shared/errors');
+const { NotFoundError, AuthorizationError, ValidationError, ConflictError } = require('../../shared/errors');
 
-// -- Repository --------------------------------------------------
 const postRepo = {
   async create(data) {
     return Post.create(data);
@@ -31,8 +30,6 @@ const postRepo = {
     return { data, total };
   },
 
-  // Comme findAll mais inclut aussi les publications masquees (isActive:false).
-  // Reserve a la gestion admin (page paroisse geree par l'admin, page Publications).
   async findAllIncludingHidden({ page = 1, limit = 10, parishId } = {}) {
     const filter = {};
     if (parishId) filter.parishId = parishId;
@@ -180,15 +177,53 @@ async resolveReportedComment(postId, commentId, action) {
       { new: true }
     );
   },
+
+  async countRegistrations(postId) {
+    return EventRegistration.countDocuments({ postId });
+  },
+
+  async createRegistration(postId, userId, nom, telephone) {
+    const post = await Post.findById(postId);
+    if (!post) throw new NotFoundError('Post');
+    if (post.type !== 'EVENEMENT') {
+      throw new ValidationError("Cette publication n'est pas un evenement");
+    }
+    if (post.eventCapacity != null) {
+      const count = await EventRegistration.countDocuments({ postId });
+      if (count >= post.eventCapacity) {
+        throw new ConflictError('Il n\'y a plus de places disponibles pour cet evenement');
+      }
+    }
+    try {
+      return await EventRegistration.create({ postId, userId, nom, telephone });
+    } catch (e) {
+      if (e.code === 11000) {
+        throw new ConflictError('Vous etes deja inscrit(e) a cet evenement');
+      }
+      throw e;
+    }
+  },
+
+  async listRegistrations(postId) {
+    return EventRegistration.find({ postId })
+      .sort({ createdAt: 1 })
+      .lean();
+  },
+
+  async findRegistration(postId, userId) {
+    return EventRegistration.findOne({ postId, userId }).lean();
+  },
 };
 
-// -- Controller ---------------------------------------------------
 const postController = {
 async create(req, res) {
-const { content, imageUrl, imageUrls, videoUrl, type } = req.body;
+const { content, imageUrl, imageUrls, videoUrl, type, eventCapacity } = req.body;
 const parishId = req.user.parishId;
 if (!parishId) throw new AuthorizationError('No parish assigned');
-const post = await postRepo.create({ parishId, content, imageUrl, imageUrls, videoUrl, type });
+const post = await postRepo.create({
+  parishId, content, imageUrl, imageUrls, videoUrl, type,
+  eventCapacity: (eventCapacity != null && eventCapacity !== '') ? Number(eventCapacity) : null,
+});
 return sendCreated(res, { post }, 'Publication creee');
 },
 
@@ -198,7 +233,6 @@ return sendCreated(res, { post }, 'Publication creee');
     return sendSuccess(res, result);
   },
 
-  // Utilise par l'admin (sa propre page de gestion) : inclut aussi les publications masquees
   async listMine(req, res) {
     const { page = 1, limit = 30 } = req.query;
     const parishId = req.user.parishId;
@@ -235,6 +269,9 @@ return sendSuccess(res, { post });
     if (req.body.imageUrl !== undefined) updates.imageUrl = req.body.imageUrl;
     if (req.body.type !== undefined) updates.type = req.body.type;
     if (req.body.isActive !== undefined) updates.isActive = req.body.isActive;
+    if (req.body.eventCapacity !== undefined) {
+      updates.eventCapacity = (req.body.eventCapacity != null && req.body.eventCapacity !== '') ? Number(req.body.eventCapacity) : null;
+    }
     const post = await postRepo.updateById(req.params.id, req.user.parishId, updates, allowAny);
     if (!post) throw new NotFoundError('Post');
     return sendSuccess(res, { post }, 'Publication mise a jour');
@@ -278,9 +315,50 @@ async resolveReported(req, res) {
   return sendSuccess(res, { comment }, 'Signalement traite');
 },
 
+  async registerForEvent(req, res) {
+    const { nom, telephone } = req.body;
+    if (!nom || !String(nom).trim() || !telephone || !String(telephone).trim()) {
+      throw new ValidationError('Nom et telephone requis');
+    }
+    const inscription = await postRepo.createRegistration(
+      req.params.id, req.user.userId, String(nom).trim(), String(telephone).trim()
+    );
+    return sendCreated(res, { inscription }, 'Inscription confirmee');
+  },
+
+  async listEventRegistrations(req, res) {
+    const post = await Post.findById(req.params.id);
+    if (!post) throw new NotFoundError('Post');
+    if (req.user.role !== 'super_admin' && String(post.parishId) !== String(req.user.parishId)) {
+      throw new AuthorizationError('Not your parish event');
+    }
+    const inscriptions = await postRepo.listRegistrations(req.params.id);
+    const placesRestantes = post.eventCapacity != null ? Math.max(0, post.eventCapacity - inscriptions.length) : null;
+    return sendSuccess(res, {
+      inscriptions,
+      total: inscriptions.length,
+      capacite: post.eventCapacity,
+      placesRestantes,
+    });
+  },
+
+  async monInscription(req, res) {
+    const post = await Post.findById(req.params.id).lean();
+    if (!post) throw new NotFoundError('Post');
+    const [inscription, count] = await Promise.all([
+      postRepo.findRegistration(req.params.id, req.user.userId),
+      postRepo.countRegistrations(req.params.id),
+    ]);
+    const placesRestantes = post.eventCapacity != null ? Math.max(0, post.eventCapacity - count) : null;
+    return sendSuccess(res, {
+      inscrit: !!inscription,
+      capacite: post.eventCapacity,
+      placesRestantes,
+    });
+  },
+
 };
 
-// -- Routes ---------------------------------------------------------
 router.get('/', asyncHandler(postController.list));
 
 router.get('/mine',
@@ -355,6 +433,22 @@ router.post('/:id/comment/:commentId/resolve',
   authenticate, requireVerified,
   authorize('parish_admin', 'super_admin'),
   asyncHandler(postController.resolveReported)
+);
+
+router.post('/:id/inscription',
+  authenticate, requireVerified,
+  asyncHandler(postController.registerForEvent)
+);
+
+router.get('/:id/inscriptions',
+  authenticate, requireVerified,
+  authorize('parish_admin', 'super_admin'),
+  asyncHandler(postController.listEventRegistrations)
+);
+
+router.get('/:id/inscriptions/moi',
+  authenticate, requireVerified,
+  asyncHandler(postController.monInscription)
 );
 
 module.exports = { router, postRepo };
