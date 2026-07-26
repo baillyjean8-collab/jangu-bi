@@ -16,10 +16,12 @@ const FILTRES = [
   { id: 'nb',         label: 'N&B',        css: 'grayscale(1)' },
   { id: 'contraste',  label: 'Contraste',  css: 'contrast(1.4)' },
 ];
-const AUTO_ADJUST_CSS = 'contrast(1.12) saturate(1.18) brightness(1.04)';
 
+// offsetX/offsetY sont exprimes en FRACTION du cadre (ex: 0.2 = 20% de la largeur),
+// pas en pixels bruts. Ainsi le recadrage se reproduit a l'identique sur l'image
+// finale envoyee au serveur, quelle que soit la taille de l'ecran du telephone.
 function limiterOffset(x, y, zoom) {
-  const marge = 90 * Math.max(zoom - 1, 0);
+  const marge = Math.max(zoom - 1, 0) / 2;
   const clampVal = function(v) { return Math.max(-marge, Math.min(marge, v)); };
   return { x: clampVal(x), y: clampVal(y) };
 }
@@ -28,6 +30,7 @@ export default function CreateStoryPage() {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
   const dragRef = useRef({ actif: false, startX: 0, startY: 0, baseX: 0, baseY: 0 });
+  const marcoRef = useRef(null);
 
   const [mode, setMode] = useState('texte'); // 'texte' | 'media'
   const [texte, setTexte] = useState('');
@@ -36,13 +39,24 @@ export default function CreateStoryPage() {
   const [mediaFile, setMediaFile] = useState(null); // { file, previewUrl, kind }
   const [caption, setCaption] = useState('');
   const [filtre, setFiltre] = useState('normal');
-  const [autoAjust, setAutoAjust] = useState(false);
+  const [brightness, setBrightness] = useState(100);
+  const [contrast, setContrast] = useState(100);
+  const [saturation, setSaturation] = useState(100);
   const [zoom, setZoom] = useState(1);
   const [offsetX, setOffsetX] = useState(0);
   const [offsetY, setOffsetY] = useState(0);
 
   const [publishing, setPublishing] = useState(false);
   const [erreur, setErreur] = useState('');
+
+  function pxDuCadre() {
+    const el = marcoRef.current;
+    if (el) {
+      const r = el.getBoundingClientRect();
+      return { w: r.width, h: r.height };
+    }
+    return { w: 300, h: (300 * 16) / 9 };
+  }
 
   function ouvrirSelecteur() {
     if (fileInputRef.current) fileInputRef.current.click();
@@ -56,7 +70,9 @@ export default function CreateStoryPage() {
     setMediaFile({ file: file, previewUrl: previewUrl, kind: kind });
     setMode('media');
     setFiltre('normal');
-    setAutoAjust(false);
+    setBrightness(100);
+    setContrast(100);
+    setSaturation(100);
     setZoom(1);
     setOffsetX(0);
     setOffsetY(0);
@@ -68,12 +84,26 @@ export default function CreateStoryPage() {
     setMode('texte');
   }
 
-  function styleFiltreActif() {
+  function calculerFiltreCss() {
     const parts = [];
-    if (autoAjust) parts.push(AUTO_ADJUST_CSS);
     const f = FILTRES.find(function(x) { return x.id === filtre; });
     if (f && f.css !== 'none') parts.push(f.css);
+    if (brightness !== 100 || contrast !== 100 || saturation !== 100) {
+      parts.push('brightness(' + brightness + '%) contrast(' + contrast + '%) saturate(' + saturation + '%)');
+    }
     return parts.length ? parts.join(' ') : 'none';
+  }
+
+  function appliquerAjustementAuto() {
+    setBrightness(104);
+    setContrast(112);
+    setSaturation(118);
+  }
+
+  function reinitialiserAjustements() {
+    setBrightness(100);
+    setContrast(100);
+    setSaturation(100);
   }
 
   function demarrerGlisser(e) {
@@ -86,10 +116,11 @@ export default function CreateStoryPage() {
   }
   function bougerGlisser(e) {
     if (!dragRef.current.actif) return;
+    const cadre = pxDuCadre();
     const point = e.touches ? e.touches[0] : e;
-    const dx = point.clientX - dragRef.current.startX;
-    const dy = point.clientY - dragRef.current.startY;
-    const limite = limiterOffset(dragRef.current.baseX + dx, dragRef.current.baseY + dy, zoom);
+    const dxFrac = (point.clientX - dragRef.current.startX) / cadre.w;
+    const dyFrac = (point.clientY - dragRef.current.startY) / cadre.h;
+    const limite = limiterOffset(dragRef.current.baseX + dxFrac, dragRef.current.baseY + dyFrac, zoom);
     setOffsetX(limite.x);
     setOffsetY(limite.y);
   }
@@ -101,6 +132,48 @@ export default function CreateStoryPage() {
     setZoom(valeur);
     setOffsetX(limite.x);
     setOffsetY(limite.y);
+  }
+
+  // Grave reellement le filtre + le recadrage/zoom dans l'image avant l'envoi,
+  // pour que la story vue par les fideles corresponde exactement a ce qui a ete
+  // compose a l'ecran. Le cadre story est toujours 9:16, rempli en entier (cover).
+  // Pour les videos, ceci n'est pas applicable cote client (traitement serveur
+  // necessaire) : le filtre choisi reste donc un apercu uniquement pour les videos.
+  function graverImageStory(file, reglages) {
+    return new Promise(function(resolve, reject) {
+      const img = new Image();
+      const objectUrl = URL.createObjectURL(file);
+      img.onload = function() {
+        const outputW = 1080, outputH = 1920;
+        const naturalW = img.naturalWidth, naturalH = img.naturalHeight;
+        const canvas = document.createElement('canvas');
+        canvas.width = outputW;
+        canvas.height = outputH;
+        const ctx = canvas.getContext('2d');
+        ctx.filter = reglages.filtreCss;
+
+        const echelleCouverture = Math.max(outputW / naturalW, outputH / naturalH);
+        const echelle = echelleCouverture * Math.max(reglages.zoom, 1);
+        const drawW = naturalW * echelle;
+        const drawH = naturalH * echelle;
+        const baseX = (outputW - drawW) / 2;
+        const baseY = (outputH - drawH) / 2;
+        const panX = (reglages.offsetX || 0) * outputW;
+        const panY = (reglages.offsetY || 0) * outputH;
+        ctx.drawImage(img, baseX + panX, baseY + panY, drawW, drawH);
+
+        URL.revokeObjectURL(objectUrl);
+        canvas.toBlob(function(blob) {
+          if (!blob) { reject(new Error("Impossible de traiter l'image.")); return; }
+          resolve(new File([blob], 'story.jpg', { type: 'image/jpeg' }));
+        }, 'image/jpeg', 0.88);
+      };
+      img.onerror = function() {
+        URL.revokeObjectURL(objectUrl);
+        reject(new Error("Impossible de charger l'image."));
+      };
+      img.src = objectUrl;
+    });
   }
 
   async function publier() {
@@ -117,14 +190,15 @@ export default function CreateStoryPage() {
     try {
       if (mode === 'texte') {
         await storiesApi.create({ type: 'texte', caption: texte.trim(), bgColor: bgColor });
-      } else {
-        const url = await uploadToCloudinary(mediaFile.file, mediaFile.kind === 'video' ? 'video' : 'image');
-        await storiesApi.create({
-          type: mediaFile.kind,
-          imageUrl: mediaFile.kind === 'image' ? url : undefined,
-          videoUrl: mediaFile.kind === 'video' ? url : undefined,
-          caption: caption.trim(),
+      } else if (mediaFile.kind === 'image') {
+        const fichierGrave = await graverImageStory(mediaFile.file, {
+          filtreCss: calculerFiltreCss(), zoom: zoom, offsetX: offsetX, offsetY: offsetY,
         });
+        const url = await uploadToCloudinary(fichierGrave, 'image');
+        await storiesApi.create({ type: 'image', imageUrl: url, caption: caption.trim() });
+      } else {
+        const url = await uploadToCloudinary(mediaFile.file, 'video');
+        await storiesApi.create({ type: 'video', videoUrl: url, caption: caption.trim() });
       }
       navigate(-1);
     } catch (e) {
@@ -134,11 +208,12 @@ export default function CreateStoryPage() {
     }
   }
 
+  const cadreTaille = pxDuCadre();
   const mediaStyle = {
     position: 'absolute', top: '50%', left: '50%', minWidth: '100%', minHeight: '100%',
     width: 'auto', height: 'auto', objectFit: 'cover',
-    transform: 'translate(-50%, -50%) translate(' + offsetX + 'px, ' + offsetY + 'px) scale(' + zoom + ')',
-    filter: styleFiltreActif(),
+    transform: 'translate(-50%, -50%) translate(' + (offsetX * cadreTaille.w) + 'px, ' + (offsetY * cadreTaille.h) + 'px) scale(' + zoom + ')',
+    filter: calculerFiltreCss(),
     touchAction: 'none',
   };
 
@@ -178,6 +253,7 @@ export default function CreateStoryPage() {
       {/* Cadre story 9:16, esprit Jangu Bi */}
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 14px 10px', minHeight: 0 }}>
         <div
+          ref={marcoRef}
           onMouseDown={mode === 'media' ? demarrerGlisser : undefined}
           onMouseMove={mode === 'media' ? bougerGlisser : undefined}
           onMouseUp={mode === 'media' ? arreterGlisser : undefined}
@@ -244,16 +320,23 @@ export default function CreateStoryPage() {
                 >{f.label}</div>
               );
             })}
-            <div
-              onClick={function() { setAutoAjust(!autoAjust); }}
-              style={{
-                flexShrink: 0, padding: '6px 14px', borderRadius: 16, fontSize: 11, fontWeight: 700, cursor: 'pointer',
-                fontFamily: 'Georgia,serif',
-                background: autoAjust ? OR : 'rgba(255,255,255,0.1)',
-                color: autoAjust ? VERT : IVOIRE,
-                border: '1px solid ' + (autoAjust ? OR : 'rgba(200,168,75,0.3)'),
-              }}
-            >Auto</div>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 14, marginBottom: 6 }}>
+            <span onClick={appliquerAjustementAuto} style={{ fontSize: 10.5, fontWeight: 700, color: OR, cursor: 'pointer' }}>Auto</span>
+            <span onClick={reinitialiserAjustements} style={{ fontSize: 10.5, fontWeight: 700, color: 'rgba(245,239,228,0.5)', cursor: 'pointer' }}>Reinitialiser</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+            <span style={{ fontSize: 9.5, color: IVOIRE, width: 62 }}>Luminosite</span>
+            <input type="range" min="50" max="150" value={brightness} onChange={function(e) { setBrightness(+e.target.value); }} style={{ flex: 1, accentColor: OR }} />
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+            <span style={{ fontSize: 9.5, color: IVOIRE, width: 62 }}>Contraste</span>
+            <input type="range" min="50" max="150" value={contrast} onChange={function(e) { setContrast(+e.target.value); }} style={{ flex: 1, accentColor: OR }} />
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+            <span style={{ fontSize: 9.5, color: IVOIRE, width: 62 }}>Saturation</span>
+            <input type="range" min="0" max="200" value={saturation} onChange={function(e) { setSaturation(+e.target.value); }} style={{ flex: 1, accentColor: OR }} />
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
