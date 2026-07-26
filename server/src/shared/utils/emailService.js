@@ -16,10 +16,12 @@ async function envoyerEmail({ destinataire, sujet, texte, html }) {
         htmlContent: html || texte,
       }),
     });
-    if (!reponse.ok) {
+        if (!reponse.ok) {
       const erreurTexte = await reponse.text();
       console.log('Erreur envoi email Brevo:', erreurTexte);
-      return false;
+      const erreurAvecDetail = new Error(erreurTexte);
+      erreurAvecDetail.detailBrevo = erreurTexte;
+      throw erreurAvecDetail;
     }
     return true;
   } catch (err) {
