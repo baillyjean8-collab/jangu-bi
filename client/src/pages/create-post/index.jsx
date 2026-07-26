@@ -47,6 +47,8 @@ export default function CreatePostPage() {
   const [publishing, setPublishing] = useState(false);
   const [erreur, setErreur]       = useState('');
   const [aussiEnStory, setAussiEnStory] = useState(false);
+  const [placesLimitees, setPlacesLimitees] = useState(false);
+  const [capaciteMax, setCapaciteMax] = useState(50);
 
   const [mediaItems, setMediaItems] = useState([]);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -690,7 +692,33 @@ export default function CreatePostPage() {
                 </div>
               );
             })}
-          </div>
+                    </div>
+
+          {typePub === 'EVENEMENT' && (
+            <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.06)', borderRadius: 12, padding: '12px 14px', marginBottom: 18 }}>
+              <div onClick={function() { setPlacesLimitees(function(v) { return !v; }); }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
+                <div>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: VERT }}>Limiter le nombre de places</div>
+                  <div style={{ fontSize: 10, color: '#9A8E7E' }}>Laisse desactive si illimite</div>
+                </div>
+                <div style={{ width: 42, height: 24, borderRadius: 20, background: placesLimitees ? OR : '#e5e0d5', position: 'relative', transition: 'background .2s', flexShrink: 0 }}>
+                  <div style={{ width: 18, height: 18, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3, left: placesLimitees ? 21 : 3, transition: 'left .2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
+                </div>
+              </div>
+              {placesLimitees && (
+                <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(0,0,0,0.06)' }}>
+                  <label style={{ fontSize: 10.5, color: '#9A8E7E', display: 'block', marginBottom: 4 }}>Nombre maximum de places</label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={capaciteMax}
+                    onChange={function(e) { setCapaciteMax(Math.max(1, +e.target.value || 1)); }}
+                    style={{ width: '100%', border: '1.5px solid rgba(200,168,75,0.3)', borderRadius: 10, padding: '9px 12px', fontSize: 13, boxSizing: 'border-box', fontFamily: 'Georgia,serif', color: VERT }}
+                  />
+                </div>
+              )}
+            </div>
+          )}
 
           <textarea
             value={texte}
