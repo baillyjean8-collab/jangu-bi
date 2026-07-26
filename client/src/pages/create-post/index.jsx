@@ -36,7 +36,6 @@ const CADRES = [
   { id: 'paysage',  label: '16:9',     ratio: 1.7778 },
 ];
 
-const AUTO_ADJUST_CSS = 'contrast(1.12) saturate(1.18) brightness(1.04)';
 
 export default function CreatePostPage() {
   const navigate = useNavigate();
@@ -53,11 +52,9 @@ export default function CreatePostPage() {
 
   const [mediaItems, setMediaItems] = useState([]);
   const [activeIndex, setActiveIndex] = useState(0);
-  const [showFiltres, setShowFiltres] = useState(false);
-  const [showCadres, setShowCadres] = useState(false);
+  const [activePanel, setActivePanel] = useState(null); // 'filtres' | 'ajuster' | 'recadrer' | null
   const [showTexteInput, setShowTexteInput] = useState(false);
   const [texteTemp, setTexteTemp] = useState('');
-  const [effetsMessage, setEffetsMessage] = useState('');
   const [editionOuverte, setEditionOuverte] = useState(false);
 
   const initiales = ((user?.firstName?.[0] || '') + (user?.lastName?.[0] || '')).toUpperCase() || 'MD';
@@ -69,6 +66,18 @@ export default function CreatePostPage() {
     const cadre = CADRES.find(function(c) { return c.id === m.cadre; });
     if (cadre && cadre.ratio !== null) return cadre.ratio;
     return m.ratio || 1;
+  }
+
+  // Une photo remplit tout le cadre (cover) des qu'on zoome dessus ou qu'on choisit
+  // un format autre que "Original". Sinon elle reste entiere, sans etre coupee (contain).
+  function doitRemplirLeCadre(m) {
+    if (!m) return false;
+    const cadreFixe = ratioEffectif(m) !== (m.ratio || 1);
+    return m.zoom > 1 || cadreFixe;
+  }
+
+  function objectFitPour(m) {
+    return doitRemplirLeCadre(m) ? 'cover' : 'contain';
   }
 
   // offsetX/offsetY sont exprimes en FRACTION du cadre (ex: 0.2 = 20% de la largeur),
@@ -125,9 +134,10 @@ export default function CreatePostPage() {
         url: r.url,
         kind: r.kind,
         filtre: 'normal',
-        auto: false,
+        brightness: 100,
+        contrast: 100,
+        saturation: 100,
         local: r.local,
-        mode: 'contain',
         zoom: 1,
         offsetX: 0,
         offsetY: 0,
@@ -153,21 +163,35 @@ export default function CreatePostPage() {
     if (mediaItems.length <= 1) setEditionOuverte(false);
   }
 
-  function toggleAutoAjust() {
+  function changerBrightness(valeur) {
     setMediaItems(function(prev) {
-      return prev.map(function(m, i) {
-        if (i !== activeIndex) return m;
-        return { ...m, auto: !m.auto };
-      });
+      return prev.map(function(m, i) { return i !== activeIndex ? m : { ...m, brightness: valeur }; });
     });
   }
 
-  function toggleRognage() {
+  function changerContrast(valeur) {
     setMediaItems(function(prev) {
-      return prev.map(function(m, i) {
-        if (i !== activeIndex) return m;
-        return { ...m, mode: m.mode === 'cover' ? 'contain' : 'cover' };
-      });
+      return prev.map(function(m, i) { return i !== activeIndex ? m : { ...m, contrast: valeur }; });
+    });
+  }
+
+  function changerSaturation(valeur) {
+    setMediaItems(function(prev) {
+      return prev.map(function(m, i) { return i !== activeIndex ? m : { ...m, saturation: valeur }; });
+    });
+  }
+
+  // Raccourci "Auto" : applique en un seul geste un reglage equilibre
+  // (equivalent a l'ancien bouton "ajustement automatique").
+  function appliquerAjustementAuto() {
+    setMediaItems(function(prev) {
+      return prev.map(function(m, i) { return i !== activeIndex ? m : { ...m, brightness: 104, contrast: 112, saturation: 118 }; });
+    });
+  }
+
+  function reinitialiserAjustements() {
+    setMediaItems(function(prev) {
+      return prev.map(function(m, i) { return i !== activeIndex ? m : { ...m, brightness: 100, contrast: 100, saturation: 100 }; });
     });
   }
 
@@ -178,7 +202,6 @@ export default function CreatePostPage() {
         return { ...m, cadre: cadreId, zoom: 1, offsetX: 0, offsetY: 0 };
       });
     });
-    setShowCadres(false);
   }
 
   function validerTexte() {
@@ -193,8 +216,7 @@ export default function CreatePostPage() {
 
   function demarrerGlisser(e) {
     if (!activeMedia) return;
-    const cadreFixe = ratioEffectif(activeMedia) !== (activeMedia.ratio || 1);
-    if (activeMedia.mode !== 'cover' && !cadreFixe) return;
+    if (!doitRemplirLeCadre(activeMedia)) return;
     const point = e.touches ? e.touches[0] : e;
     dragRef.current = { actif: true, startX: point.clientX, startY: point.clientY, baseX: activeMedia.offsetX, baseY: activeMedia.offsetY };
   }
@@ -242,9 +264,14 @@ export default function CreatePostPage() {
   function calculerFiltreCss(m) {
     if (!m) return 'none';
     const parts = [];
-    if (m.auto) parts.push(AUTO_ADJUST_CSS);
     const f = FILTRES.find(function(x) { return x.id === m.filtre; });
     if (f && f.css !== 'none') parts.push(f.css);
+    const b = m.brightness != null ? m.brightness : 100;
+    const c = m.contrast != null ? m.contrast : 100;
+    const s = m.saturation != null ? m.saturation : 100;
+    if (b !== 100 || c !== 100 || s !== 100) {
+      parts.push('brightness(' + b + '%) contrast(' + c + '%) saturate(' + s + '%)');
+    }
     return parts.length ? parts.join(' ') : 'none';
   }
 
@@ -262,8 +289,7 @@ export default function CreatePostPage() {
       const img = new Image();
       img.onload = function() {
         const naturalW = img.naturalWidth, naturalH = img.naturalHeight;
-        const cadreFixe = ratioEffectif(m) !== (m.ratio || (naturalW / naturalH));
-        const doitRogner = m.mode === 'cover' || cadreFixe;
+        const doitRogner = doitRemplirLeCadre(m);
 
         let outputW, outputH;
         if (doitRogner) {
@@ -387,8 +413,7 @@ export default function CreatePostPage() {
   }
 
   function transformActif(m) {
-    const cadreFixe = ratioEffectif(m) !== (m.ratio || 1);
-    if (m.mode === 'cover' || cadreFixe) {
+    if (doitRemplirLeCadre(m)) {
       return 'translate(' + ((m.offsetX || 0) * 100) + '%,' + ((m.offsetY || 0) * 100) + '%) scale(' + Math.max(m.zoom, 1) + ')';
     }
     return 'none';
@@ -396,17 +421,14 @@ export default function CreatePostPage() {
 
   function rendreMedia() {
     if (!activeMedia) return null;
+    const fit = objectFitPour(activeMedia);
     return (
       <>
-{activeMedia.kind === 'video' ? (
-
-<video src={activeMedia.url} style={{ width: '100%', height: '100%', objectFit: activeMedia.mode === 'cover' ? 'cover' : 'contain', background: '#000', transform: transformActif(activeMedia), filter: styleFiltreActif() }} muted loop autoPlay playsInline />
-
-) : (
-
-<img src={activeMedia.url} alt="media" style={{ width: '100%', height: '100%', objectFit: activeMedia.mode === 'cover' ? 'cover' : 'contain', background: '#000', transform: transformActif(activeMedia), filter: styleFiltreActif() }} />
-
-)}
+        {activeMedia.kind === 'video' ? (
+          <video src={activeMedia.url} style={{ width: '100%', height: '100%', objectFit: fit, background: '#000', transform: transformActif(activeMedia), filter: styleFiltreActif() }} muted loop autoPlay playsInline />
+        ) : (
+          <img src={activeMedia.url} alt="media" style={{ width: '100%', height: '100%', objectFit: fit, background: '#000', transform: transformActif(activeMedia), filter: styleFiltreActif() }} />
+        )}
 
         {activeMedia.texteAjoute && (
           <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', color: '#fff', fontWeight: 700, fontSize: 22, textAlign: 'center', textShadow: '0 2px 8px rgba(0,0,0,0.6)', padding: '0 20px', zIndex: 2, pointerEvents: 'none', fontFamily: 'Georgia,serif' }}>
@@ -432,59 +454,38 @@ export default function CreatePostPage() {
           +
         </button>
 
-        <div style={{ position: 'absolute', top: 12, right: 12, display: 'flex', flexDirection: 'column', gap: 10, zIndex: 3 }}>
-          <button onClick={function() { setShowCadres(function(v) { return !v; }); setShowFiltres(false); }} style={{ width: 34, height: 34, borderRadius: '50%', border: 'none', cursor: 'pointer', background: showCadres ? OR : 'rgba(0,0,0,0.45)', color: showCadres ? VERT : '#fff', fontSize: 14 }} title="Format">
-            <i className="ti ti-aspect-ratio" />
-          </button>
-          <button onClick={toggleRognage} style={{ width: 34, height: 34, borderRadius: '50%', border: 'none', cursor: 'pointer', background: activeMedia.mode === 'cover' ? OR : 'rgba(0,0,0,0.45)', color: activeMedia.mode === 'cover' ? VERT : '#fff', fontSize: 14 }} title="Rogner">
-            <i className="ti ti-crop" />
-          </button>
-          <button onClick={toggleAutoAjust} style={{ width: 34, height: 34, borderRadius: '50%', border: 'none', cursor: 'pointer', background: activeMedia.auto ? OR : 'rgba(0,0,0,0.45)', color: activeMedia.auto ? VERT : '#fff', fontSize: 14 }} title="Ajustement automatique">
-            <i className="ti ti-sparkles" />
-          </button>
-          <button onClick={function() { setShowFiltres(function(v) { return !v; }); setShowCadres(false); }} style={{ width: 34, height: 34, borderRadius: '50%', border: 'none', cursor: 'pointer', background: showFiltres ? OR : 'rgba(0,0,0,0.45)', color: showFiltres ? VERT : '#fff', fontSize: 14 }} title="Filtres">
-            <i className="ti ti-palette" />
-          </button>
-          <button onClick={function() { setTexteTemp(activeMedia.texteAjoute || ''); setShowTexteInput(true); }} style={{ width: 34, height: 34, borderRadius: '50%', border: 'none', cursor: 'pointer', background: activeMedia.texteAjoute ? OR : 'rgba(0,0,0,0.45)', color: activeMedia.texteAjoute ? VERT : '#fff', fontSize: 13, fontWeight: 700 }} title="Ajouter du texte">
-            Aa
-          </button>
-          <button onClick={function() { setEffetsMessage('Effets avances bientot disponibles.'); setTimeout(function() { setEffetsMessage(''); }, 2500); }} style={{ width: 34, height: 34, borderRadius: '50%', border: 'none', cursor: 'pointer', background: 'rgba(0,0,0,0.45)', color: '#fff', fontSize: 14 }} title="Effets">
-            <i className="ti ti-sun" />
-          </button>
+        {/* Barre d'outils : 4 boutons avec libelle visible, comme sur la maquette validee */}
+        <div style={{ position: 'absolute', top: 56, right: 12, display: 'flex', flexDirection: 'column', gap: 16, zIndex: 3 }}>
+          <div onClick={function() { setActivePanel(activePanel === 'filtres' ? null : 'filtres'); }} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, cursor: 'pointer' }}>
+            <div style={{ width: 38, height: 38, borderRadius: '50%', border: 'none', background: activePanel === 'filtres' ? OR : 'rgba(0,0,0,0.45)', color: activePanel === 'filtres' ? VERT : '#fff', fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <i className="ti ti-palette" />
+            </div>
+            <span style={{ fontSize: 9, color: '#fff', fontWeight: 700 }}>Filtres</span>
+          </div>
+
+          <div onClick={function() { setActivePanel(activePanel === 'ajuster' ? null : 'ajuster'); }} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, cursor: 'pointer' }}>
+            <div style={{ width: 38, height: 38, borderRadius: '50%', border: 'none', background: activePanel === 'ajuster' ? OR : 'rgba(0,0,0,0.45)', color: activePanel === 'ajuster' ? VERT : '#fff', fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <i className="ti ti-sun" />
+            </div>
+            <span style={{ fontSize: 9, color: '#fff', fontWeight: 700 }}>Ajuster</span>
+          </div>
+
+          <div onClick={function() { setTexteTemp(activeMedia.texteAjoute || ''); setShowTexteInput(true); }} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, cursor: 'pointer' }}>
+            <div style={{ width: 38, height: 38, borderRadius: '50%', border: 'none', background: activeMedia.texteAjoute ? OR : 'rgba(0,0,0,0.45)', color: activeMedia.texteAjoute ? VERT : '#fff', fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              Aa
+            </div>
+            <span style={{ fontSize: 9, color: '#fff', fontWeight: 700 }}>Texte</span>
+          </div>
+
+          <div onClick={function() { setActivePanel(activePanel === 'recadrer' ? null : 'recadrer'); }} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, cursor: 'pointer' }}>
+            <div style={{ width: 38, height: 38, borderRadius: '50%', border: 'none', background: activePanel === 'recadrer' ? OR : 'rgba(0,0,0,0.45)', color: activePanel === 'recadrer' ? VERT : '#fff', fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <i className="ti ti-crop" />
+            </div>
+            <span style={{ fontSize: 9, color: '#fff', fontWeight: 700 }}>Cadrer</span>
+          </div>
         </div>
 
-        {(activeMedia.mode === 'cover' || ratioEffectif(activeMedia) !== (activeMedia.ratio || 1)) && (
-          <div style={{ position: 'absolute', bottom: showFiltres || showCadres ? 74 : 14, left: 14, right: 70, zIndex: 3, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <i className="ti ti-zoom-out" style={{ color: '#fff', fontSize: 13 }} />
-            <input type="range" min="1" max="2.5" step="0.05" value={activeMedia.zoom} onChange={function(e) { changerZoom(parseFloat(e.target.value)); }} style={{ flex: 1 }} />
-            <i className="ti ti-zoom-in" style={{ color: '#fff', fontSize: 13 }} />
-          </div>
-        )}
-
-        {effetsMessage && (
-          <div style={{ position: 'absolute', bottom: (showFiltres || showCadres) ? 74 : 12, left: 12, right: 12, background: 'rgba(0,0,0,0.7)', color: '#fff', fontSize: 10, padding: '6px 10px', borderRadius: 8, textAlign: 'center', zIndex: 4 }}>
-            {effetsMessage}
-          </div>
-        )}
-
-        {showCadres && (
-          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.6), transparent)', padding: '26px 10px 10px', display: 'flex', gap: 8, overflowX: 'auto', zIndex: 3 }}>
-            {CADRES.map(function(c) {
-              const actif = (activeMedia.cadre || 'portrait') === c.id;
-              const r = c.ratio || (activeMedia.ratio || 1);
-              const iconH = 22;
-              const iconW = Math.max(12, Math.min(30, iconH * r));
-              return (
-                <div key={c.id} onClick={function() { choisirCadre(c.id); }} style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, padding: '6px 10px', borderRadius: 12, background: actif ? OR : 'rgba(255,255,255,0.12)', cursor: 'pointer' }}>
-                  <div style={{ width: iconW, height: iconH, border: '2px solid ' + (actif ? VERT : '#fff'), borderRadius: 2 }} />
-                  <span style={{ fontSize: 9, fontWeight: 700, color: actif ? VERT : '#fff' }}>{c.label}</span>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {showFiltres && (
+        {activePanel === 'filtres' && (
           <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.6), transparent)', padding: '26px 10px 10px', display: 'flex', gap: 8, overflowX: 'auto', zIndex: 3 }}>
             {FILTRES.map(function(f) {
               const actif = activeMedia.filtre === f.id;
@@ -495,6 +496,51 @@ export default function CreatePostPage() {
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {activePanel === 'ajuster' && (
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.75), transparent)', padding: '30px 16px 14px', zIndex: 3 }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 14, marginBottom: 10 }}>
+              <span onClick={appliquerAjustementAuto} style={{ fontSize: 11, fontWeight: 700, color: OR, cursor: 'pointer' }}>Auto</span>
+              <span onClick={reinitialiserAjustements} style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.6)', cursor: 'pointer' }}>Reinitialiser</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+              <span style={{ fontSize: 10, color: '#fff', width: 72 }}>Luminosite</span>
+              <input type="range" min="50" max="150" value={activeMedia.brightness} onChange={function(e) { changerBrightness(+e.target.value); }} style={{ flex: 1 }} />
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+              <span style={{ fontSize: 10, color: '#fff', width: 72 }}>Contraste</span>
+              <input type="range" min="50" max="150" value={activeMedia.contrast} onChange={function(e) { changerContrast(+e.target.value); }} style={{ flex: 1 }} />
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ fontSize: 10, color: '#fff', width: 72 }}>Saturation</span>
+              <input type="range" min="0" max="200" value={activeMedia.saturation} onChange={function(e) { changerSaturation(+e.target.value); }} style={{ flex: 1 }} />
+            </div>
+          </div>
+        )}
+
+        {activePanel === 'recadrer' && (
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.75), transparent)', padding: '26px 10px 14px', zIndex: 3 }}>
+            <div style={{ display: 'flex', gap: 8, overflowX: 'auto', marginBottom: 14 }}>
+              {CADRES.map(function(c) {
+                const actif = (activeMedia.cadre || 'original') === c.id;
+                const r = c.ratio || (activeMedia.ratio || 1);
+                const iconH = 22;
+                const iconW = Math.max(12, Math.min(30, iconH * r));
+                return (
+                  <div key={c.id} onClick={function() { choisirCadre(c.id); }} style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, padding: '6px 10px', borderRadius: 12, background: actif ? OR : 'rgba(255,255,255,0.12)', cursor: 'pointer' }}>
+                    <div style={{ width: iconW, height: iconH, border: '2px solid ' + (actif ? VERT : '#fff'), borderRadius: 2 }} />
+                    <span style={{ fontSize: 9, fontWeight: 700, color: actif ? VERT : '#fff' }}>{c.label}</span>
+                  </div>
+                );
+              })}
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <i className="ti ti-zoom-out" style={{ color: '#fff', fontSize: 13 }} />
+              <input type="range" min="1" max="2.5" step="0.05" value={activeMedia.zoom} onChange={function(e) { changerZoom(parseFloat(e.target.value)); }} style={{ flex: 1 }} />
+              <i className="ti ti-zoom-in" style={{ color: '#fff', fontSize: 13 }} />
+            </div>
           </div>
         )}
       </>
@@ -567,9 +613,9 @@ export default function CreatePostPage() {
               style={{ position: 'relative', borderRadius: 14, overflow: 'hidden', marginBottom: 12, background: '#0C0A06', aspectRatio: ratioEffectif(activeMedia) + ' / 1', cursor: 'pointer' }}
             >
               {activeMedia.kind === 'video' ? (
-                <video src={activeMedia.url} onLoadedMetadata={function(e) { enregistrerRatio(e.target.videoWidth, e.target.videoHeight); }} style={{ width: '100%', height: '100%', objectFit: activeMedia.mode === 'cover' ? 'cover' : 'contain', background: '#000', transform: transformActif(activeMedia), filter: styleFiltreActif() }} controls playsInline />
+                <video src={activeMedia.url} onLoadedMetadata={function(e) { enregistrerRatio(e.target.videoWidth, e.target.videoHeight); }} style={{ width: '100%', height: '100%', objectFit: objectFitPour(activeMedia), background: '#000', transform: transformActif(activeMedia), filter: styleFiltreActif() }} controls playsInline />
               ) : (
-                <img src={activeMedia.url} alt="media" draggable="false" onLoad={function(e) { enregistrerRatio(e.target.naturalWidth, e.target.naturalHeight); }} style={{ width: '100%', height: '100%', objectFit: activeMedia.mode === 'cover' ? 'cover' : 'contain', background: '#000', transform: transformActif(activeMedia), filter: styleFiltreActif(), pointerEvents: 'none' }} onError={function(e) { e.target.style.opacity = 0.2; }} />
+                <img src={activeMedia.url} alt="media" draggable="false" onLoad={function(e) { enregistrerRatio(e.target.naturalWidth, e.target.naturalHeight); }} style={{ width: '100%', height: '100%', objectFit: objectFitPour(activeMedia), background: '#000', transform: transformActif(activeMedia), filter: styleFiltreActif(), pointerEvents: 'none' }} onError={function(e) { e.target.style.opacity = 0.2; }} />
               )}
               {activeMedia.texteAjoute && (
                 <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', color: '#fff', fontWeight: 700, fontSize: 16, textAlign: 'center', textShadow: '0 2px 6px rgba(0,0,0,0.6)', padding: '0 14px', fontFamily: 'Georgia,serif' }}>
@@ -627,7 +673,7 @@ export default function CreatePostPage() {
             onTouchStart={demarrerGlisser} onTouchMove={bougerGlisser} onTouchEnd={arreterGlisser}
             style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000', padding: 12, boxSizing: 'border-box' }}
           >
-            <div style={{ position: 'relative', width: '100%', maxHeight: '100%', aspectRatio: ratioEffectif(activeMedia) + ' / 1', overflow: 'hidden', borderRadius: 4, cursor: activeMedia.mode === 'cover' ? 'grab' : 'default' }}>
+            <div style={{ position: 'relative', width: '100%', maxHeight: '100%', aspectRatio: ratioEffectif(activeMedia) + ' / 1', overflow: 'hidden', borderRadius: 4, cursor: doitRemplirLeCadre(activeMedia) ? 'grab' : 'default' }}>
               {rendreMedia()}
             </div>
           </div>
