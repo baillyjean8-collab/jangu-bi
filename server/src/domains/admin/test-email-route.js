@@ -7,9 +7,10 @@ router.get('/:destinataire', async (req, res) => {
   const nodemailer = require('nodemailer');
   const config = require('../../config/env');
   try {
-    const transporteur = nodemailer.createTransport({
+        const transporteur = nodemailer.createTransport({
       host: config.email.host,
-      port: config.email.port,
+      port: 465,
+      secure: true,
       auth: { user: config.email.user, pass: config.email.password },
       connectionTimeout: 10000,
     });
