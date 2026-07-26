@@ -17,9 +17,6 @@ const FILTRES = [
   { id: 'contraste',  label: 'Contraste',  css: 'contrast(1.4)' },
 ];
 
-// offsetX/offsetY sont exprimes en FRACTION du cadre (ex: 0.2 = 20% de la largeur),
-// pas en pixels bruts. Ainsi le recadrage se reproduit a l'identique sur l'image
-// finale envoyee au serveur, quelle que soit la taille de l'ecran du telephone.
 function limiterOffset(x, y, zoom) {
   const marge = Math.max(zoom - 1, 0) / 2;
   const clampVal = function(v) { return Math.max(-marge, Math.min(marge, v)); };
@@ -50,12 +47,6 @@ export default function CreateStoryPage() {
   const marcoRef = useRef(null);
   const captionRef = useRef(null);
 
-  // Plusieurs diapositives (comme une vraie "story" a tiroirs) : chacune
-  // est soit un texte sur fond colore, soit une photo/video avec ses propres
-  // reglages (filtre, luminosite, zoom, legende). Publier envoie chaque
-  // diapositive comme une story separee, dans l'ordre : le fil les regroupe
-  // deja automatiquement par paroisse (voir HomePage), donc aucun changement
-  // cote serveur n'est necessaire pour ce chantier.
   const [slides, setSlides] = useState(function() { return [nouvelleSlideTexte()]; });
   const [activeSlideIndex, setActiveSlideIndex] = useState(0);
   const activeSlide = slides[activeSlideIndex];
@@ -157,10 +148,6 @@ export default function CreateStoryPage() {
     majSlideActive({ zoom: valeur, offsetX: limite.x, offsetY: limite.y });
   }
 
-  // Legende ecrite directement sur la photo (comme les publications), a la
-  // place d'un champ de saisie separe. Elle reste stockee a part (pas gravee
-  // dans les pixels) : c'est le lecteur de stories qui l'affiche en bandeau,
-  // exactement comme avant - seule la facon de la saisir change.
   function surCaptionBlur(e) {
     majSlideActive({ caption: e.target.textContent });
   }
@@ -170,11 +157,77 @@ export default function CreateStoryPage() {
     }
   }, [activeSlideIndex]);
 
-  // Grave reellement le filtre + le recadrage/zoom dans l'image avant l'envoi,
-  // pour que la story vue par les fideles corresponde exactement a ce qui a ete
-  // compose a l'ecran. Le cadre story est toujours 9:16, rempli en entier (cover).
-  // Pour les videos, ceci n'est pas applicable cote client (traitement serveur
-  // necessaire) : le filtre choisi reste donc un apercu uniquement pour les videos.
+  function clamp255(v) { return v < 0 ? 0 : v > 255 ? 255 : v; }
+
+  function appliquerBrightnessSurPixels(data, facteur) {
+    for (let i = 0; i < data.length; i += 4) {
+      data[i] = clamp255(data[i] * facteur);
+      data[i + 1] = clamp255(data[i + 1] * facteur);
+      data[i + 2] = clamp255(data[i + 2] * facteur);
+    }
+  }
+  function appliquerContrasteSurPixels(data, facteur) {
+    for (let i = 0; i < data.length; i += 4) {
+      data[i] = clamp255((data[i] - 128) * facteur + 128);
+      data[i + 1] = clamp255((data[i + 1] - 128) * facteur + 128);
+      data[i + 2] = clamp255((data[i + 2] - 128) * facteur + 128);
+    }
+  }
+  function appliquerSaturationSurPixels(data, facteur) {
+    for (let i = 0; i < data.length; i += 4) {
+      const r = data[i], g = data[i + 1], b = data[i + 2];
+      const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+      data[i] = clamp255(lum + (r - lum) * facteur);
+      data[i + 1] = clamp255(lum + (g - lum) * facteur);
+      data[i + 2] = clamp255(lum + (b - lum) * facteur);
+    }
+  }
+  function appliquerGrayscaleSurPixels(data, facteur) {
+    for (let i = 0; i < data.length; i += 4) {
+      const r = data[i], g = data[i + 1], b = data[i + 2];
+      const gris = 0.299 * r + 0.587 * g + 0.114 * b;
+      data[i] = clamp255(r + (gris - r) * facteur);
+      data[i + 1] = clamp255(g + (gris - g) * facteur);
+      data[i + 2] = clamp255(b + (gris - b) * facteur);
+    }
+  }
+  function appliquerSepiaSurPixels(data, facteur) {
+    for (let i = 0; i < data.length; i += 4) {
+      const r = data[i], g = data[i + 1], b = data[i + 2];
+      const sr = 0.393 * r + 0.769 * g + 0.189 * b;
+      const sg = 0.349 * r + 0.686 * g + 0.168 * b;
+      const sb = 0.272 * r + 0.534 * g + 0.131 * b;
+      data[i] = clamp255(r + (sr - r) * facteur);
+      data[i + 1] = clamp255(g + (sg - g) * facteur);
+      data[i + 2] = clamp255(b + (sb - b) * facteur);
+    }
+  }
+  function appliquerFiltresSurCanvas(ctx, largeur, hauteur, s) {
+    const imageData = ctx.getImageData(0, 0, largeur, hauteur);
+    const data = imageData.data;
+
+    if (s.filtre === 'vif') {
+      appliquerSaturationSurPixels(data, 1.6);
+      appliquerContrasteSurPixels(data, 1.05);
+    } else if (s.filtre === 'chaleureux') {
+      appliquerSepiaSurPixels(data, 0.35);
+      appliquerSaturationSurPixels(data, 1.2);
+    } else if (s.filtre === 'nb') {
+      appliquerGrayscaleSurPixels(data, 1);
+    } else if (s.filtre === 'contraste') {
+      appliquerContrasteSurPixels(data, 1.4);
+    }
+
+    const b = s.brightness != null ? s.brightness : 100;
+    const c = s.contrast != null ? s.contrast : 100;
+    const sat = s.saturation != null ? s.saturation : 100;
+    if (b !== 100) appliquerBrightnessSurPixels(data, b / 100);
+    if (c !== 100) appliquerContrasteSurPixels(data, c / 100);
+    if (sat !== 100) appliquerSaturationSurPixels(data, sat / 100);
+
+    ctx.putImageData(imageData, 0, 0);
+  }
+
   function graverImageStory(file, reglages) {
     return new Promise(function(resolve, reject) {
       const img = new Image();
@@ -186,7 +239,6 @@ export default function CreateStoryPage() {
         canvas.width = outputW;
         canvas.height = outputH;
         const ctx = canvas.getContext('2d');
-        ctx.filter = reglages.filtreCss;
 
         const echelleCouverture = Math.max(outputW / naturalW, outputH / naturalH);
         const echelle = echelleCouverture * Math.max(reglages.zoom, 1);
@@ -197,6 +249,8 @@ export default function CreateStoryPage() {
         const panX = (reglages.offsetX || 0) * outputW;
         const panY = (reglages.offsetY || 0) * outputH;
         ctx.drawImage(img, baseX + panX, baseY + panY, drawW, drawH);
+
+        appliquerFiltresSurCanvas(ctx, outputW, outputH, reglages);
 
         URL.revokeObjectURL(objectUrl);
         canvas.toBlob(function(blob) {
@@ -227,15 +281,14 @@ export default function CreateStoryPage() {
     setPublishing(true);
     setErreur('');
     try {
-      // Envoyees dans l'ordre, une par une : le fil les regroupe deja par
-      // paroisse et par date de creation, donc l'ordre choisi ici est respecte.
       for (let i = 0; i < slides.length; i++) {
         const s = slides[i];
         if (s.mode === 'texte') {
           await storiesApi.create({ type: 'texte', caption: s.texte.trim(), bgColor: s.bgColor });
         } else if (s.mediaFile.kind === 'image') {
           const fichierGrave = await graverImageStory(s.mediaFile.file, {
-            filtreCss: calculerFiltreCss(s), zoom: s.zoom, offsetX: s.offsetX, offsetY: s.offsetY,
+            filtre: s.filtre, brightness: s.brightness, contrast: s.contrast, saturation: s.saturation,
+            zoom: s.zoom, offsetX: s.offsetX, offsetY: s.offsetY,
           });
           const url = await uploadToCloudinary(fichierGrave, 'image');
           await storiesApi.create({ type: 'image', imageUrl: url, caption: (s.caption || '').trim() });
@@ -274,7 +327,6 @@ export default function CreateStoryPage() {
         onChange={surFichierChoisi}
       />
 
-      {/* Barre du haut */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 14px 12px' }}>
         <button onClick={() => navigate(-1)} style={{
           width: 34, height: 34, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(200,168,75,0.3)',
@@ -296,7 +348,6 @@ export default function CreateStoryPage() {
         </div>
       )}
 
-      {/* Cadre story 9:16, esprit Jangu Bi */}
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 14px 10px', minHeight: 0 }}>
         <div
           ref={marcoRef}
@@ -317,7 +368,6 @@ export default function CreateStoryPage() {
         >
           <div style={{ position: 'absolute', top: -30, right: -30, width: 120, height: 120, borderRadius: '50%', background: 'radial-gradient(circle,rgba(200,168,75,.15),transparent 70%)', pointerEvents: 'none', zIndex: 1 }} />
 
-          {/* points de progression (plusieurs diapositives) */}
           {slides.length > 1 && (
             <div style={{ position: 'absolute', top: 8, left: 8, right: 8, display: 'flex', gap: 4, zIndex: 5 }}>
               {slides.map(function(_, i) {
@@ -328,7 +378,6 @@ export default function CreateStoryPage() {
             </div>
           )}
 
-          {/* fleches gauche/droite entre diapositives */}
           {slides.length > 1 && (
             <>
               <button
@@ -344,14 +393,12 @@ export default function CreateStoryPage() {
             </>
           )}
 
-          {/* supprimer la diapositive actuelle */}
           {slides.length > 1 && (
             <button onClick={supprimerSlideActive} style={{ position: 'absolute', top: 16, left: 10, width: 26, height: 26, borderRadius: '50%', background: 'rgba(0,0,0,0.4)', border: 'none', color: '#fff', fontSize: 12, zIndex: 5 }}>
               <i className="ti ti-x" />
             </button>
           )}
 
-          {/* ajouter une nouvelle diapositive */}
           <button onClick={ajouterSlide} style={{ position: 'absolute', top: 16, right: 10, width: 26, height: 26, borderRadius: '50%', background: 'rgba(0,0,0,0.4)', border: 'none', color: '#fff', fontSize: 15, zIndex: 5 }}>
             +
           </button>
@@ -397,7 +444,6 @@ export default function CreateStoryPage() {
         </div>
       </div>
 
-      {/* Options media : filtres, ajustement, zoom */}
       {activeSlide.mode === 'media' && (
         <div style={{ padding: '0 14px' }}>
           <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 8, scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
@@ -446,7 +492,6 @@ export default function CreateStoryPage() {
         </div>
       )}
 
-      {/* Palette de couleurs (mode texte) */}
       {activeSlide.mode === 'texte' && (
         <div style={{ display: 'flex', justifyContent: 'center', gap: 10, padding: '0 14px 14px' }}>
           {COULEURS_FOND.map(function(c) {
@@ -465,7 +510,6 @@ export default function CreateStoryPage() {
         </div>
       )}
 
-      {/* Barre du bas : basculer texte / media pour la diapositive active */}
       <div style={{ display: 'flex', justifyContent: 'center', gap: 28, padding: '10px 14px 26px', borderTop: '1px solid rgba(200,168,75,0.15)' }}>
         <div onClick={retourSlideTexte} style={{
           display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, cursor: 'pointer',
