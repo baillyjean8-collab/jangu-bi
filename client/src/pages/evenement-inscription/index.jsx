@@ -33,6 +33,9 @@ export default function EvenementInscriptionPage() {
   const [loading, setLoading] = useState(true);
   const [dejaInscrit, setDejaInscrit] = useState(false);
   const [placesRestantes, setPlacesRestantes] = useState(null);
+  const [autoriserAnnulation, setAutoriserAnnulation] = useState(true);
+  const [annulation, setAnnulation] = useState(false);
+  const [annule, setAnnule] = useState(false);
   const [telephone, setTelephone] = useState('');
   const [participants, setParticipants] = useState([nouveauParticipant()]);
   const [paroisses, setParoisses] = useState([]);
@@ -73,6 +76,7 @@ export default function EvenementInscriptionPage() {
         const d = resInscription && resInscription.data ? resInscription.data : {};
         setDejaInscrit(!!d.inscrit);
         setPlacesRestantes(d.placesRestantes);
+        setAutoriserAnnulation(d.autoriserAnnulation !== false);
       } catch (e) {
         setErreur(e.message || 'Impossible de charger cet evenement.');
       } finally {
@@ -133,6 +137,20 @@ export default function EvenementInscriptionPage() {
     }
   }
 
+  async function annulerInscription() {
+    setAnnulation(true);
+    setErreur('');
+    try {
+      await postsApi.annulerInscription(postId);
+      setAnnule(true);
+      setDejaInscrit(false);
+    } catch (e) {
+      setErreur(e.message || "Impossible d'annuler l'inscription.");
+    } finally {
+      setAnnulation(false);
+    }
+  }
+
   const complet = placesRestantes === 0;
   const selectStyle = { width: '100%', border: '1.5px solid rgba(200,168,75,0.3)', borderRadius: 10, padding: '9px 12px', fontSize: 13, boxSizing: 'border-box', fontFamily: 'Georgia,serif', color: VERT, background: '#fff' };
   const inputStyle = { width: '100%', border: '1.5px solid rgba(200,168,75,0.3)', borderRadius: 10, padding: '9px 12px', fontSize: 13, boxSizing: 'border-box', fontFamily: 'Georgia,serif', color: VERT };
@@ -176,19 +194,43 @@ export default function EvenementInscriptionPage() {
                 </div>
               )}
 
-              {!success && dejaInscrit && (
-                <div style={{ textAlign: 'center', padding: '30px 16px', fontSize: 13, color: '#3a3a3a' }}>
-                  Vous etes deja inscrit(e) a cet evenement.
+              {annule && (
+                <div style={{ textAlign: 'center', padding: '30px 16px' }}>
+                  <div style={{ fontFamily: 'Georgia,serif', fontSize: 15, fontWeight: 700, color: VERT, marginBottom: 8 }}>Inscription annulee</div>
+                  <div style={{ fontSize: 13, color: '#7A6E5E', marginBottom: 20 }}>Vous pouvez vous reinscrire a tout moment si des places restent disponibles.</div>
+                  <button onClick={function() { window.location.reload(); }} style={{ padding: '10px 24px', background: VERT, color: OR, border: 'none', borderRadius: 999, fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
+                    Retour
+                  </button>
                 </div>
               )}
 
-              {!success && !dejaInscrit && complet && (
+              {!success && !annule && dejaInscrit && (
+                <div style={{ textAlign: 'center', padding: '20px 16px' }}>
+                  <div style={{ fontSize: 13, color: '#3a3a3a', marginBottom: 16 }}>
+                    Vous etes deja inscrit(e) a cet evenement.
+                  </div>
+                  {autoriserAnnulation ? (
+                    <button onClick={annulerInscription} disabled={annulation} style={{ padding: '10px 22px', background: 'none', border: '1.5px solid #b71c1c', borderRadius: 999, color: '#b71c1c', fontWeight: 700, fontSize: 12.5, cursor: annulation ? 'default' : 'pointer' }}>
+                      {annulation ? 'Annulation...' : 'Annuler mon inscription'}
+                    </button>
+                  ) : (
+                    <div style={{ fontSize: 11.5, color: '#9A8E7E', fontStyle: 'italic' }}>
+                      Cette inscription est definitive et ne peut pas etre annulee.
+                    </div>
+                  )}
+                  {erreur && (
+                    <div style={{ marginTop: 12, fontSize: 11.5, color: '#e53935' }}>{erreur}</div>
+                  )}
+                </div>
+              )}
+
+              {!success && !annule && !dejaInscrit && complet && (
                 <div style={{ textAlign: 'center', padding: '30px 16px', fontSize: 13, color: '#b71c1c' }}>
                   Il n'y a plus de places disponibles pour cet evenement.
                 </div>
               )}
 
-              {!success && !dejaInscrit && !complet && (
+              {!success && !annule && !dejaInscrit && !complet && (
                 <>
                   <label style={labelStyle}>Telephone de contact</label>
                   <input
