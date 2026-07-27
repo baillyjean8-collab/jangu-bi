@@ -1,6 +1,7 @@
 'use strict';
 
 const Joi = require('joi');
+const mongoose = require('mongoose');
 const router = require('express').Router();
 const { Post, EventRegistration } = require('../../models');
 const { authenticate, requireVerified } = require('../../middlewares/authenticate');
