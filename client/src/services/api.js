@@ -54,7 +54,14 @@ async function apiFetch(endpoint, options) {
   }
 
   const data = await res.json();
-  if (!res.ok) throw new Error(data.message || 'Erreur serveur');
+    if (!res.ok) {
+    let msg = data.message || 'Erreur serveur';
+    if (data.errors && typeof data.errors === 'object') {
+      const details = Object.values(data.errors).join(' — ');
+      if (details) msg = msg + ' : ' + details;
+    }
+    throw new Error(msg);
+  }
   return data;
 }
 
