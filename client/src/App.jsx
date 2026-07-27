@@ -24,6 +24,8 @@ import SettingsPage from './pages/settings';
 import MesDemandesPage from './pages/mes-demandes';
 import MessagesPage from './pages/messages';
 import GroupDetailPage from './pages/groupes';
+import EvenementInscriptionPage from './pages/evenement-inscription';
+import EvenementInscritsPage from './pages/evenement-inscrits';
 // Context
 import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './components/ui';
@@ -86,6 +88,8 @@ export default function App() {
             <Route path="/messages" element={<ProtectedRoute><MessagesPage /></ProtectedRoute>} />
             <Route path="/messages/:conversationId" element={<ProtectedRoute><MessagesPage /></ProtectedRoute>} />
             <Route path="/groupes/:id" element={<ProtectedRoute><GroupDetailPage /></ProtectedRoute>} />
+            <Route path="/evenement/:postId/inscription" element={<ProtectedRoute><EvenementInscriptionPage /></ProtectedRoute>} />
+            <Route path="/evenement/:postId/inscrits" element={<ProtectedRoute><EvenementInscritsPage /></ProtectedRoute>} />
           
             {/* ── Panel Admin Paroisse ── */}
             <Route path="/parish-admin/login"        element={<AdminLoginPage />} />
