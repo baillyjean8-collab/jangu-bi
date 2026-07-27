@@ -20,6 +20,7 @@ function nouveauParticipant(nomDefaut, parishIdDefaut, parishNomDefaut) {
     nom: nomDefaut || '',
     parishId: parishIdDefaut || '',
     parishNom: parishNomDefaut || '',
+    sexe: 'homme',
     trancheAge: 'adulte',
   };
 }
@@ -126,7 +127,7 @@ export default function EvenementInscriptionPage() {
       await postsApi.inscrireEvenement(postId, {
         telephone: telephone.trim(),
         participants: participants.map(function(p) {
-          return { nom: p.nom.trim(), parishId: p.parishId || null, parishNom: p.parishNom, trancheAge: p.trancheAge };
+          return { nom: p.nom.trim(), parishId: p.parishId || null, parishNom: p.parishNom, sexe: p.sexe, trancheAge: p.trancheAge };
         }),
       });
       setSuccess(true);
@@ -144,6 +145,7 @@ export default function EvenementInscriptionPage() {
       await postsApi.annulerInscription(postId);
       setAnnule(true);
       setDejaInscrit(false);
+      setTimeout(function() { navigate('/'); }, 1400);
     } catch (e) {
       setErreur(e.message || "Impossible d'annuler l'inscription.");
     } finally {
@@ -152,6 +154,9 @@ export default function EvenementInscriptionPage() {
   }
 
   const complet = placesRestantes === 0;
+  const maintenant = new Date();
+  const pasEncoreOuvert = post && post.inscriptionDebut && maintenant < new Date(post.inscriptionDebut);
+  const ferme = post && post.inscriptionFin && maintenant > new Date(post.inscriptionFin);
   const selectStyle = { width: '100%', border: '1.5px solid rgba(200,168,75,0.3)', borderRadius: 10, padding: '9px 12px', fontSize: 13, boxSizing: 'border-box', fontFamily: 'Georgia,serif', color: VERT, background: '#fff' };
   const inputStyle = { width: '100%', border: '1.5px solid rgba(200,168,75,0.3)', borderRadius: 10, padding: '9px 12px', fontSize: 13, boxSizing: 'border-box', fontFamily: 'Georgia,serif', color: VERT };
   const labelStyle = { fontSize: 10, color: '#9A8E7E', fontWeight: 700, display: 'block', marginBottom: 4 };
@@ -224,13 +229,25 @@ export default function EvenementInscriptionPage() {
                 </div>
               )}
 
-              {!success && !annule && !dejaInscrit && complet && (
+              {!success && !annule && !dejaInscrit && pasEncoreOuvert && (
+                <div style={{ textAlign: 'center', padding: '30px 16px', fontSize: 13, color: '#8B6020' }}>
+                  Les inscriptions ouvriront le {new Date(post.inscriptionDebut).toLocaleString('fr-FR', { dateStyle: 'long', timeStyle: 'short' })}.
+                </div>
+              )}
+
+              {!success && !annule && !dejaInscrit && !pasEncoreOuvert && ferme && (
+                <div style={{ textAlign: 'center', padding: '30px 16px', fontSize: 13, color: '#b71c1c' }}>
+                  Les inscriptions sont closes depuis le {new Date(post.inscriptionFin).toLocaleString('fr-FR', { dateStyle: 'long', timeStyle: 'short' })}.
+                </div>
+              )}
+
+              {!success && !annule && !dejaInscrit && !pasEncoreOuvert && !ferme && complet && (
                 <div style={{ textAlign: 'center', padding: '30px 16px', fontSize: 13, color: '#b71c1c' }}>
                   Il n'y a plus de places disponibles pour cet evenement.
                 </div>
               )}
 
-              {!success && !annule && !dejaInscrit && !complet && (
+              {!success && !annule && !dejaInscrit && !pasEncoreOuvert && !ferme && !complet && (
                 <>
                   <label style={labelStyle}>Telephone de contact</label>
                   <input
@@ -261,6 +278,16 @@ export default function EvenementInscriptionPage() {
                           onChange={function(e) { majParticipant(i, { nom: e.target.value }); }}
                           style={Object.assign({}, inputStyle, { marginBottom: 10 })}
                         />
+
+                        <label style={labelStyle}>Sexe</label>
+                        <select
+                          value={p.sexe}
+                          onChange={function(e) { majParticipant(i, { sexe: e.target.value }); }}
+                          style={Object.assign({}, selectStyle, { marginBottom: 10 })}
+                        >
+                          <option value="homme">Homme</option>
+                          <option value="femme">Femme</option>
+                        </select>
 
                         <label style={labelStyle}>Paroisse</label>
                         <select
