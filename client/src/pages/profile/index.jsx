@@ -188,12 +188,19 @@ export default function ProfilePage() {
     setSexe(user?.sexe || '');
   }, [user]);
 
-    async function enregistrerInfosPersonnelles() {
+      async function enregistrerInfosPersonnelles() {
+    const payload = {};
+    if (dateNaissance) payload.dateNaissance = dateNaissance;
+    if (sexe) payload.sexe = sexe;
+    if (Object.keys(payload).length === 0) {
+      setErreurInfos('Renseigne au moins un des deux champs avant d\'enregistrer.');
+      return;
+    }
     setEnregistrementInfos(true);
     setErreurInfos('');
     try {
       const { userApi } = await import('../../services/api');
-      const res = await userApi.updateMe({ dateNaissance: dateNaissance || null, sexe: sexe || null });
+      const res = await userApi.updateMe(payload);
       if (updateUser && res && res.data && res.data.user) updateUser(res.data.user);
       setEditionInfos(false);
     } catch (e) {
