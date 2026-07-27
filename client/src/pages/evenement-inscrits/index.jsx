@@ -14,6 +14,13 @@ const STATUTS = [
   { id: 'paye_sur_place',label: 'Paye sur place', color: '#2e7c2e', bg: 'rgba(46,124,46,0.12)' },
 ];
 
+const TRANCHES_LABEL = {
+  enfant: 'Enfant',
+  adolescent: 'Adolescent',
+  adulte: 'Adulte',
+  senior: 'Senior',
+};
+
 export default function EvenementInscritsPage() {
   const { postId } = useParams();
   const navigate = useNavigate();
@@ -22,6 +29,7 @@ export default function EvenementInscritsPage() {
   const [inscriptions, setInscriptions] = useState([]);
   const [capacite, setCapacite] = useState(null);
   const [placesRestantes, setPlacesRestantes] = useState(null);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [erreur, setErreur] = useState('');
   const [menuOuvert, setMenuOuvert] = useState(null);
@@ -39,6 +47,7 @@ export default function EvenementInscritsPage() {
         setInscriptions(d.inscriptions || []);
         setCapacite(d.capacite != null ? d.capacite : null);
         setPlacesRestantes(d.placesRestantes != null ? d.placesRestantes : null);
+        setTotal(d.total || 0);
       } catch (e) {
         setErreur(e.message || 'Impossible de charger la liste.');
       } finally {
@@ -83,7 +92,7 @@ export default function EvenementInscritsPage() {
             <>
               <div style={{ fontSize: 13, color: VERT, fontFamily: 'Georgia,serif', marginBottom: 6, lineHeight: 1.4 }}>{post.content}</div>
               <div style={{ fontSize: 11.5, color: '#8B6020', fontWeight: 700, marginBottom: 16 }}>
-                {inscriptions.length} inscrit(s){capacite != null ? ' sur ' + capacite + ' places (' + placesRestantes + ' restantes)' : ' — places illimitees'}
+                {total} personne(s) inscrite(s){capacite != null ? ' sur ' + capacite + ' places (' + placesRestantes + ' restantes)' : ' — places illimitees'}
               </div>
             </>
           )}
@@ -103,11 +112,10 @@ export default function EvenementInscritsPage() {
           {inscriptions.map(function(ins, idx) {
             const statut = statutInfo(ins.statutPaiement);
             return (
-              <div key={ins._id} style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.06)', borderRadius: 12, padding: '12px 14px', marginBottom: 8, position: 'relative' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div key={ins._id} style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.06)', borderRadius: 12, padding: '12px 14px', marginBottom: 10, position: 'relative' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
                   <div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: VERT }}>{idx + 1}. {ins.nom}</div>
-                    <div style={{ fontSize: 11, color: '#9A8E7E', marginTop: 2 }}>{ins.telephone}</div>
+                    <div style={{ fontSize: 11, color: '#9A8E7E' }}>Inscription {idx + 1} — {ins.telephone}</div>
                     <div style={{ fontSize: 9.5, color: '#bbb', marginTop: 2 }}>
                       {ins.createdAt ? new Date(ins.createdAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : ''}
                     </div>
@@ -120,8 +128,19 @@ export default function EvenementInscritsPage() {
                   </div>
                 </div>
 
+                {(ins.participants || []).map(function(p, pi) {
+                  return (
+                    <div key={pi} style={{ padding: '8px 10px', background: '#F5F0E8', borderRadius: 8, marginBottom: 6 }}>
+                      <div style={{ fontSize: 12.5, fontWeight: 700, color: VERT }}>{p.nom}</div>
+                      <div style={{ fontSize: 10.5, color: '#7A6E5E', marginTop: 2 }}>
+                        {p.parishNom || 'Paroisse non precisee'} · {TRANCHES_LABEL[p.trancheAge] || p.trancheAge}
+                      </div>
+                    </div>
+                  );
+                })}
+
                 {menuOuvert === ins._id && (
-                  <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid rgba(0,0,0,0.06)', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <div style={{ marginTop: 8, paddingTop: 10, borderTop: '1px solid rgba(0,0,0,0.06)', display: 'flex', flexDirection: 'column', gap: 6 }}>
                     {STATUTS.map(function(s) {
                       return (
                         <div
