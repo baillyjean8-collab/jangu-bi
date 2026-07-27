@@ -895,15 +895,15 @@ function matchesSearch(post, query) {
                   )}
                 </div>
               )}
-              {(post.image || post.video) && grilleImages(post, i)}
-              {/* Actions bas de carte */}
-              <div style={{ display: 'flex', gap: 14, padding: '8px 12px', borderTop: '1px solid #f0ece4', fontSize: 11, color: '#666' }}>
-                <span onClick={() => toggleLike(i)} style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer', color: liked[i] ? '#C8A84B' : '#666' }}>
-                  <i className={liked[i] ? 'ti ti-heart-filled' : 'ti ti-heart'} style={{ fontSize: 13 }} /> {postsState[i]?.likes ?? post.likes}
+                            {(post.image || post.video) && grilleImages(post, i)}
+              {/* Actions bas de carte — icones agrandies pour l'accessibilite */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 20, padding: '10px 14px', borderTop: '1px solid #f0ece4', fontSize: 13, color: '#666' }}>
+                <span onClick={() => toggleLike(i)} style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', color: liked[i] ? '#C8A84B' : '#666' }}>
+                  <i className={liked[i] ? 'ti ti-heart-filled' : 'ti ti-heart'} style={{ fontSize: 20 }} /> {postsState[i]?.likes ?? post.likes}
                 </span>
                 {post.type !== 'don' && (
-                  <span onClick={() => toggleCommentaires(i)} style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}>
-                    <i className="ti ti-message-circle" style={{ fontSize: 13 }} /> {postsState[i]?.comments ?? post.comments}
+                  <span onClick={() => toggleCommentaires(i)} style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
+                    <i className="ti ti-message-circle" style={{ fontSize: 20 }} /> {postsState[i]?.comments ?? post.comments}
                   </span>
                 )}
                 <span onClick={() => {
@@ -920,17 +920,17 @@ return prev.map(function(p, idx) { return idx === i ? Object.assign({}, p, { sha
 }).catch(function(e) { console.log('Share:', e.message); });
 });
 }
-}} style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}>
-<i className="ti ti-share" style={{ fontSize: 13 }} /> {postsState[i]?.sharesCount ?? 0}
+}} style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
+<i className="ti ti-share" style={{ fontSize: 20 }} /> {postsState[i]?.sharesCount ?? 0}
 </span>
                 {post.type === 'evenement' && (
                   <span onClick={function(e) { e.stopPropagation(); ouvrirInscription(post._id); }} style={{
-                    marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer',
-                    background: 'linear-gradient(135deg,#C8A84B,#8B6020)', color: '#1e2d14', fontWeight: 700,
-                    padding: '5px 12px', borderRadius: 14, fontSize: 10.5,
+                    marginLeft: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    width: 40, height: 40, borderRadius: '50%', cursor: 'pointer', flexShrink: 0,
+                    background: 'linear-gradient(135deg,#C8A84B,#8B6020)', color: '#1e2d14',
                     animation: 'pulseInscription 1.8s ease-in-out infinite',
                   }}>
-                    <i className="ti ti-calendar-event" style={{ fontSize: 12 }} /> S'inscrire
+                    <i className="ti ti-calendar-event" style={{ fontSize: 18 }} />
                   </span>
                 )}
               </div>
