@@ -380,7 +380,7 @@ async resolveReported(req, res) {
     });
   },
 
-  async monInscription(req, res) {
+    async monInscription(req, res) {
     const post = await Post.findById(req.params.id).lean();
     if (!post) throw new NotFoundError('Post');
     const [inscription, count] = await Promise.all([
@@ -393,7 +393,19 @@ async resolveReported(req, res) {
       nombreParticipants: inscription ? inscription.participants.length : 0,
       capacite: post.eventCapacity,
       placesRestantes,
+      autoriserAnnulation: post.autoriserAnnulation !== false,
     });
+  },
+
+  async annulerInscription(req, res) {
+    const post = await Post.findById(req.params.id).lean();
+    if (!post) throw new NotFoundError('Post');
+    if (post.autoriserAnnulation === false) {
+      throw new AuthorizationError("L'annulation n'est pas autorisee pour cet evenement");
+    }
+    const supprime = await postRepo.cancelRegistration(req.params.id, req.user.userId);
+    if (!supprime) throw new NotFoundError('Inscription');
+    return sendSuccess(res, {}, 'Inscription annulee');
   },
 
   async updateStatutPaiement(req, res) {
@@ -510,6 +522,11 @@ router.patch('/inscriptions/:registrationId/statut',
 router.get('/:id/inscriptions/moi',
   authenticate, requireVerified,
   asyncHandler(postController.monInscription)
+);
+
+router.delete('/:id/inscription',
+  authenticate, requireVerified,
+  asyncHandler(postController.annulerInscription)
 );
 
 module.exports = { router, postRepo };
