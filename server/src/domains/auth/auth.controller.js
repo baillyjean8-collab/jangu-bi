@@ -118,7 +118,7 @@ async function getUserById(req, res) {
 
 async function updateMe(req, res) {
   const { User } = require("../../models");
-  const champs_autorises = ["firstName","lastName","phone","parishId","photo"];
+    const champs_autorises = ["firstName","lastName","phone","parishId","photo","avatarUrl","dateNaissance","sexe"];
   const updates = {};
   champs_autorises.forEach(f => { if (req.body[f] !== undefined) updates[f] = req.body[f]; });
   const user = await User.findByIdAndUpdate(req.user.userId, updates, { new: true, runValidators: true }).lean();
