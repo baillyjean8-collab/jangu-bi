@@ -77,7 +77,7 @@ const userSchema = new mongoose.Schema(
         message: 'Please provide a valid email address',
       },
     },
-    phone: {
+        phone: {
       type: String,
       required: [true, 'Phone number is required'],
       unique: true,
@@ -86,6 +86,15 @@ const userSchema = new mongoose.Schema(
         validator: (v) => /^\+[1-9]\d{6,14}$/.test(v),
 message: 'Phone must be in E.164 format (e.g. +221771234567)',
       },
+    },
+    dateNaissance: {
+      type: Date,
+      default: null,
+    },
+    sexe: {
+      type: String,
+      enum: ['homme', 'femme', null],
+      default: null,
     },
     password: {
       type: String,
