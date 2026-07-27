@@ -128,12 +128,12 @@ export default function EvenementInscritsPage() {
                   </div>
                 </div>
 
-                {(ins.participants || []).map(function(p, pi) {
+                  {(ins.participants || []).map(function(p, pi) {
                   return (
                     <div key={pi} style={{ padding: '8px 10px', background: '#F5F0E8', borderRadius: 8, marginBottom: 6 }}>
                       <div style={{ fontSize: 12.5, fontWeight: 700, color: VERT }}>{p.nom}</div>
                       <div style={{ fontSize: 10.5, color: '#7A6E5E', marginTop: 2 }}>
-                        {p.parishNom || 'Paroisse non precisee'} · {TRANCHES_LABEL[p.trancheAge] || p.trancheAge}
+                        {p.parishNom || 'Paroisse non precisee'} · {p.sexe === 'femme' ? 'Femme' : 'Homme'} · {TRANCHES_LABEL[p.trancheAge] || p.trancheAge}
                       </div>
                     </div>
                   );
