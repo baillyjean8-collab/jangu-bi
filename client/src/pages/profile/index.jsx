@@ -154,10 +154,6 @@ export default function ProfilePage() {
     });
   }, [activeTab]);
 
-  // Un admin de paroisse (parish_admin) voit la vitrine publique de sa paroisse
-  // a la place du profil fidele classique, comme une Page Facebook geree.
-  // Un super-admin (supervision globale, pas rattache a une seule paroisse)
-  // est redirige vers le vrai tableau de bord super-admin.
   useEffect(function() {
     if (!user) return;
     if (user.role === 'super_admin') {
@@ -181,6 +177,29 @@ export default function ProfilePage() {
   const email    = user?.email     || 'admin@jangubi.com';
   const phone    = user?.phone     || '+221 77 123 45 67';
   const since    = 'janvier 2023';
+  const [editionInfos, setEditionInfos] = useState(false);
+  const [dateNaissance, setDateNaissance] = useState(user?.dateNaissance ? user.dateNaissance.slice(0, 10) : '');
+  const [sexe, setSexe] = useState(user?.sexe || '');
+  const [enregistrementInfos, setEnregistrementInfos] = useState(false);
+
+  useEffect(function() {
+    setDateNaissance(user?.dateNaissance ? user.dateNaissance.slice(0, 10) : '');
+    setSexe(user?.sexe || '');
+  }, [user]);
+
+  async function enregistrerInfosPersonnelles() {
+    setEnregistrementInfos(true);
+    try {
+      const { userApi } = await import('../../services/api');
+      const res = await userApi.updateMe({ dateNaissance: dateNaissance || null, sexe: sexe || null });
+      if (updateUser && res && res.data && res.data.user) updateUser(res.data.user);
+      setEditionInfos(false);
+    } catch (e) {
+      console.log('Enregistrement infos:', e.message);
+    } finally {
+      setEnregistrementInfos(false);
+    }
+  }
   const faithLevel = Math.min(user?.faithLevel ?? 1, 4);
   const faithDays  = user?.faithDays ?? 34;
   const progress   = (faithLevel / 4) * 100;
@@ -300,8 +319,13 @@ export default function ProfilePage() {
           {activeTab === 0 && (
             <>
               <div style={{ background: 'white', borderRadius: 14, padding: '12px 14px', boxShadow: '0 2px 10px rgba(13,59,46,.06)' }}>
-                <div style={{ fontFamily: 'Georgia,serif', fontSize: 13, fontWeight: 700, color: '#0D2B1F', marginBottom: 10 }}>Informations personnelles</div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                  <div style={{ fontFamily: 'Georgia,serif', fontSize: 13, fontWeight: 700, color: '#0D2B1F' }}>Informations personnelles</div>
+                  <div onClick={() => setEditionInfos(function(v) { return !v; })} style={{ fontSize: 10.5, color: '#8B6020', fontWeight: 700, cursor: 'pointer' }}>
+                    {editionInfos ? 'Annuler' : '✏️ Modifier'}
+                  </div>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: editionInfos ? 12 : 0 }}>
                   {[
                     { icon: '👤', label: 'Prenom', value: prenom },
                     { icon: '👤', label: 'Nom', value: nom },
@@ -318,7 +342,54 @@ export default function ProfilePage() {
                       </div>
                     </div>
                   ))}
+                  {!editionInfos && (
+                    <>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ fontSize: 14 }}>🎂</span>
+                        <div>
+                          <div style={{ fontSize: 9, color: '#7A6E5E' }}>Date de naissance</div>
+                          <div style={{ fontSize: 11, fontWeight: 600, color: '#0D2B1F' }}>{dateNaissance ? new Date(dateNaissance).toLocaleDateString('fr-FR') : 'Non renseignee'}</div>
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ fontSize: 14 }}>⚧</span>
+                        <div>
+                          <div style={{ fontSize: 9, color: '#7A6E5E' }}>Sexe</div>
+                          <div style={{ fontSize: 11, fontWeight: 600, color: '#0D2B1F' }}>{sexe === 'femme' ? 'Femme' : sexe === 'homme' ? 'Homme' : 'Non renseigne'}</div>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
+
+                {editionInfos && (
+                  <div style={{ borderTop: '1px solid rgba(0,0,0,0.06)', paddingTop: 12 }}>
+                    <div style={{ fontSize: 9, color: '#7A6E5E', marginBottom: 4 }}>Date de naissance</div>
+                    <input
+                      type="date"
+                      value={dateNaissance}
+                      onChange={function(e) { setDateNaissance(e.target.value); }}
+                      style={{ width: '100%', border: '1.5px solid rgba(200,168,75,0.3)', borderRadius: 10, padding: '8px 10px', fontSize: 12, boxSizing: 'border-box', fontFamily: 'Georgia,serif', color: '#0D2B1F', marginBottom: 10 }}
+                    />
+                    <div style={{ fontSize: 9, color: '#7A6E5E', marginBottom: 4 }}>Sexe</div>
+                    <select
+                      value={sexe}
+                      onChange={function(e) { setSexe(e.target.value); }}
+                      style={{ width: '100%', border: '1.5px solid rgba(200,168,75,0.3)', borderRadius: 10, padding: '8px 10px', fontSize: 12, boxSizing: 'border-box', fontFamily: 'Georgia,serif', color: '#0D2B1F', marginBottom: 12, background: '#fff' }}
+                    >
+                      <option value="">-- Choisir --</option>
+                      <option value="homme">Homme</option>
+                      <option value="femme">Femme</option>
+                    </select>
+                    <button
+                      onClick={enregistrerInfosPersonnelles}
+                      disabled={enregistrementInfos}
+                      style={{ width: '100%', padding: 10, background: 'linear-gradient(135deg,#C8A84B,#8B7030)', border: 'none', borderRadius: 10, color: '#0D2B1F', fontWeight: 700, fontSize: 12, cursor: enregistrementInfos ? 'default' : 'pointer' }}
+                    >
+                      {enregistrementInfos ? 'Enregistrement...' : 'Enregistrer'}
+                    </button>
+                  </div>
+                )}
               </div>
 
               <div style={{ background: '#0C0A06', backgroundImage: BOGOLAN_DARK, borderRadius: 14, padding: 14, position: 'relative', overflow: 'hidden' }}>
