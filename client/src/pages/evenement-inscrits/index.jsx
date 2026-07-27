@@ -117,7 +117,7 @@ export default function EvenementInscritsPage() {
                   <div>
                     <div style={{ fontSize: 11, color: '#9A8E7E' }}>Inscription {idx + 1} — {ins.telephone}</div>
                     <div style={{ fontSize: 9.5, color: '#bbb', marginTop: 2 }}>
-                      {ins.createdAt ? new Date(ins.createdAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : ''}
+                  {ins.createdAt ? new Date(ins.createdAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'Africa/Dakar' }) : ''}
                     </div>
                   </div>
                   <div
