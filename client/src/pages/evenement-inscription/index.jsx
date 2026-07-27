@@ -2,11 +2,27 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import AppShell from '../../components/AppShell';
 import { useAuth } from '../../context/AuthContext';
-import { postsApi } from '../../services/api';
+import { postsApi, parishesApi } from '../../services/api';
 
 const VERT = '#1e2d14';
 const OR = '#C8A84B';
 const IVOIRE = '#F5F0E8';
+
+const TRANCHES = [
+  { id: 'enfant',     label: 'Enfant (0-12 ans)' },
+  { id: 'adolescent', label: 'Adolescent (13-17 ans)' },
+  { id: 'adulte',     label: 'Adulte (18-59 ans)' },
+  { id: 'senior',     label: 'Senior (60 ans et +)' },
+];
+
+function nouveauParticipant(nomDefaut, parishIdDefaut, parishNomDefaut) {
+  return {
+    nom: nomDefaut || '',
+    parishId: parishIdDefaut || '',
+    parishNom: parishNomDefaut || '',
+    trancheAge: 'adulte',
+  };
+}
 
 export default function EvenementInscriptionPage() {
   const { postId } = useParams();
@@ -17,16 +33,33 @@ export default function EvenementInscriptionPage() {
   const [loading, setLoading] = useState(true);
   const [dejaInscrit, setDejaInscrit] = useState(false);
   const [placesRestantes, setPlacesRestantes] = useState(null);
-  const [nom, setNom] = useState('');
   const [telephone, setTelephone] = useState('');
+  const [participants, setParticipants] = useState([nouveauParticipant()]);
+  const [paroisses, setParoisses] = useState([]);
   const [envoi, setEnvoi] = useState(false);
   const [erreur, setErreur] = useState('');
   const [success, setSuccess] = useState(false);
 
   useEffect(function() {
-    setNom(((user?.firstName || '') + ' ' + (user?.lastName || '')).trim());
     setTelephone(user?.phone || '');
+    const nomDefaut = ((user?.firstName || '') + ' ' + (user?.lastName || '')).trim();
+    const parishIdDefaut = user?.parishId || (user?.parish && user.parish._id) || '';
+    const parishNomDefaut = (user?.parish && user.parish.name) || '';
+    setParticipants([nouveauParticipant(nomDefaut, parishIdDefaut, parishNomDefaut)]);
   }, [user]);
+
+  useEffect(function() {
+    async function chargerParoisses() {
+      try {
+        const data = await parishesApi.getAll({ limit: 200 });
+        const items = data && data.data ? (Array.isArray(data.data) ? data.data : (data.data.items || data.data.data || [])) : [];
+        setParoisses(items.map(function(p) { return { id: p._id, nom: p.name }; }));
+      } catch (e) {
+        console.log('Paroisses:', e.message);
+      }
+    }
+    chargerParoisses();
+  }, []);
 
   useEffect(function() {
     async function charger() {
@@ -49,15 +82,49 @@ export default function EvenementInscriptionPage() {
     charger();
   }, [postId]);
 
+  function majParticipant(index, champs) {
+    setParticipants(function(prev) {
+      return prev.map(function(p, i) { return i !== index ? p : Object.assign({}, p, champs); });
+    });
+  }
+
+  function choisirParoisse(index, parishId) {
+    const p = paroisses.find(function(x) { return x.id === parishId; });
+    majParticipant(index, { parishId: parishId, parishNom: p ? p.nom : '' });
+  }
+
+  function ajouterParticipant() {
+    const premier = participants[0];
+    setParticipants(function(prev) {
+      return prev.concat([nouveauParticipant('', premier ? premier.parishId : '', premier ? premier.parishNom : '')]);
+    });
+  }
+
+  function retirerParticipant(index) {
+    if (participants.length <= 1) return;
+    setParticipants(function(prev) { return prev.filter(function(_, i) { return i !== index; }); });
+  }
+
   async function confirmer() {
-    if (!nom.trim() || !telephone.trim()) {
-      setErreur('Nom et telephone requis.');
+    if (!telephone.trim()) {
+      setErreur('Le numero de telephone est requis.');
       return;
+    }
+    for (let i = 0; i < participants.length; i++) {
+      if (!participants[i].nom.trim()) {
+        setErreur('Chaque participant doit avoir un nom (participant ' + (i + 1) + ').');
+        return;
+      }
     }
     setEnvoi(true);
     setErreur('');
     try {
-      await postsApi.inscrireEvenement(postId, { nom: nom.trim(), telephone: telephone.trim() });
+      await postsApi.inscrireEvenement(postId, {
+        telephone: telephone.trim(),
+        participants: participants.map(function(p) {
+          return { nom: p.nom.trim(), parishId: p.parishId || null, parishNom: p.parishNom, trancheAge: p.trancheAge };
+        }),
+      });
       setSuccess(true);
     } catch (e) {
       setErreur(e.message || 'Une erreur est survenue.');
@@ -67,6 +134,9 @@ export default function EvenementInscriptionPage() {
   }
 
   const complet = placesRestantes === 0;
+  const selectStyle = { width: '100%', border: '1.5px solid rgba(200,168,75,0.3)', borderRadius: 10, padding: '9px 12px', fontSize: 13, boxSizing: 'border-box', fontFamily: 'Georgia,serif', color: VERT, background: '#fff' };
+  const inputStyle = { width: '100%', border: '1.5px solid rgba(200,168,75,0.3)', borderRadius: 10, padding: '9px 12px', fontSize: 13, boxSizing: 'border-box', fontFamily: 'Georgia,serif', color: VERT };
+  const labelStyle = { fontSize: 10, color: '#9A8E7E', fontWeight: 700, display: 'block', marginBottom: 4 };
 
   return (
     <AppShell>
@@ -120,20 +190,65 @@ export default function EvenementInscriptionPage() {
 
               {!success && !dejaInscrit && !complet && (
                 <>
-                  <label style={{ fontSize: 11, color: '#9A8E7E', fontWeight: 700, display: 'block', marginBottom: 6 }}>Nom complet</label>
-                  <input
-                    type="text"
-                    value={nom}
-                    onChange={function(e) { setNom(e.target.value); }}
-                    style={{ width: '100%', border: '1.5px solid rgba(200,168,75,0.3)', borderRadius: 12, padding: '11px 14px', fontSize: 14, boxSizing: 'border-box', fontFamily: 'Georgia,serif', color: VERT, marginBottom: 14 }}
-                  />
-                  <label style={{ fontSize: 11, color: '#9A8E7E', fontWeight: 700, display: 'block', marginBottom: 6 }}>Telephone</label>
+                  <label style={labelStyle}>Telephone de contact</label>
                   <input
                     type="tel"
                     value={telephone}
                     onChange={function(e) { setTelephone(e.target.value); }}
-                    style={{ width: '100%', border: '1.5px solid rgba(200,168,75,0.3)', borderRadius: 12, padding: '11px 14px', fontSize: 14, boxSizing: 'border-box', fontFamily: 'Georgia,serif', color: VERT, marginBottom: 20 }}
+                    style={Object.assign({}, inputStyle, { marginBottom: 18 })}
                   />
+
+                  <div style={{ fontSize: 11, color: '#9A8E7E', fontWeight: 700, marginBottom: 10, letterSpacing: '.04em' }}>
+                    PARTICIPANT(S) — {participants.length}
+                  </div>
+
+                  {participants.map(function(p, i) {
+                    return (
+                      <div key={i} style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.06)', borderRadius: 12, padding: 14, marginBottom: 12, position: 'relative' }}>
+                        {participants.length > 1 && (
+                          <button onClick={function() { retirerParticipant(i); }} style={{ position: 'absolute', top: 10, right: 10, width: 24, height: 24, borderRadius: '50%', background: 'rgba(0,0,0,0.05)', border: 'none', color: '#b71c1c', fontSize: 12, cursor: 'pointer' }}>
+                            <i className="ti ti-x" />
+                          </button>
+                        )}
+                        <div style={{ fontSize: 11, fontWeight: 700, color: VERT, marginBottom: 10 }}>Personne {i + 1}</div>
+
+                        <label style={labelStyle}>Nom complet</label>
+                        <input
+                          type="text"
+                          value={p.nom}
+                          onChange={function(e) { majParticipant(i, { nom: e.target.value }); }}
+                          style={Object.assign({}, inputStyle, { marginBottom: 10 })}
+                        />
+
+                        <label style={labelStyle}>Paroisse</label>
+                        <select
+                          value={p.parishId}
+                          onChange={function(e) { choisirParoisse(i, e.target.value); }}
+                          style={Object.assign({}, selectStyle, { marginBottom: 10 })}
+                        >
+                          <option value="">-- Choisir une paroisse --</option>
+                          {paroisses.map(function(par) {
+                            return <option key={par.id} value={par.id}>{par.nom}</option>;
+                          })}
+                        </select>
+
+                        <label style={labelStyle}>Tranche d'age</label>
+                        <select
+                          value={p.trancheAge}
+                          onChange={function(e) { majParticipant(i, { trancheAge: e.target.value }); }}
+                          style={selectStyle}
+                        >
+                          {TRANCHES.map(function(t) {
+                            return <option key={t.id} value={t.id}>{t.label}</option>;
+                          })}
+                        </select>
+                      </div>
+                    );
+                  })}
+
+                  <div onClick={ajouterParticipant} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '11px', border: '1.5px dashed rgba(200,168,75,0.4)', borderRadius: 12, color: '#8B6020', fontSize: 12, fontWeight: 700, cursor: 'pointer', marginBottom: 20 }}>
+                    <i className="ti ti-plus" /> Ajouter une personne
+                  </div>
 
                   {erreur && (
                     <div style={{ marginBottom: 14, padding: '10px 14px', background: 'rgba(229,57,53,0.08)', border: '1px solid rgba(229,57,53,0.2)', borderRadius: 10, fontSize: 12, color: '#e53935' }}>
