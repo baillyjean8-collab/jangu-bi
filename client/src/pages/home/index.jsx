@@ -164,11 +164,12 @@ export default function HomePage() {
             // publications 'normal' (texte simple) : les champs riches
             // (media, don avec barre de progression) n'existent pas encore
             // sur les vraies publications recuperees depuis l'API.
-            const formatted = items.map(p => ({
+                        const formatted = items.map(p => ({
 
 _id: p._id,
 
-type: 'normal',
+type: p.type === 'EVENEMENT' ? 'evenement' : 'normal',
+eventCapacity: p.eventCapacity != null ? p.eventCapacity : null,
 
 initiales: p.parishId && p.parishId.name ? p.parishId.name.substring(0,2).toUpperCase() : 'SC',
               logo: p.parishId && p.parishId.logoUrl ? p.parishId.logoUrl : null,
@@ -268,8 +269,9 @@ const [galerieIndex, setGalerieIndex] = useState(0);
   const [avertissementCommentaire, setAvertissementCommentaire] = useState('');
   const [compteurAvertissements, setCompteurAvertissements] = useState(0);
   const [commentDraft, setCommentDraft] = useState('');
-const [replyingTo, setReplyingTo] = useState(null);
-const [signales, setSignales] = useState({});
+  const [replyingTo, setReplyingTo] = useState(null);
+  // Fiche d'inscription a un evenement : { postId, loading, dejaInscrit, complet, nom, telephone, envoi, erreur, success }
+  const [inscriptionModal, setInscriptionModal] = useState(null);
 
 function signalerCommentaire(post, commentId) {
   if (!post || !post._id) return;
@@ -298,6 +300,63 @@ function signalerCommentaire(post, commentId) {
     return a.includes(b) || b.includes(a);
   }
 
+    // ── Inscription a un evenement (gratuit, sans paiement pour l'instant) ──
+  function ouvrirInscription(postId) {
+    setInscriptionModal({
+      postId: postId,
+      loading: true,
+      dejaInscrit: false,
+      complet: false,
+      placesRestantes: null,
+      nom: ((user?.firstName || '') + ' ' + (user?.lastName || '')).trim(),
+      telephone: user?.phone || '',
+      envoi: false,
+      erreur: '',
+      success: false,
+    });
+    import('../../services/api').then(function(mod) {
+      mod.postsApi.getMonInscription(postId).then(function(res) {
+        const d = res && res.data ? res.data : {};
+        setInscriptionModal(function(prev) {
+          if (!prev || prev.postId !== postId) return prev;
+          return Object.assign({}, prev, {
+            loading: false,
+            dejaInscrit: !!d.inscrit,
+            complet: d.placesRestantes === 0,
+            placesRestantes: d.placesRestantes,
+          });
+        });
+      }).catch(function(e) {
+        setInscriptionModal(function(prev) {
+          if (!prev || prev.postId !== postId) return prev;
+          return Object.assign({}, prev, { loading: false, erreur: e.message });
+        });
+      });
+    });
+  }
+
+  function fermerInscription() {
+    setInscriptionModal(null);
+  }
+
+  function confirmerInscription() {
+    if (!inscriptionModal) return;
+    if (!inscriptionModal.nom.trim() || !inscriptionModal.telephone.trim()) {
+      setInscriptionModal(function(prev) { return Object.assign({}, prev, { erreur: 'Nom et telephone requis.' }); });
+      return;
+    }
+    setInscriptionModal(function(prev) { return Object.assign({}, prev, { envoi: true, erreur: '' }); });
+    import('../../services/api').then(function(mod) {
+      mod.postsApi.inscrireEvenement(inscriptionModal.postId, {
+        nom: inscriptionModal.nom.trim(),
+        telephone: inscriptionModal.telephone.trim(),
+      }).then(function() {
+        setInscriptionModal(function(prev) { return Object.assign({}, prev, { envoi: false, success: true }); });
+      }).catch(function(e) {
+        setInscriptionModal(function(prev) { return Object.assign({}, prev, { envoi: false, erreur: e.message }); });
+      });
+    });
+  }
   function toggleLike(i) {
 const post = postsState[i];
 if (!post._id) { setLiked(l => ({ ...l, [i]: !l[i] })); return; }
@@ -812,6 +871,9 @@ function matchesSearch(post, query) {
                 {post.type === 'inscription' && (
                   <span style={{ fontSize: 8, background: '#0D3B2E', color: '#C8A84B', borderRadius: 10, padding: '3px 8px', fontWeight: 700 }}>INSCRIPTION</span>
                 )}
+                                {post.type === 'evenement' && (
+                  <span style={{ fontSize: 8, background: '#0D3B2E', color: '#C8A84B', borderRadius: 10, padding: '3px 8px', fontWeight: 700 }}>EVENEMENT</span>
+                )}
                 {post.urgent && (
                   <span style={{ fontSize: 8, background: '#e53935', color: 'white', borderRadius: 10, padding: '3px 8px', fontWeight: 700 }}>URGENT</span>
                 )}
@@ -868,6 +930,23 @@ function matchesSearch(post, query) {
 
               {post.type === 'normal' && (
                 <div style={{ padding: '0 12px 10px', fontSize: 12, color: '#3a3a3a', lineHeight: 1.5 }}>{post.texte}</div>
+              )}
+                            {post.type === 'evenement' && (
+                <div style={{ padding: '0 12px 10px' }}>
+                  <div style={{ fontSize: 12, color: '#3a3a3a', lineHeight: 1.5, marginBottom: 10 }}>{post.texte}</div>
+                  {post.eventCapacity != null && (
+                    <div style={{ fontSize: 10, color: '#8B6020', fontWeight: 700, marginBottom: 8 }}>
+                      Places limitees : {post.eventCapacity}
+                    </div>
+                  )}
+                  <button onClick={() => ouvrirInscription(post._id)} style={{
+                    width: '100%', padding: 9, background: 'linear-gradient(135deg,#C8A84B,#8B6020)',
+                    border: 'none', borderRadius: 18, color: '#1e2d14', fontWeight: 700, fontSize: 11,
+                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                  }}>
+                    <i className="ti ti-calendar-event" style={{ fontSize: 13 }} /> S'inscrire
+                  </button>
+                </div>
               )}
               {(post.image || post.video) && grilleImages(post, i)}
               {/* Actions bas de carte */}
@@ -1144,6 +1223,81 @@ style={{ width: '100%', maxHeight: '80vh', objectFit: 'contain' }}
 <i className="ti ti-x" style={{ color: '#fff', fontSize: 16 }} />
 </div>
 </div>
+)}
+
+{inscriptionModal && (
+  <div onClick={fermerInscription} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 2100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+    <div onClick={function(e) { e.stopPropagation(); }} style={{ background: '#fff', borderRadius: 16, padding: '20px 18px', width: '100%', maxWidth: 360 }}>
+      <div style={{ fontFamily: 'Georgia,serif', fontSize: 15, fontWeight: 700, color: '#1e2d14', marginBottom: 4 }}>
+        {inscriptionModal.success ? 'Inscription confirmee' : "S'inscrire a l'evenement"}
+      </div>
+
+      {inscriptionModal.loading && (
+        <div style={{ fontSize: 12, color: '#9A8E7E', padding: '10px 0' }}>Verification en cours...</div>
+      )}
+
+      {!inscriptionModal.loading && inscriptionModal.success && (
+        <div style={{ fontSize: 12, color: '#3a3a3a', padding: '10px 0 16px', lineHeight: 1.5 }}>
+          Votre inscription a bien ete enregistree. A bientot !
+        </div>
+      )}
+
+      {!inscriptionModal.loading && !inscriptionModal.success && inscriptionModal.dejaInscrit && (
+        <div style={{ fontSize: 12, color: '#3a3a3a', padding: '10px 0 16px', lineHeight: 1.5 }}>
+          Vous etes deja inscrit(e) a cet evenement.
+        </div>
+      )}
+
+      {!inscriptionModal.loading && !inscriptionModal.success && !inscriptionModal.dejaInscrit && inscriptionModal.complet && (
+        <div style={{ fontSize: 12, color: '#b71c1c', padding: '10px 0 16px', lineHeight: 1.5 }}>
+          Il n'y a plus de places disponibles pour cet evenement.
+        </div>
+      )}
+
+      {!inscriptionModal.loading && !inscriptionModal.success && !inscriptionModal.dejaInscrit && !inscriptionModal.complet && (
+        <>
+          {inscriptionModal.placesRestantes != null && (
+            <div style={{ fontSize: 10.5, color: '#8B6020', fontWeight: 700, marginBottom: 12 }}>
+              {inscriptionModal.placesRestantes} place(s) restante(s)
+            </div>
+          )}
+          <label style={{ fontSize: 10.5, color: '#9A8E7E', display: 'block', marginBottom: 4 }}>Nom complet</label>
+          <input
+            type="text"
+            value={inscriptionModal.nom}
+            onChange={function(e) { const v = e.target.value; setInscriptionModal(function(prev) { return Object.assign({}, prev, { nom: v }); }); }}
+            style={{ width: '100%', border: '1.5px solid rgba(200,168,75,0.3)', borderRadius: 10, padding: '9px 12px', fontSize: 13, boxSizing: 'border-box', fontFamily: 'Georgia,serif', color: '#1e2d14', marginBottom: 10 }}
+          />
+          <label style={{ fontSize: 10.5, color: '#9A8E7E', display: 'block', marginBottom: 4 }}>Telephone</label>
+          <input
+            type="tel"
+            value={inscriptionModal.telephone}
+            onChange={function(e) { const v = e.target.value; setInscriptionModal(function(prev) { return Object.assign({}, prev, { telephone: v }); }); }}
+            style={{ width: '100%', border: '1.5px solid rgba(200,168,75,0.3)', borderRadius: 10, padding: '9px 12px', fontSize: 13, boxSizing: 'border-box', fontFamily: 'Georgia,serif', color: '#1e2d14', marginBottom: 14 }}
+          />
+        </>
+      )}
+
+      {inscriptionModal.erreur && (
+        <div style={{ fontSize: 11, color: '#e53935', marginBottom: 10 }}>{inscriptionModal.erreur}</div>
+      )}
+
+      <div style={{ display: 'flex', gap: 8 }}>
+        {!inscriptionModal.loading && !inscriptionModal.success && !inscriptionModal.dejaInscrit && !inscriptionModal.complet && (
+          <button onClick={confirmerInscription} disabled={inscriptionModal.envoi} style={{
+            flex: 1, padding: 11, background: 'linear-gradient(135deg,#C8A84B,#8B6020)', border: 'none', borderRadius: 10,
+            color: '#1e2d14', fontWeight: 700, fontSize: 12, cursor: inscriptionModal.envoi ? 'default' : 'pointer',
+            opacity: inscriptionModal.envoi ? 0.6 : 1,
+          }}>
+            {inscriptionModal.envoi ? 'Envoi...' : 'Confirmer mon inscription'}
+          </button>
+        )}
+        <button onClick={fermerInscription} style={{ flex: inscriptionModal.success || inscriptionModal.dejaInscrit || inscriptionModal.complet ? 1 : 'none', padding: 11, background: 'none', border: '1.5px solid #e5e0d5', borderRadius: 10, color: '#7A6E5E', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>
+          {inscriptionModal.success || inscriptionModal.dejaInscrit || inscriptionModal.complet ? 'Fermer' : 'Annuler'}
+        </button>
+      </div>
+    </div>
+  </div>
 )}
 </AppShell>
 );
