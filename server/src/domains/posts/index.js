@@ -224,19 +224,24 @@ async resolveReportedComment(postId, commentId, action) {
       .lean();
   },
 
-  async findRegistration(postId, userId) {
+    async findRegistration(postId, userId) {
     return EventRegistration.findOne({ postId, userId }).lean();
+  },
+
+  async cancelRegistration(postId, userId) {
+    return EventRegistration.findOneAndDelete({ postId, userId });
   },
 };
 
 const postController = {
 async create(req, res) {
-const { content, imageUrl, imageUrls, videoUrl, type, eventCapacity } = req.body;
+const { content, imageUrl, imageUrls, videoUrl, type, eventCapacity, autoriserAnnulation } = req.body;
 const parishId = req.user.parishId;
 if (!parishId) throw new AuthorizationError('No parish assigned');
 const post = await postRepo.create({
   parishId, content, imageUrl, imageUrls, videoUrl, type,
   eventCapacity: (eventCapacity != null && eventCapacity !== '') ? Number(eventCapacity) : null,
+  autoriserAnnulation: autoriserAnnulation !== false,
 });
 return sendCreated(res, { post }, 'Publication creee');
 },
