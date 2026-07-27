@@ -148,11 +148,17 @@ export default function ProfilePage() {
   const fileRef = useRef(null);
   const [activeTab, setActiveTab] = useState(0);
 
-  // Un admin (parish_admin / super_admin) voit la vitrine publique de sa paroisse
+    // Un admin de paroisse (parish_admin) voit la vitrine publique de sa paroisse
   // a la place du profil fidele classique, comme une Page Facebook geree.
+  // Un super-admin (supervision globale, pas rattache a une seule paroisse)
+  // est redirige vers le vrai tableau de bord super-admin.
   useEffect(function() {
-    const isAdmin = user && (user.role === 'parish_admin' || user.role === 'super_admin');
-    if (isAdmin && user.parishId) {
+    if (!user) return;
+    if (user.role === 'super_admin') {
+      navigate('/admin', { replace: true });
+      return;
+    }
+    if (user.role === 'parish_admin' && user.parishId) {
       navigate('/parishes/' + user.parishId, { replace: true });
     }
   }, [user, navigate]);
