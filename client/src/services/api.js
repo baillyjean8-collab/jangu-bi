@@ -138,8 +138,11 @@ share: function(id) { return apiFetch('/posts/' + id + '/share', { method: 'POST
         inscrireEvenement: function(postId, data) {
       return apiFetch('/posts/' + postId + '/inscription', { method: 'POST', body: JSON.stringify(data) });
     },
-    annulerInscription: function(postId) {
+        annulerInscription: function(postId) {
       return apiFetch('/posts/' + postId + '/inscription', { method: 'DELETE' });
+    },
+    getMesInscriptions: function() {
+      return apiFetch('/posts/mes-inscriptions');
     },
     getInscriptions: function(postId) {
       return apiFetch('/posts/' + postId + '/inscriptions');
