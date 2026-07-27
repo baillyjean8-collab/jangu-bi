@@ -224,8 +224,15 @@ async resolveReportedComment(postId, commentId, action) {
       .lean();
   },
 
-    async findRegistration(postId, userId) {
+      async findRegistration(postId, userId) {
     return EventRegistration.findOne({ postId, userId }).lean();
+  },
+
+  async listMesInscriptions(userId) {
+    return EventRegistration.find({ userId })
+      .populate('postId', 'content createdAt eventCapacity')
+      .sort({ createdAt: -1 })
+      .lean();
   },
 
   async cancelRegistration(postId, userId) {
@@ -413,7 +420,7 @@ async resolveReported(req, res) {
     });
   },
 
-  async annulerInscription(req, res) {
+    async annulerInscription(req, res) {
     const post = await Post.findById(req.params.id).lean();
     if (!post) throw new NotFoundError('Post');
     if (post.autoriserAnnulation === false) {
@@ -422,6 +429,11 @@ async resolveReported(req, res) {
     const supprime = await postRepo.cancelRegistration(req.params.id, req.user.userId);
     if (!supprime) throw new NotFoundError('Inscription');
     return sendSuccess(res, {}, 'Inscription annulee');
+  },
+
+  async mesInscriptions(req, res) {
+    const inscriptions = await postRepo.listMesInscriptions(req.user.userId);
+    return sendSuccess(res, { inscriptions });
   },
 
   async updateStatutPaiement(req, res) {
@@ -467,6 +479,11 @@ router.get('/moderation/signales',
   authenticate, requireVerified,
   authorize('parish_admin', 'super_admin'),
   asyncHandler(postController.listReported)
+);
+
+router.get('/mes-inscriptions',
+  authenticate, requireVerified,
+  asyncHandler(postController.mesInscriptions)
 );
 
 router.get('/:id',
