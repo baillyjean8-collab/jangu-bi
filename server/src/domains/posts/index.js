@@ -329,13 +329,31 @@ async resolveReported(req, res) {
   return sendSuccess(res, { comment }, 'Signalement traite');
 },
 
-  async registerForEvent(req, res) {
-    const { nom, telephone } = req.body;
-    if (!nom || !String(nom).trim() || !telephone || !String(telephone).trim()) {
-      throw new ValidationError('Nom et telephone requis');
+    async registerForEvent(req, res) {
+    const { telephone, participants } = req.body;
+    if (!telephone || !String(telephone).trim()) {
+      throw new ValidationError('Telephone requis');
     }
+    if (!Array.isArray(participants) || participants.length === 0) {
+      throw new ValidationError('Au moins un participant est requis');
+    }
+    const tranchesValides = ['enfant', 'adolescent', 'adulte', 'senior'];
+    const participantsPropres = participants.map(function(p) {
+      if (!p || !p.nom || !String(p.nom).trim()) {
+        throw new ValidationError('Chaque participant doit avoir un nom');
+      }
+      if (!tranchesValides.includes(p.trancheAge)) {
+        throw new ValidationError("Tranche d'age invalide pour " + p.nom);
+      }
+      return {
+        nom: String(p.nom).trim(),
+        parishId: p.parishId || null,
+        parishNom: p.parishNom ? String(p.parishNom).trim() : '',
+        trancheAge: p.trancheAge,
+      };
+    });
     const inscription = await postRepo.createRegistration(
-      req.params.id, req.user.userId, String(nom).trim(), String(telephone).trim()
+      req.params.id, req.user.userId, String(telephone).trim(), participantsPropres
     );
     return sendCreated(res, { inscription }, 'Inscription confirmee');
   },
@@ -347,25 +365,27 @@ async resolveReported(req, res) {
       throw new AuthorizationError('Not your parish event');
     }
     const inscriptions = await postRepo.listRegistrations(req.params.id);
-    const placesRestantes = post.eventCapacity != null ? Math.max(0, post.eventCapacity - inscriptions.length) : null;
+    const totalParticipants = inscriptions.reduce(function(sum, i) { return sum + (i.participants ? i.participants.length : 0); }, 0);
+    const placesRestantes = post.eventCapacity != null ? Math.max(0, post.eventCapacity - totalParticipants) : null;
     return sendSuccess(res, {
       inscriptions,
-      total: inscriptions.length,
+      total: totalParticipants,
       capacite: post.eventCapacity,
       placesRestantes,
     });
   },
 
-    async monInscription(req, res) {
+  async monInscription(req, res) {
     const post = await Post.findById(req.params.id).lean();
     if (!post) throw new NotFoundError('Post');
     const [inscription, count] = await Promise.all([
       postRepo.findRegistration(req.params.id, req.user.userId),
-      postRepo.countRegistrations(req.params.id),
+      postRepo.countParticipants(req.params.id),
     ]);
     const placesRestantes = post.eventCapacity != null ? Math.max(0, post.eventCapacity - count) : null;
     return sendSuccess(res, {
       inscrit: !!inscription,
+      nombreParticipants: inscription ? inscription.participants.length : 0,
       capacite: post.eventCapacity,
       placesRestantes,
     });
