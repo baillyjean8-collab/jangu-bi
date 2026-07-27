@@ -547,6 +547,7 @@ router.patch('/inscriptions/:registrationId/statut',
   asyncHandler(postController.updateStatutPaiement)
 );
 
+router.get('/:id/inscriptions',
   authenticate, requireVerified,
   authorize('parish_admin', 'super_admin'),
   asyncHandler(postController.listEventRegistrations)
