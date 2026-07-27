@@ -50,6 +50,8 @@ export default function CreatePostPage() {
   const [placesLimitees, setPlacesLimitees] = useState(false);
   const [capaciteMax, setCapaciteMax] = useState(50);
   const [autoriserAnnulation, setAutoriserAnnulation] = useState(true);
+  const [inscriptionDebut, setInscriptionDebut] = useState('');
+  const [inscriptionFin, setInscriptionFin] = useState('');
 
   const [mediaItems, setMediaItems] = useState([]);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -482,6 +484,8 @@ export default function CreatePostPage() {
         videoUrl: videoValide ? videoValide.url : undefined,
         eventCapacity: (typePub === 'EVENEMENT' && placesLimitees) ? capaciteMax : null,
         autoriserAnnulation: typePub === 'EVENEMENT' ? autoriserAnnulation : undefined,
+        inscriptionDebut: (typePub === 'EVENEMENT' && inscriptionDebut) ? inscriptionDebut : undefined,
+        inscriptionFin: (typePub === 'EVENEMENT' && inscriptionFin) ? inscriptionFin : undefined,
       });
 
       if (aussiEnStory && premiereImage && !premiereImage.local) {
@@ -730,10 +734,31 @@ export default function CreatePostPage() {
                   <div style={{ fontSize: 12, fontWeight: 700, color: VERT }}>Autoriser l'annulation</div>
                   <div style={{ fontSize: 10, color: '#9A8E7E' }}>Desactive : l'inscription devient definitive</div>
                 </div>
-                <div style={{ width: 42, height: 24, borderRadius: 20, background: autoriserAnnulation ? OR : '#e5e0d5', position: 'relative', transition: 'background .2s', flexShrink: 0 }}>
+                                <div style={{ width: 42, height: 24, borderRadius: 20, background: autoriserAnnulation ? OR : '#e5e0d5', position: 'relative', transition: 'background .2s', flexShrink: 0 }}>
                   <div style={{ width: 18, height: 18, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3, left: autoriserAnnulation ? 21 : 3, transition: 'left .2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
                 </div>
               </div>
+            </div>
+          )}
+
+          {typePub === 'EVENEMENT' && (
+            <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.06)', borderRadius: 12, padding: '12px 14px', marginBottom: 18 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: VERT, marginBottom: 4 }}>Periode d'inscription</div>
+              <div style={{ fontSize: 10, color: '#9A8E7E', marginBottom: 10 }}>Laisse vide pour aucune limite de ce cote</div>
+              <label style={{ fontSize: 10.5, color: '#9A8E7E', display: 'block', marginBottom: 4 }}>Ouverture des inscriptions</label>
+              <input
+                type="datetime-local"
+                value={inscriptionDebut}
+                onChange={function(e) { setInscriptionDebut(e.target.value); }}
+                style={{ width: '100%', border: '1.5px solid rgba(200,168,75,0.3)', borderRadius: 10, padding: '9px 12px', fontSize: 13, boxSizing: 'border-box', fontFamily: 'Georgia,serif', color: VERT, marginBottom: 10 }}
+              />
+              <label style={{ fontSize: 10.5, color: '#9A8E7E', display: 'block', marginBottom: 4 }}>Fermeture des inscriptions</label>
+              <input
+                type="datetime-local"
+                value={inscriptionFin}
+                onChange={function(e) { setInscriptionFin(e.target.value); }}
+                style={{ width: '100%', border: '1.5px solid rgba(200,168,75,0.3)', borderRadius: 10, padding: '9px 12px', fontSize: 13, boxSizing: 'border-box', fontFamily: 'Georgia,serif', color: VERT }}
+              />
             </div>
           )}
 
