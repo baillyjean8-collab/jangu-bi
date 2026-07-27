@@ -141,8 +141,13 @@ share: function(id) { return apiFetch('/posts/' + id + '/share', { method: 'POST
     getInscriptions: function(postId) {
       return apiFetch('/posts/' + postId + '/inscriptions');
     },
-    getMonInscription: function(postId) {
+        getMonInscription: function(postId) {
       return apiFetch('/posts/' + postId + '/inscriptions/moi');
+    },
+    updateStatutPaiement: function(registrationId, statutPaiement) {
+      return apiFetch('/posts/inscriptions/' + registrationId + '/statut', {
+        method: 'PATCH', body: JSON.stringify({ statutPaiement: statutPaiement })
+      });
     },
   };
 
