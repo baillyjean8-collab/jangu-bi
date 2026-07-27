@@ -597,10 +597,14 @@ function matchesSearch(post, query) {
 
   return (
     <AppShell>
-      <style>{`
-        @keyframes pulseInscription {
-          0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(200,168,75,0.5); }
-          50% { transform: scale(1.07); box-shadow: 0 0 0 5px rgba(200,168,75,0); }
+            <style>{`
+        @keyframes ringExpand {
+          0% { transform: scale(1); opacity: 0.6; }
+          100% { transform: scale(1.9); opacity: 0; }
+        }
+        @keyframes badgeGlow {
+          0%, 100% { box-shadow: 0 2px 10px rgba(0,0,0,0.25), 0 0 0 0 rgba(200,168,75,0.6); }
+          50% { box-shadow: 0 2px 14px rgba(0,0,0,0.3), 0 0 0 7px rgba(200,168,75,0); }
         }
       `}</style>
       <div style={{ minHeight: '100vh', background: '#F5F0E8', backgroundImage: BOGOLAN }}>
@@ -888,10 +892,11 @@ function matchesSearch(post, query) {
                       Places limitees : {post.eventCapacity}
                     </div>
                   )}
-                  {isAdmin && (
+              {isAdmin && (user?.role === 'super_admin' || String(post.parishId) === String(user?.parishId || (user?.parish && user.parish._id) || '')) && (
                     <div onClick={function(e) { e.stopPropagation(); navigate('/evenement/' + post._id + '/inscrits'); }} style={{ fontSize: 10, color: '#8B6020', fontWeight: 700, textDecoration: 'underline', cursor: 'pointer' }}>
                       Voir les inscrits →
                     </div>
+                  )}
                   )}
                 </div>
               )}
@@ -923,14 +928,20 @@ return prev.map(function(p, idx) { return idx === i ? Object.assign({}, p, { sha
 }} style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
 <i className="ti ti-share" style={{ fontSize: 20 }} /> {postsState[i]?.sharesCount ?? 0}
 </span>
-                {post.type === 'evenement' && (
+                                {post.type === 'evenement' && (
                   <span onClick={function(e) { e.stopPropagation(); ouvrirInscription(post._id); }} style={{
-                    marginLeft: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    width: 40, height: 40, borderRadius: '50%', cursor: 'pointer', flexShrink: 0,
-                    background: 'linear-gradient(135deg,#C8A84B,#8B6020)', color: '#1e2d14',
-                    animation: 'pulseInscription 1.8s ease-in-out infinite',
+                    marginLeft: 'auto', position: 'relative', width: 58, height: 58, flexShrink: 0, cursor: 'pointer',
                   }}>
-                    <i className="ti ti-calendar-event" style={{ fontSize: 18 }} />
+                    <span style={{ position: 'absolute', inset: 0, borderRadius: '50%', border: '2px solid #C8A84B', animation: 'ringExpand 1.8s ease-out infinite' }} />
+                    <span style={{
+                      position: 'absolute', inset: 0, borderRadius: '50%',
+                      background: 'linear-gradient(135deg,#C8A84B,#8B6020)',
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                      color: '#1e2d14', animation: 'badgeGlow 1.8s ease-in-out infinite',
+                    }}>
+                      <i className="ti ti-calendar-event" style={{ fontSize: 15 }} />
+                      <span style={{ fontSize: 6.5, fontWeight: 800, letterSpacing: '.02em', marginTop: 1 }}>INSCRIPTION</span>
+                    </span>
                   </span>
                 )}
               </div>
