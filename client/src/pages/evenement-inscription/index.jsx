@@ -247,13 +247,13 @@ export default function EvenementInscriptionPage() {
 
               {!success && !annule && !dejaInscrit && pasEncoreOuvert && (
                 <div style={{ textAlign: 'center', padding: '30px 16px', fontSize: 13, color: '#8B6020' }}>
-                  Les inscriptions ouvriront le {new Date(post.inscriptionDebut).toLocaleString('fr-FR', { dateStyle: 'long', timeStyle: 'short' })}.
+                Les inscriptions ouvriront le {new Date(post.inscriptionDebut).toLocaleString('fr-FR', { dateStyle: 'long', timeStyle: 'short', timeZone: 'Africa/Dakar' })}.
                 </div>
               )}
 
               {!success && !annule && !dejaInscrit && !pasEncoreOuvert && ferme && (
                 <div style={{ textAlign: 'center', padding: '30px 16px', fontSize: 13, color: '#b71c1c' }}>
-                  Les inscriptions sont closes depuis le {new Date(post.inscriptionFin).toLocaleString('fr-FR', { dateStyle: 'long', timeStyle: 'short' })}.
+                Les inscriptions sont closes depuis le {new Date(post.inscriptionFin).toLocaleString('fr-FR', { dateStyle: 'long', timeStyle: 'short', timeZone: 'Africa/Dakar' })}.
                 </div>
               )}
 
