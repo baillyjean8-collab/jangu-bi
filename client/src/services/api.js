@@ -135,8 +135,11 @@ share: function(id) { return apiFetch('/posts/' + id + '/share', { method: 'POST
       });
     },
     // ── Inscriptions aux evenements (gratuit, sans paiement pour l'instant) ──
-    inscrireEvenement: function(postId, data) {
+        inscrireEvenement: function(postId, data) {
       return apiFetch('/posts/' + postId + '/inscription', { method: 'POST', body: JSON.stringify(data) });
+    },
+    annulerInscription: function(postId) {
+      return apiFetch('/posts/' + postId + '/inscription', { method: 'DELETE' });
     },
     getInscriptions: function(postId) {
       return apiFetch('/posts/' + postId + '/inscriptions');
