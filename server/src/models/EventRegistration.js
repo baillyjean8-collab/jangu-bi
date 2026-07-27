@@ -6,9 +6,13 @@ const eventRegistrationSchema = new mongoose.Schema({
   userId:    { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   nom:       { type: String, required: true, trim: true, maxlength: 120 },
   telephone: { type: String, required: true, trim: true, maxlength: 30 },
+  statutPaiement: {
+    type: String,
+    enum: ['non_requis', 'en_attente', 'paye_ligne', 'paye_sur_place'],
+    default: 'non_requis',
+  },
 }, { timestamps: true });
 
-// Une seule inscription par personne et par evenement.
 eventRegistrationSchema.index({ postId: 1, userId: 1 }, { unique: true });
 eventRegistrationSchema.index({ postId: 1, createdAt: 1 });
 
