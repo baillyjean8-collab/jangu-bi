@@ -296,7 +296,7 @@ export default function ProfilePage() {
         <div style={{ background: '#F5F0E8', borderBottom: '1px solid rgba(0,0,0,.06)', flexShrink: 0 }}>
           <div style={{ display: 'flex', overflowX: 'auto', scrollbarWidth: 'none' }}>
             {TABS.map((tab, i) => (
-              <div key={i} onClick={() => setActiveTab(i)} style={{ padding: '10px 14px', fontSize: 11, fontWeight: i === activeTab ? 700 : 400, color: i === activeTab ? '#0D3B2E' : '#7A6E5E', borderBottom: i === activeTab ? '2.5px solid #C8A84B' : '2.5px solid transparent', whiteSpace: 'nowrap', flexShrink: 0, cursor: 'pointer' }}>{tab}</div>
+              <div key={i} onClick={() => { if (i === 4) { navigate('/settings'); } else { setActiveTab(i); } }} style={{ padding: '10px 14px', fontSize: 11, fontWeight: i === activeTab ? 700 : 400, color: i === activeTab ? '#0D3B2E' : '#7A6E5E', borderBottom: i === activeTab ? '2.5px solid #C8A84B' : '2.5px solid transparent', whiteSpace: 'nowrap', flexShrink: 0, cursor: 'pointer' }}>{tab}</div>
             ))}
           </div>
         </div>
