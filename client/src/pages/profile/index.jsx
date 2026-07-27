@@ -367,12 +367,14 @@ export default function ProfilePage() {
                 {editionInfos && (
                   <div style={{ borderTop: '1px solid rgba(0,0,0,0.06)', paddingTop: 12 }}>
                     <div style={{ fontSize: 9, color: '#7A6E5E', marginBottom: 4 }}>Date de naissance</div>
-                                        <input
-                      type="date"
-                      value={dateNaissance}
-                      onChange={function(e) { setDateNaissance(e.target.value); }}
-                      style={{ width: '100%', maxWidth: '100%', border: '1.5px solid rgba(200,168,75,0.3)', borderRadius: 10, padding: '8px 10px', fontSize: 16, boxSizing: 'border-box', fontFamily: 'Georgia,serif', color: '#0D2B1F', marginBottom: 10, display: 'block' }}
-                    />
+                                                            <div style={{ width: '100%', overflow: 'hidden', borderRadius: 10, marginBottom: 10 }}>
+                      <input
+                        type="date"
+                        value={dateNaissance}
+                        onChange={function(e) { setDateNaissance(e.target.value); }}
+                        style={{ width: '100%', minWidth: 0, maxWidth: '100%', border: '1.5px solid rgba(200,168,75,0.3)', borderRadius: 10, padding: '8px 10px', fontSize: 16, boxSizing: 'border-box', fontFamily: 'Georgia,serif', color: '#0D2B1F', display: 'block' }}
+                      />
+                    </div>
                     <div style={{ fontSize: 9, color: '#7A6E5E', marginBottom: 4 }}>Sexe</div>
                     <select
                       value={sexe}
