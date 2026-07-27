@@ -454,7 +454,7 @@ export default function ProfilePage() {
                       {(ins.participants || []).length} personne(s) inscrite(s)
                     </div>
                     <div style={{ fontSize: 9.5, color: '#9A8E7E' }}>
-                      Inscrit le {ins.createdAt ? new Date(ins.createdAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''}
+                    Inscrit le {ins.createdAt ? new Date(ins.createdAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Africa/Dakar' }) : ''}
                     </div>
                   </div>
                 );
