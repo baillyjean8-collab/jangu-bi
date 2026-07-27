@@ -144,12 +144,7 @@ share: function(id) { return apiFetch('/posts/' + id + '/share', { method: 'POST
             getMonInscription: function(postId) {
       return apiFetch('/posts/' + postId + '/inscriptions/moi');
     },
-    updateStatutPaiement: function(registrationId, statutPaiement) {
-      return apiFetch('/posts/inscriptions/' + registrationId + '/statut', {
-        method: 'PATCH', body: JSON.stringify({ statutPaiement: statutPaiement })
-      });
-    },
-    updateStatutPaiement: function(registrationId, statutPaiement) {
+        updateStatutPaiement: function(registrationId, statutPaiement) {
       return apiFetch('/posts/inscriptions/' + registrationId + '/statut', {
         method: 'PATCH', body: JSON.stringify({ statutPaiement: statutPaiement })
       });
