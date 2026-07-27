@@ -235,13 +235,15 @@ async resolveReportedComment(postId, commentId, action) {
 
 const postController = {
 async create(req, res) {
-const { content, imageUrl, imageUrls, videoUrl, type, eventCapacity, autoriserAnnulation } = req.body;
+const { content, imageUrl, imageUrls, videoUrl, type, eventCapacity, autoriserAnnulation, inscriptionDebut, inscriptionFin } = req.body;
 const parishId = req.user.parishId;
 if (!parishId) throw new AuthorizationError('No parish assigned');
 const post = await postRepo.create({
   parishId, content, imageUrl, imageUrls, videoUrl, type,
   eventCapacity: (eventCapacity != null && eventCapacity !== '') ? Number(eventCapacity) : null,
   autoriserAnnulation: autoriserAnnulation !== false,
+  inscriptionDebut: inscriptionDebut ? new Date(inscriptionDebut) : null,
+  inscriptionFin: inscriptionFin ? new Date(inscriptionFin) : null,
 });
 return sendCreated(res, { post }, 'Publication creee');
 },
@@ -334,7 +336,7 @@ async resolveReported(req, res) {
   return sendSuccess(res, { comment }, 'Signalement traite');
 },
 
-    async registerForEvent(req, res) {
+      async registerForEvent(req, res) {
     const { telephone, participants } = req.body;
     if (!telephone || !String(telephone).trim()) {
       throw new ValidationError('Telephone requis');
@@ -342,7 +344,17 @@ async resolveReported(req, res) {
     if (!Array.isArray(participants) || participants.length === 0) {
       throw new ValidationError('Au moins un participant est requis');
     }
+    const post = await Post.findById(req.params.id).lean();
+    if (!post) throw new NotFoundError('Post');
+    const maintenant = new Date();
+    if (post.inscriptionDebut && maintenant < new Date(post.inscriptionDebut)) {
+      throw new ValidationError('Les inscriptions ne sont pas encore ouvertes pour cet evenement');
+    }
+    if (post.inscriptionFin && maintenant > new Date(post.inscriptionFin)) {
+      throw new ValidationError('Les inscriptions sont closes pour cet evenement');
+    }
     const tranchesValides = ['enfant', 'adolescent', 'adulte', 'senior'];
+    const sexesValides = ['homme', 'femme'];
     const participantsPropres = participants.map(function(p) {
       if (!p || !p.nom || !String(p.nom).trim()) {
         throw new ValidationError('Chaque participant doit avoir un nom');
@@ -350,10 +362,14 @@ async resolveReported(req, res) {
       if (!tranchesValides.includes(p.trancheAge)) {
         throw new ValidationError("Tranche d'age invalide pour " + p.nom);
       }
+      if (!sexesValides.includes(p.sexe)) {
+        throw new ValidationError('Sexe invalide pour ' + p.nom);
+      }
       return {
         nom: String(p.nom).trim(),
         parishId: p.parishId || null,
         parishNom: p.parishNom ? String(p.parishNom).trim() : '',
+        sexe: p.sexe,
         trancheAge: p.trancheAge,
       };
     });
