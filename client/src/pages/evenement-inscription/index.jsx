@@ -15,14 +15,28 @@ const TRANCHES = [
   { id: 'senior',     label: 'Senior (60 ans et +)' },
 ];
 
-function nouveauParticipant(nomDefaut, parishIdDefaut, parishNomDefaut) {
+function nouveauParticipant(nomDefaut, parishIdDefaut, parishNomDefaut, sexeDefaut, trancheDefaut) {
   return {
     nom: nomDefaut || '',
     parishId: parishIdDefaut || '',
     parishNom: parishNomDefaut || '',
-    sexe: 'homme',
-    trancheAge: 'adulte',
+    sexe: sexeDefaut || 'homme',
+    trancheAge: trancheDefaut || 'adulte',
   };
+}
+
+function calculerTrancheAge(dateNaissance) {
+  if (!dateNaissance) return 'adulte';
+  const naissance = new Date(dateNaissance);
+  if (isNaN(naissance.getTime())) return 'adulte';
+  const aujourdHui = new Date();
+  let age = aujourdHui.getFullYear() - naissance.getFullYear();
+  const m = aujourdHui.getMonth() - naissance.getMonth();
+  if (m < 0 || (m === 0 && aujourdHui.getDate() < naissance.getDate())) age--;
+  if (age <= 12) return 'enfant';
+  if (age <= 17) return 'adolescent';
+  if (age <= 59) return 'adulte';
+  return 'senior';
 }
 
 export default function EvenementInscriptionPage() {
