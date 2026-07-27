@@ -58,12 +58,14 @@ export default function EvenementInscriptionPage() {
   const [erreur, setErreur] = useState('');
   const [success, setSuccess] = useState(false);
 
-  useEffect(function() {
+    useEffect(function() {
     setTelephone(user?.phone || '');
     const nomDefaut = ((user?.firstName || '') + ' ' + (user?.lastName || '')).trim();
     const parishIdDefaut = user?.parishId || (user?.parish && user.parish._id) || '';
     const parishNomDefaut = (user?.parish && user.parish.name) || '';
-    setParticipants([nouveauParticipant(nomDefaut, parishIdDefaut, parishNomDefaut)]);
+    const sexeDefaut = user?.sexe || 'homme';
+    const trancheDefaut = calculerTrancheAge(user?.dateNaissance);
+    setParticipants([nouveauParticipant(nomDefaut, parishIdDefaut, parishNomDefaut, sexeDefaut, trancheDefaut)]);
   }, [user]);
 
   useEffect(function() {
