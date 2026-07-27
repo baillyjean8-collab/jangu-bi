@@ -179,24 +179,37 @@ async resolveReportedComment(postId, commentId, action) {
     );
   },
 
-  async countRegistrations(postId) {
-    return EventRegistration.countDocuments({ postId });
+    // ── Inscriptions aux evenements (gratuit, sans paiement pour l'instant) ──
+  // Le nombre de "places" se compte en personnes (participants), pas en
+  // soumissions : une famille de 4 qui s'inscrit ensemble prend 4 places.
+
+  async countParticipants(postId) {
+    const result = await EventRegistration.aggregate([
+      { $match: { postId: new mongoose.Types.ObjectId(postId) } },
+      { $group: { _id: null, total: { $sum: { $size: '$participants' } } } },
+    ]);
+    return result.length ? result[0].total : 0;
   },
 
-  async createRegistration(postId, userId, nom, telephone) {
+  async createRegistration(postId, userId, telephone, participants) {
     const post = await Post.findById(postId);
     if (!post) throw new NotFoundError('Post');
     if (post.type !== 'EVENEMENT') {
       throw new ValidationError("Cette publication n'est pas un evenement");
     }
     if (post.eventCapacity != null) {
-      const count = await EventRegistration.countDocuments({ postId });
-      if (count >= post.eventCapacity) {
-        throw new ConflictError('Il n\'y a plus de places disponibles pour cet evenement');
+      const dejaPris = await postRepo.countParticipants(postId);
+      if (dejaPris + participants.length > post.eventCapacity) {
+        const restantes = Math.max(0, post.eventCapacity - dejaPris);
+        throw new ConflictError(
+          restantes > 0
+            ? 'Il ne reste que ' + restantes + ' place(s) disponible(s) pour ' + participants.length + ' personne(s) demandee(s).'
+            : "Il n'y a plus de places disponibles pour cet evenement."
+        );
       }
     }
     try {
-      return await EventRegistration.create({ postId, userId, nom, telephone });
+      return await EventRegistration.create({ postId, userId, telephone, participants });
     } catch (e) {
       if (e.code === 11000) {
         throw new ConflictError('Vous etes deja inscrit(e) a cet evenement');
