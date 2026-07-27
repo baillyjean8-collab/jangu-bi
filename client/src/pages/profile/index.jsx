@@ -2,11 +2,12 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppShell from '../../components/AppShell';
 import { useAuth } from '../../context/AuthContext';
+import { postsApi } from '../../services/api';
 
 const BOGOLAN = 'repeating-linear-gradient(0deg,transparent,transparent 8px,rgba(200,168,75,0.025) 8px,rgba(200,168,75,0.025) 9px),repeating-linear-gradient(90deg,transparent,transparent 8px,rgba(200,168,75,0.025) 8px,rgba(200,168,75,0.025) 9px)';
 const BOGOLAN_DARK = 'repeating-linear-gradient(0deg,transparent,transparent 8px,rgba(200,168,75,0.05) 8px,rgba(200,168,75,0.05) 9px),repeating-linear-gradient(90deg,transparent,transparent 8px,rgba(200,168,75,0.05) 8px,rgba(200,168,75,0.05) 9px)';
 const FAITH_STEPS = ['Disciple', 'Apotre', 'Pelerin', 'Temoin', 'Lumiere'];
-const TABS = ['Profil', 'Dons', 'Intentions', 'Paroisses', 'Parametres'];
+const TABS = ['Profil', 'Dons', 'Mes demandes', 'Inscription', 'Parametres'];
 
 // Composant editeur photo avec zoom/recadrage
 function PhotoEditor({ src, onSave, onCancel }) {
@@ -32,17 +33,14 @@ function PhotoEditor({ src, onSave, onCancel }) {
     const img = imgRef.current;
     ctx.clearRect(0, 0, SIZE, SIZE);
 
-    // Clip cercle
     ctx.save();
     ctx.beginPath();
     ctx.arc(SIZE/2, SIZE/2, SIZE/2, 0, Math.PI * 2);
     ctx.clip();
 
-    // Fond noir
     ctx.fillStyle = '#000';
     ctx.fillRect(0, 0, SIZE, SIZE);
 
-    // Calculer dimensions image avec scale
     const ratio = Math.max(SIZE / img.width, SIZE / img.height);
     const w = img.width * ratio * scale;
     const h = img.height * ratio * scale;
@@ -51,7 +49,6 @@ function PhotoEditor({ src, onSave, onCancel }) {
     ctx.drawImage(img, x, y, w, h);
     ctx.restore();
 
-    // Bordure ambre
     ctx.beginPath();
     ctx.arc(SIZE/2, SIZE/2, SIZE/2 - 1, 0, Math.PI * 2);
     ctx.strokeStyle = '#C8A84B';
@@ -94,7 +91,6 @@ function PhotoEditor({ src, onSave, onCancel }) {
       <div style={{ fontFamily: 'Georgia,serif', fontSize: 16, color: '#F5EFE4' }}>Ajuster la photo</div>
       <div style={{ fontSize: 11, color: 'rgba(245,239,228,.4)', marginTop: -14 }}>Glissez pour recadrer</div>
 
-      {/* Canvas cercle */}
       <canvas
         ref={canvasRef}
         width={SIZE} height={SIZE}
@@ -103,7 +99,6 @@ function PhotoEditor({ src, onSave, onCancel }) {
         onTouchStart={onStart} onTouchMove={onMove} onTouchEnd={onEnd}
       />
 
-      {/* Zoom slider */}
       <div style={{ width: 260, display: 'flex', alignItems: 'center', gap: 10 }}>
         <span style={{ fontSize: 14, color: 'rgba(200,168,75,.6)' }}>A</span>
         <input
@@ -114,7 +109,6 @@ function PhotoEditor({ src, onSave, onCancel }) {
         <span style={{ fontSize: 20, color: '#C8A84B' }}>A</span>
       </div>
 
-      {/* Boutons */}
       <div style={{ display: 'flex', gap: 12 }}>
         <button onClick={onCancel} style={{ padding: '11px 26px', background: 'transparent', border: '1px solid rgba(245,239,228,.2)', borderRadius: 50, color: 'rgba(245,239,228,.7)', fontSize: 13, cursor: 'pointer', fontFamily: 'Georgia,serif' }}>Annuler</button>
         <button onClick={handleSave} style={{ padding: '11px 30px', background: 'linear-gradient(135deg,#C8A84B,#8B7030)', border: 'none', borderRadius: 50, color: '#0C0A06', fontSize: 13, fontWeight: 800, cursor: 'pointer', fontFamily: 'Georgia,serif' }}>Valider</button>
@@ -125,7 +119,6 @@ function PhotoEditor({ src, onSave, onCancel }) {
 
 export default function ProfilePage() {
 
-  // ── Chargement des données profil réelles ───────────────
   useEffect(() => {
     async function loadProfile() {
       try {
@@ -133,7 +126,6 @@ export default function ProfilePage() {
         const data = await userApi.getMe();
         if (data && data.data) {
           const u = data.data;
-          // Mettre à jour les états du profil si ils existent
           if (typeof setNom === 'function') setNom((u.firstName || '') + ' ' + (u.lastName || ''));
           if (typeof setPhone === 'function') setPhone(u.phone || '');
         }
@@ -147,8 +139,22 @@ export default function ProfilePage() {
   const { user, updateUser } = useAuth();
   const fileRef = useRef(null);
   const [activeTab, setActiveTab] = useState(0);
+  const [mesInscriptions, setMesInscriptions] = useState([]);
+  const [chargementInscriptions, setChargementInscriptions] = useState(false);
 
-    // Un admin de paroisse (parish_admin) voit la vitrine publique de sa paroisse
+  useEffect(function() {
+    if (activeTab !== 3) return;
+    setChargementInscriptions(true);
+    postsApi.getMesInscriptions().then(function(res) {
+      setMesInscriptions((res && res.data && res.data.inscriptions) || []);
+    }).catch(function(e) {
+      console.log('Mes inscriptions:', e.message);
+    }).finally(function() {
+      setChargementInscriptions(false);
+    });
+  }, [activeTab]);
+
+  // Un admin de paroisse (parish_admin) voit la vitrine publique de sa paroisse
   // a la place du profil fidele classique, comme une Page Facebook geree.
   // Un super-admin (supervision globale, pas rattache a une seule paroisse)
   // est redirige vers le vrai tableau de bord super-admin.
@@ -193,14 +199,10 @@ export default function ProfilePage() {
   async function handleSavePhoto(cropped) {
     setShowEditor(false);
     setRawPhoto(null);
-    // Sauvegarder dans le contexte utilisateur (affichage immediat)
     if (updateUser) updateUser({ profilePhoto: cropped, avatarUrl: cropped });
     else {
-      // Fallback: stocker dans localStorage
       localStorage.setItem('jangubi_profile_photo', cropped);
     }
-    // Persister cote serveur (champ avatarUrl du modele User) pour que la
-    // photo survive a un rafraichissement de page.
     try {
       const { userApi } = await import('../../services/api');
       await userApi.updateMe({ avatarUrl: cropped });
@@ -223,14 +225,6 @@ export default function ProfilePage() {
           {/* Top row */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <div style={{ fontFamily: 'Georgia,serif', fontSize: 17, fontWeight: 700, color: '#0D2B1F' }}>Mon Profil</div>
-            <div onClick={() => navigate('/settings')} style={{ background: 'rgba(13,59,46,.08)', border: '1px solid rgba(13,59,46,.15)', borderRadius: 20, padding: '5px 12px', display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer' }}>
-              <span style={{ fontSize: 11 }}>✏️</span>
-              <span style={{ fontSize: 11, color: '#0D3B2E', fontWeight: 600 }}>Modifier</span>
-            </div>
-            <div onClick={() => navigate('/mes-demandes')} style={{ background: 'rgba(200,168,75,0.1)', border: '1px solid rgba(200,168,75,0.25)', borderRadius: 20, padding: '5px 12px', display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer' }}>
-              <span style={{ fontSize: 11 }}>📄</span>
-              <span style={{ fontSize: 11, color: '#8B6020', fontWeight: 600 }}>Mes demandes</span>
-            </div>
           </div>
 
           {/* Photo + infos + cierge */}
@@ -339,11 +333,48 @@ export default function ProfilePage() {
               </div>
             </>
           )}
-          {activeTab !== 0 && (
+          {activeTab === 1 && (
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 12 }}>
               <div style={{ fontSize: 36 }}>🚧</div>
               <div style={{ fontFamily: 'Georgia,serif', fontSize: 14, color: '#7A6E5E', textAlign: 'center' }}>Section {TABS[activeTab]} bientot disponible</div>
             </div>
+          )}
+
+          {activeTab === 2 && (
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 12 }}>
+              <div style={{ fontSize: 36 }}>📄</div>
+              <div style={{ fontFamily: 'Georgia,serif', fontSize: 14, color: '#7A6E5E', textAlign: 'center' }}>Aucune demande pour l'instant</div>
+            </div>
+          )}
+
+          {activeTab === 3 && (
+            <>
+              {chargementInscriptions && (
+                <div style={{ textAlign: 'center', padding: 30, fontSize: 13, color: '#7A6E5E' }}>Chargement...</div>
+              )}
+              {!chargementInscriptions && mesInscriptions.length === 0 && (
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 12, padding: '30px 0' }}>
+                  <div style={{ fontSize: 36 }}>🎟️</div>
+                  <div style={{ fontFamily: 'Georgia,serif', fontSize: 14, color: '#7A6E5E', textAlign: 'center' }}>Aucune inscription pour l'instant</div>
+                </div>
+              )}
+              {!chargementInscriptions && mesInscriptions.map(function(ins) {
+                const evt = ins.postId;
+                return (
+                  <div key={ins._id} style={{ background: 'white', borderRadius: 14, padding: '12px 14px', boxShadow: '0 2px 10px rgba(13,59,46,.06)' }}>
+                    <div style={{ fontSize: 12.5, fontWeight: 700, color: '#0D2B1F', fontFamily: 'Georgia,serif', marginBottom: 4 }}>
+                      {evt && evt.content ? evt.content : 'Evenement'}
+                    </div>
+                    <div style={{ fontSize: 10.5, color: '#7A6E5E', marginBottom: 2 }}>
+                      {(ins.participants || []).length} personne(s) inscrite(s)
+                    </div>
+                    <div style={{ fontSize: 9.5, color: '#9A8E7E' }}>
+                      Inscrit le {ins.createdAt ? new Date(ins.createdAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''}
+                    </div>
+                  </div>
+                );
+              })}
+            </>
           )}
         </div>
       </div>
