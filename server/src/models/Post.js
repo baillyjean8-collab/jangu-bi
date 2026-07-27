@@ -23,7 +23,11 @@ const postSchema = new mongoose.Schema({
   eventCapacity: { type: Number, default: null, min: 1 },
   // L'admin decide, a la creation de l'evenement, si les fideles peuvent
   // annuler leur inscription ensuite, ou si c'est definitif.
-  autoriserAnnulation: { type: Boolean, default: true },
+    autoriserAnnulation: { type: Boolean, default: true },
+  // Fenetre optionnelle pendant laquelle les inscriptions sont ouvertes.
+  // null = pas de restriction sur ce cote de la fenetre.
+  inscriptionDebut: { type: Date, default: null },
+  inscriptionFin: { type: Date, default: null },
   likes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
 sharesCount: { type: Number, default: 0, min: 0 },
   comments:  [commentSchema],
