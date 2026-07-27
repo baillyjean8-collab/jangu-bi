@@ -8,6 +8,11 @@ const participantSchema = new mongoose.Schema({
   nom:       { type: String, required: true, trim: true, maxlength: 120 },
   parishId:  { type: mongoose.Schema.Types.ObjectId, ref: 'Parish', default: null },
   parishNom: { type: String, trim: true, maxlength: 120, default: '' },
+  sexe: {
+    type: String,
+    enum: ['homme', 'femme'],
+    required: true,
+  },
   trancheAge: {
     type: String,
     enum: ['enfant', 'adolescent', 'adulte', 'senior'],
