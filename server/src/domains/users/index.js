@@ -9,11 +9,13 @@ const Joi = require('joi');
 const { JoiFields } = require('../../middlewares/validate');
 
 const userSchemas = {
-  updateProfile: Joi.object({
+    updateProfile: Joi.object({
     firstName: Joi.string().trim().min(2).max(50).optional(),
     lastName:  Joi.string().trim().min(2).max(50).optional(),
     phone:     JoiFields.phone().optional(),
     avatarUrl: Joi.string().max(5000000).optional(),
+    dateNaissance: Joi.date().iso().allow(null).optional(),
+    sexe: Joi.string().valid('homme', 'femme').allow(null, '').optional(),
   }).min(1),
 
   changePassword: Joi.object({
