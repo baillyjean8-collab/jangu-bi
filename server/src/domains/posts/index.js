@@ -342,7 +342,7 @@ async resolveReported(req, res) {
     });
   },
 
-  async monInscription(req, res) {
+    async monInscription(req, res) {
     const post = await Post.findById(req.params.id).lean();
     if (!post) throw new NotFoundError('Post');
     const [inscription, count] = await Promise.all([
@@ -355,6 +355,23 @@ async resolveReported(req, res) {
       capacite: post.eventCapacity,
       placesRestantes,
     });
+  },
+
+  async updateStatutPaiement(req, res) {
+    const inscription = await EventRegistration.findById(req.params.registrationId);
+    if (!inscription) throw new NotFoundError('Inscription');
+    const post = await Post.findById(inscription.postId);
+    if (!post) throw new NotFoundError('Post');
+    if (req.user.role !== 'super_admin' && String(post.parishId) !== String(req.user.parishId)) {
+      throw new AuthorizationError('Not your parish event');
+    }
+    const statutsValides = ['non_requis', 'en_attente', 'paye_ligne', 'paye_sur_place'];
+    if (!statutsValides.includes(req.body.statutPaiement)) {
+      throw new ValidationError('Statut invalide');
+    }
+    inscription.statutPaiement = req.body.statutPaiement;
+    await inscription.save();
+    return sendSuccess(res, { inscription }, 'Statut mis a jour');
   },
 
 };
