@@ -49,6 +49,7 @@ export default function CreatePostPage() {
   const [aussiEnStory, setAussiEnStory] = useState(false);
   const [placesLimitees, setPlacesLimitees] = useState(false);
   const [capaciteMax, setCapaciteMax] = useState(50);
+  const [autoriserAnnulation, setAutoriserAnnulation] = useState(true);
 
   const [mediaItems, setMediaItems] = useState([]);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -480,6 +481,7 @@ export default function CreatePostPage() {
         imageUrls: imagesGravees,
         videoUrl: videoValide ? videoValide.url : undefined,
         eventCapacity: (typePub === 'EVENEMENT' && placesLimitees) ? capaciteMax : null,
+        autoriserAnnulation: typePub === 'EVENEMENT' ? autoriserAnnulation : undefined,
       });
 
       if (aussiEnStory && premiereImage && !premiereImage.local) {
@@ -706,7 +708,7 @@ export default function CreatePostPage() {
                   <div style={{ width: 18, height: 18, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3, left: placesLimitees ? 21 : 3, transition: 'left .2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
                 </div>
               </div>
-              {placesLimitees && (
+                            {placesLimitees && (
                 <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(0,0,0,0.06)' }}>
                   <label style={{ fontSize: 10.5, color: '#9A8E7E', display: 'block', marginBottom: 4 }}>Nombre maximum de places</label>
                   <input
@@ -718,6 +720,20 @@ export default function CreatePostPage() {
                   />
                 </div>
               )}
+            </div>
+          )}
+
+          {typePub === 'EVENEMENT' && (
+            <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.06)', borderRadius: 12, padding: '12px 14px', marginBottom: 18 }}>
+              <div onClick={function() { setAutoriserAnnulation(function(v) { return !v; }); }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
+                <div>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: VERT }}>Autoriser l'annulation</div>
+                  <div style={{ fontSize: 10, color: '#9A8E7E' }}>Desactive : l'inscription devient definitive</div>
+                </div>
+                <div style={{ width: 42, height: 24, borderRadius: 20, background: autoriserAnnulation ? OR : '#e5e0d5', position: 'relative', transition: 'background .2s', flexShrink: 0 }}>
+                  <div style={{ width: 18, height: 18, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3, left: autoriserAnnulation ? 21 : 3, transition: 'left .2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
+                </div>
+              </div>
             </div>
           )}
 
