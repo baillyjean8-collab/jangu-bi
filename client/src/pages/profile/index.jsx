@@ -181,21 +181,23 @@ export default function ProfilePage() {
   const [dateNaissance, setDateNaissance] = useState(user?.dateNaissance ? user.dateNaissance.slice(0, 10) : '');
   const [sexe, setSexe] = useState(user?.sexe || '');
   const [enregistrementInfos, setEnregistrementInfos] = useState(false);
+  const [erreurInfos, setErreurInfos] = useState('');
 
   useEffect(function() {
     setDateNaissance(user?.dateNaissance ? user.dateNaissance.slice(0, 10) : '');
     setSexe(user?.sexe || '');
   }, [user]);
 
-  async function enregistrerInfosPersonnelles() {
+    async function enregistrerInfosPersonnelles() {
     setEnregistrementInfos(true);
+    setErreurInfos('');
     try {
       const { userApi } = await import('../../services/api');
       const res = await userApi.updateMe({ dateNaissance: dateNaissance || null, sexe: sexe || null });
       if (updateUser && res && res.data && res.data.user) updateUser(res.data.user);
       setEditionInfos(false);
     } catch (e) {
-      console.log('Enregistrement infos:', e.message);
+      setErreurInfos(e.message || 'Erreur inconnue lors de l\'enregistrement.');
     } finally {
       setEnregistrementInfos(false);
     }
@@ -380,7 +382,10 @@ export default function ProfilePage() {
                       <option value="">-- Choisir --</option>
                       <option value="homme">Homme</option>
                       <option value="femme">Femme</option>
-                    </select>
+                                        </select>
+                    {erreurInfos && (
+                      <div style={{ fontSize: 11, color: '#e53935', marginBottom: 10 }}>{erreurInfos}</div>
+                    )}
                     <button
                       onClick={enregistrerInfosPersonnelles}
                       disabled={enregistrementInfos}
