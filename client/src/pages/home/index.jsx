@@ -130,7 +130,7 @@ function VideoPublication({ src, sonActifGlobal, setSonActifGlobal, postId, navi
 
   return (
     <div ref={conteneurRef} style={{ position: 'relative', width: '100%', maxHeight: 600, background: '#000' }}>
-    <video ref={videoRef} src={src} playsInline preload="metadata" muted={!sonLocal} onEnded={surFin} onClick={function() { if (navigate && postId) navigate('/reels/' + postId); }} style={{ width: '100%', display: 'block', maxHeight: 600, objectFit: 'cover', background: '#000', cursor: 'pointer' }} />
+            <video ref={videoRef} src={src} playsInline preload="metadata" muted={!sonLocal} onEnded={surFin} onClick={function() { if (navigate && postId) navigate('/reels/' + postId); }} style={{ width: '100%', display: 'block', maxHeight: 600, objectFit: 'cover', background: '#000', cursor: 'pointer' }} />
       {!sonLocal && !termine && (
         <button onClick={activerSon} style={{ position: 'absolute', bottom: 10, right: 10, width: 34, height: 34, borderRadius: '50%', background: 'rgba(0,0,0,0.55)', border: 'none', color: '#fff', fontSize: 15, cursor: 'pointer' }}>
           <i className="ti ti-volume-3" />
@@ -159,12 +159,7 @@ export default function HomePage() {
         if (data && data.data) {
           const items = Array.isArray(data.data) ? data.data : (data.data.items || data.data.data || []);
           if (items.length > 0) {
-            // Transformer les posts backend en format attendu par le composant
-            // Les vraies publications sont affichees via le meme rendu que les
-            // publications 'normal' (texte simple) : les champs riches
-            // (media, don avec barre de progression) n'existent pas encore
-            // sur les vraies publications recuperees depuis l'API.
-                        const formatted = items.map(p => ({
+            const formatted = items.map(p => ({
 
 _id: p._id,
 
@@ -259,19 +254,18 @@ const [galerieIndex, setGalerieIndex] = useState(0);
   const [liveParishIds, setLiveParishIds] = useState(new Set());
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [storyGroupIndex, setStoryGroupIndex] = useState(null); // index du groupe (paroisse) en cours
-  const [storySlideIndex, setStorySlideIndex] = useState(0); // index de la story dans le groupe
-  const [storyPaused, setStoryPaused] = useState(false); // maintien du doigt = pause
+  const [storyGroupIndex, setStoryGroupIndex] = useState(null);
+  const [storySlideIndex, setStorySlideIndex] = useState(0);
+  const [storyPaused, setStoryPaused] = useState(false);
   const storyTimerRef = useRef(null);
   const [postsState, setPostsState] = useState(() => POSTS.map(p => ({ ...p, commentsList: [] })));
   const [visibleCount, setVisibleCount] = useState(10);
-  const [openComments, setOpenComments] = useState(null); // index du post dont les commentaires sont ouverts
+  const [openComments, setOpenComments] = useState(null);
   const [avertissementCommentaire, setAvertissementCommentaire] = useState('');
   const [compteurAvertissements, setCompteurAvertissements] = useState(0);
   const [commentDraft, setCommentDraft] = useState('');
-  const [replyingTo, setReplyingTo] = useState(null);
-  // Fiche d'inscription a un evenement : { postId, loading, dejaInscrit, complet, nom, telephone, envoi, erreur, success }
-  const [inscriptionModal, setInscriptionModal] = useState(null);
+const [replyingTo, setReplyingTo] = useState(null);
+const [signales, setSignales] = useState({});
 
 function signalerCommentaire(post, commentId) {
   if (!post || !post._id) return;
@@ -300,63 +294,11 @@ function signalerCommentaire(post, commentId) {
     return a.includes(b) || b.includes(a);
   }
 
-    // ── Inscription a un evenement (gratuit, sans paiement pour l'instant) ──
+  // Inscription a un evenement : redirige vers la vraie page dediee.
   function ouvrirInscription(postId) {
-    setInscriptionModal({
-      postId: postId,
-      loading: true,
-      dejaInscrit: false,
-      complet: false,
-      placesRestantes: null,
-      nom: ((user?.firstName || '') + ' ' + (user?.lastName || '')).trim(),
-      telephone: user?.phone || '',
-      envoi: false,
-      erreur: '',
-      success: false,
-    });
-    import('../../services/api').then(function(mod) {
-      mod.postsApi.getMonInscription(postId).then(function(res) {
-        const d = res && res.data ? res.data : {};
-        setInscriptionModal(function(prev) {
-          if (!prev || prev.postId !== postId) return prev;
-          return Object.assign({}, prev, {
-            loading: false,
-            dejaInscrit: !!d.inscrit,
-            complet: d.placesRestantes === 0,
-            placesRestantes: d.placesRestantes,
-          });
-        });
-      }).catch(function(e) {
-        setInscriptionModal(function(prev) {
-          if (!prev || prev.postId !== postId) return prev;
-          return Object.assign({}, prev, { loading: false, erreur: e.message });
-        });
-      });
-    });
+    navigate('/evenement/' + postId + '/inscription');
   }
 
-  function fermerInscription() {
-    setInscriptionModal(null);
-  }
-
-  function confirmerInscription() {
-    if (!inscriptionModal) return;
-    if (!inscriptionModal.nom.trim() || !inscriptionModal.telephone.trim()) {
-      setInscriptionModal(function(prev) { return Object.assign({}, prev, { erreur: 'Nom et telephone requis.' }); });
-      return;
-    }
-    setInscriptionModal(function(prev) { return Object.assign({}, prev, { envoi: true, erreur: '' }); });
-    import('../../services/api').then(function(mod) {
-      mod.postsApi.inscrireEvenement(inscriptionModal.postId, {
-        nom: inscriptionModal.nom.trim(),
-        telephone: inscriptionModal.telephone.trim(),
-      }).then(function() {
-        setInscriptionModal(function(prev) { return Object.assign({}, prev, { envoi: false, success: true }); });
-      }).catch(function(e) {
-        setInscriptionModal(function(prev) { return Object.assign({}, prev, { envoi: false, erreur: e.message }); });
-      });
-    });
-  }
   function toggleLike(i) {
 const post = postsState[i];
 if (!post._id) { setLiked(l => ({ ...l, [i]: !l[i] })); return; }
@@ -655,6 +597,12 @@ function matchesSearch(post, query) {
 
   return (
     <AppShell>
+      <style>{`
+        @keyframes pulseInscription {
+          0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(200,168,75,0.5); }
+          50% { transform: scale(1.07); box-shadow: 0 0 0 5px rgba(200,168,75,0); }
+        }
+      `}</style>
       <div style={{ minHeight: '100vh', background: '#F5F0E8', backgroundImage: BOGOLAN }}>
 
         {/* HEADER */}
@@ -871,7 +819,7 @@ function matchesSearch(post, query) {
                 {post.type === 'inscription' && (
                   <span style={{ fontSize: 8, background: '#0D3B2E', color: '#C8A84B', borderRadius: 10, padding: '3px 8px', fontWeight: 700 }}>INSCRIPTION</span>
                 )}
-                                {post.type === 'evenement' && (
+                {post.type === 'evenement' && (
                   <span style={{ fontSize: 8, background: '#0D3B2E', color: '#C8A84B', borderRadius: 10, padding: '3px 8px', fontWeight: 700 }}>EVENEMENT</span>
                 )}
                 {post.urgent && (
@@ -931,21 +879,20 @@ function matchesSearch(post, query) {
               {post.type === 'normal' && (
                 <div style={{ padding: '0 12px 10px', fontSize: 12, color: '#3a3a3a', lineHeight: 1.5 }}>{post.texte}</div>
               )}
-                            {post.type === 'evenement' && (
+
+              {post.type === 'evenement' && (
                 <div style={{ padding: '0 12px 10px' }}>
-                  <div style={{ fontSize: 12, color: '#3a3a3a', lineHeight: 1.5, marginBottom: 10 }}>{post.texte}</div>
+                  <div style={{ fontSize: 12, color: '#3a3a3a', lineHeight: 1.5, marginBottom: 8 }}>{post.texte}</div>
                   {post.eventCapacity != null && (
-                    <div style={{ fontSize: 10, color: '#8B6020', fontWeight: 700, marginBottom: 8 }}>
+                    <div style={{ fontSize: 10, color: '#8B6020', fontWeight: 700, marginBottom: 4 }}>
                       Places limitees : {post.eventCapacity}
                     </div>
                   )}
-                  <button onClick={() => ouvrirInscription(post._id)} style={{
-                    width: '100%', padding: 9, background: 'linear-gradient(135deg,#C8A84B,#8B6020)',
-                    border: 'none', borderRadius: 18, color: '#1e2d14', fontWeight: 700, fontSize: 11,
-                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                  }}>
-                    <i className="ti ti-calendar-event" style={{ fontSize: 13 }} /> S'inscrire
-                  </button>
+                  {isAdmin && (
+                    <div onClick={function(e) { e.stopPropagation(); navigate('/evenement/' + post._id + '/inscrits'); }} style={{ fontSize: 10, color: '#8B6020', fontWeight: 700, textDecoration: 'underline', cursor: 'pointer' }}>
+                      Voir les inscrits →
+                    </div>
+                  )}
                 </div>
               )}
               {(post.image || post.video) && grilleImages(post, i)}
@@ -976,6 +923,16 @@ return prev.map(function(p, idx) { return idx === i ? Object.assign({}, p, { sha
 }} style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}>
 <i className="ti ti-share" style={{ fontSize: 13 }} /> {postsState[i]?.sharesCount ?? 0}
 </span>
+                {post.type === 'evenement' && (
+                  <span onClick={function(e) { e.stopPropagation(); ouvrirInscription(post._id); }} style={{
+                    marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer',
+                    background: 'linear-gradient(135deg,#C8A84B,#8B6020)', color: '#1e2d14', fontWeight: 700,
+                    padding: '5px 12px', borderRadius: 14, fontSize: 10.5,
+                    animation: 'pulseInscription 1.8s ease-in-out infinite',
+                  }}>
+                    <i className="ti ti-calendar-event" style={{ fontSize: 12 }} /> S'inscrire
+                  </span>
+                )}
               </div>
 
               {/* Section commentaires integree (deroulante, style Facebook) */}
@@ -1223,81 +1180,6 @@ style={{ width: '100%', maxHeight: '80vh', objectFit: 'contain' }}
 <i className="ti ti-x" style={{ color: '#fff', fontSize: 16 }} />
 </div>
 </div>
-)}
-
-{inscriptionModal && (
-  <div onClick={fermerInscription} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 2100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-    <div onClick={function(e) { e.stopPropagation(); }} style={{ background: '#fff', borderRadius: 16, padding: '20px 18px', width: '100%', maxWidth: 360 }}>
-      <div style={{ fontFamily: 'Georgia,serif', fontSize: 15, fontWeight: 700, color: '#1e2d14', marginBottom: 4 }}>
-        {inscriptionModal.success ? 'Inscription confirmee' : "S'inscrire a l'evenement"}
-      </div>
-
-      {inscriptionModal.loading && (
-        <div style={{ fontSize: 12, color: '#9A8E7E', padding: '10px 0' }}>Verification en cours...</div>
-      )}
-
-      {!inscriptionModal.loading && inscriptionModal.success && (
-        <div style={{ fontSize: 12, color: '#3a3a3a', padding: '10px 0 16px', lineHeight: 1.5 }}>
-          Votre inscription a bien ete enregistree. A bientot !
-        </div>
-      )}
-
-      {!inscriptionModal.loading && !inscriptionModal.success && inscriptionModal.dejaInscrit && (
-        <div style={{ fontSize: 12, color: '#3a3a3a', padding: '10px 0 16px', lineHeight: 1.5 }}>
-          Vous etes deja inscrit(e) a cet evenement.
-        </div>
-      )}
-
-      {!inscriptionModal.loading && !inscriptionModal.success && !inscriptionModal.dejaInscrit && inscriptionModal.complet && (
-        <div style={{ fontSize: 12, color: '#b71c1c', padding: '10px 0 16px', lineHeight: 1.5 }}>
-          Il n'y a plus de places disponibles pour cet evenement.
-        </div>
-      )}
-
-      {!inscriptionModal.loading && !inscriptionModal.success && !inscriptionModal.dejaInscrit && !inscriptionModal.complet && (
-        <>
-          {inscriptionModal.placesRestantes != null && (
-            <div style={{ fontSize: 10.5, color: '#8B6020', fontWeight: 700, marginBottom: 12 }}>
-              {inscriptionModal.placesRestantes} place(s) restante(s)
-            </div>
-          )}
-          <label style={{ fontSize: 10.5, color: '#9A8E7E', display: 'block', marginBottom: 4 }}>Nom complet</label>
-          <input
-            type="text"
-            value={inscriptionModal.nom}
-            onChange={function(e) { const v = e.target.value; setInscriptionModal(function(prev) { return Object.assign({}, prev, { nom: v }); }); }}
-            style={{ width: '100%', border: '1.5px solid rgba(200,168,75,0.3)', borderRadius: 10, padding: '9px 12px', fontSize: 13, boxSizing: 'border-box', fontFamily: 'Georgia,serif', color: '#1e2d14', marginBottom: 10 }}
-          />
-          <label style={{ fontSize: 10.5, color: '#9A8E7E', display: 'block', marginBottom: 4 }}>Telephone</label>
-          <input
-            type="tel"
-            value={inscriptionModal.telephone}
-            onChange={function(e) { const v = e.target.value; setInscriptionModal(function(prev) { return Object.assign({}, prev, { telephone: v }); }); }}
-            style={{ width: '100%', border: '1.5px solid rgba(200,168,75,0.3)', borderRadius: 10, padding: '9px 12px', fontSize: 13, boxSizing: 'border-box', fontFamily: 'Georgia,serif', color: '#1e2d14', marginBottom: 14 }}
-          />
-        </>
-      )}
-
-      {inscriptionModal.erreur && (
-        <div style={{ fontSize: 11, color: '#e53935', marginBottom: 10 }}>{inscriptionModal.erreur}</div>
-      )}
-
-      <div style={{ display: 'flex', gap: 8 }}>
-        {!inscriptionModal.loading && !inscriptionModal.success && !inscriptionModal.dejaInscrit && !inscriptionModal.complet && (
-          <button onClick={confirmerInscription} disabled={inscriptionModal.envoi} style={{
-            flex: 1, padding: 11, background: 'linear-gradient(135deg,#C8A84B,#8B6020)', border: 'none', borderRadius: 10,
-            color: '#1e2d14', fontWeight: 700, fontSize: 12, cursor: inscriptionModal.envoi ? 'default' : 'pointer',
-            opacity: inscriptionModal.envoi ? 0.6 : 1,
-          }}>
-            {inscriptionModal.envoi ? 'Envoi...' : 'Confirmer mon inscription'}
-          </button>
-        )}
-        <button onClick={fermerInscription} style={{ flex: inscriptionModal.success || inscriptionModal.dejaInscrit || inscriptionModal.complet ? 1 : 'none', padding: 11, background: 'none', border: '1.5px solid #e5e0d5', borderRadius: 10, color: '#7A6E5E', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>
-          {inscriptionModal.success || inscriptionModal.dejaInscrit || inscriptionModal.complet ? 'Fermer' : 'Annuler'}
-        </button>
-      </div>
-    </div>
-  </div>
 )}
 </AppShell>
 );
