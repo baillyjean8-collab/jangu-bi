@@ -664,13 +664,9 @@ export default function CreatePostPage() {
   }
 
   function rendreControles() {
-    if (!activeMedia) return null;
+        if (!activeMedia) return null;
     return (
       <>
-        <button onClick={retirerMediaActif} style={{ position: 'absolute', top: 12, left: 12, width: 30, height: 30, borderRadius: '50%', background: 'rgba(0,0,0,0.45)', border: 'none', color: '#fff', fontSize: 14, cursor: 'pointer', zIndex: 12 }}>
-          <i className="ti ti-x" />
-        </button>
-
         {mediaItems.length > 1 && (
           <>
             <button
@@ -686,9 +682,6 @@ export default function CreatePostPage() {
           </>
         )}
 
-        <button onClick={ouvrirSelecteurFichiers} style={{ position: 'absolute', top: 12, right: 56, width: 34, height: 34, borderRadius: '50%', background: 'rgba(0,0,0,0.45)', border: 'none', color: '#fff', fontSize: 16, cursor: 'pointer', zIndex: 12 }}>
-          +
-        </button>
 
                 {/* Colonne complete, icones seules sans libelle, dans l'ordre exact de la
             maquette de reference. Seuls Ajuster/Texte/Filtres/Cadrer sont relies a
