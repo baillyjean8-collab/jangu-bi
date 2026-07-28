@@ -91,6 +91,7 @@ export default function App() {
             <Route path="/groupes/:id" element={<ProtectedRoute><GroupDetailPage /></ProtectedRoute>} />
             <Route path="/evenement/:postId/inscription" element={<ProtectedRoute><EvenementInscriptionPage /></ProtectedRoute>} />
             <Route path="/evenement/:postId/inscrits" element={<ProtectedRoute><EvenementInscritsPage /></ProtectedRoute>} />
+            <Route path="/evenement-paiement-retour" element={<ProtectedRoute><EvenementPaiementRetourPage /></ProtectedRoute>} />
           
             {/* ── Panel Admin Paroisse ── */}
             <Route path="/parish-admin/login"        element={<AdminLoginPage />} />
