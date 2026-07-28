@@ -1047,8 +1047,8 @@ export default function CreatePostPage() {
       </div>
 
       {editionOuverte && activeMedia && (
-        <div style={{ position: 'fixed', top: 0, bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: 430, background: '#000', zIndex: 1000, display: 'flex', flexDirection: 'column' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '44px 16px 6px', position: 'relative', zIndex: 20 }}>
+                <div style={{ position: 'fixed', top: 0, bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: 430, background: '#000', zIndex: 1000, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '44px 16px 6px', position: 'relative', zIndex: 20, flexShrink: 0 }}>
             <button onClick={function() { setEditionOuverte(false); }} style={{ width: 34, height: 34, borderRadius: '50%', background: 'rgba(0,0,0,0.45)', border: 'none', color: '#fff', fontSize: 17, cursor: 'pointer' }}>‹</button>
             {mediaItems.length > 1 ? (
               <div style={{ display: 'flex', gap: 5 }}>
@@ -1063,7 +1063,7 @@ export default function CreatePostPage() {
             ref={conteneurMediaRef}
             onMouseDown={activePanel === 'recadrer' ? undefined : demarrerGlisser} onMouseMove={activePanel === 'recadrer' ? undefined : bougerGlisser} onMouseUp={activePanel === 'recadrer' ? undefined : arreterGlisser} onMouseLeave={activePanel === 'recadrer' ? undefined : arreterGlisser}
             onTouchStart={activePanel === 'recadrer' ? undefined : demarrerGlisser} onTouchMove={activePanel === 'recadrer' ? undefined : bougerGlisser} onTouchEnd={activePanel === 'recadrer' ? undefined : arreterGlisser}
-            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000', padding: 12, boxSizing: 'border-box', position: 'relative' }}
+          style={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000', padding: 12, boxSizing: 'border-box', position: 'relative' }}
           >
             {activePanel === 'recadrer' ? rendreRecadrage() : (
               <>
@@ -1074,7 +1074,7 @@ export default function CreatePostPage() {
               </>
             )}
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 16px 22px', position: 'relative', zIndex: 20 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 16px 22px', position: 'relative', zIndex: 20, flexShrink: 0 }}>
             <button onClick={function() { if (activePanel === 'recadrer') { setActivePanel(null); } else { setEditionOuverte(false); } }} style={{ background: 'rgba(255,255,255,0.12)', color: '#fff', border: 'none', padding: '10px 20px', borderRadius: 999, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Annuler</button>
             <button onClick={function() { if (activePanel === 'recadrer') { setActivePanel(null); } else { setEditionOuverte(false); } }} style={{ background: OR, color: VERT, border: 'none', padding: '10px 22px', borderRadius: 999, fontSize: 13.5, fontWeight: 700, cursor: 'pointer' }}>Termine</button>
           </div>
