@@ -302,7 +302,7 @@ if (!post) throw new NotFoundError('Post');
 return sendSuccess(res, { post });
 },
 
-  async update(req, res) {
+    async update(req, res) {
     const allowAny = req.user.role === 'super_admin';
     const updates = {};
     if (req.body.content !== undefined) updates.content = req.body.content;
@@ -311,6 +311,18 @@ return sendSuccess(res, { post });
     if (req.body.isActive !== undefined) updates.isActive = req.body.isActive;
     if (req.body.eventCapacity !== undefined) {
       updates.eventCapacity = (req.body.eventCapacity != null && req.body.eventCapacity !== '') ? Number(req.body.eventCapacity) : null;
+    }
+    if (req.body.autoriserAnnulation !== undefined) {
+      updates.autoriserAnnulation = req.body.autoriserAnnulation !== false;
+    }
+    if (req.body.inscriptionDebut !== undefined) {
+      updates.inscriptionDebut = req.body.inscriptionDebut ? new Date(req.body.inscriptionDebut) : null;
+    }
+    if (req.body.inscriptionFin !== undefined) {
+      updates.inscriptionFin = req.body.inscriptionFin ? new Date(req.body.inscriptionFin) : null;
+    }
+    if (req.body.eventFeeAmount !== undefined) {
+      updates.eventFeeAmount = (req.body.eventFeeAmount != null && req.body.eventFeeAmount !== '') ? Number(req.body.eventFeeAmount) : null;
     }
     const post = await postRepo.updateById(req.params.id, req.user.parishId, updates, allowAny);
     if (!post) throw new NotFoundError('Post');
