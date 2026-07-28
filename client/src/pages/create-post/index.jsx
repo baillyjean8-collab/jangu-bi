@@ -50,8 +50,10 @@ export default function CreatePostPage() {
   const [placesLimitees, setPlacesLimitees] = useState(false);
   const [capaciteMax, setCapaciteMax] = useState(50);
   const [autoriserAnnulation, setAutoriserAnnulation] = useState(true);
-  const [inscriptionDebut, setInscriptionDebut] = useState('');
+    const [inscriptionDebut, setInscriptionDebut] = useState('');
   const [inscriptionFin, setInscriptionFin] = useState('');
+  const [estPayant, setEstPayant] = useState(false);
+  const [tarifParPersonne, setTarifParPersonne] = useState(1000);
 
   const [mediaItems, setMediaItems] = useState([]);
   const [activeIndex, setActiveIndex] = useState(0);
