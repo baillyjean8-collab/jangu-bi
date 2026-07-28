@@ -929,7 +929,7 @@ export default function CreatePostPage() {
             disabled={publishing}
             style={{ width: '100%', padding: 14, background: publishing ? 'rgba(200,168,75,0.5)' : 'linear-gradient(135deg,#C8A84B,#8B6020)', border: 'none', borderRadius: 14, color: VERT, fontWeight: 700, fontSize: 14, fontFamily: 'Georgia,serif', cursor: publishing ? 'default' : 'pointer' }}
           >
-            {publishing ? 'Publication en cours...' : 'Publier'}
+          {publishing ? (editId ? 'Enregistrement...' : 'Publication en cours...') : (editId ? 'Enregistrer les modifications' : 'Publier')}
           </button>
         </div>
       </div>
