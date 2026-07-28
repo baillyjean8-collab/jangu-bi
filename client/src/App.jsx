@@ -26,6 +26,7 @@ import MessagesPage from './pages/messages';
 import GroupDetailPage from './pages/groupes';
 import EvenementInscriptionPage from './pages/evenement-inscription';
 import EvenementInscritsPage from './pages/evenement-inscrits';
+import EvenementPaiementRetourPage from './pages/evenement-paiement-retour';
 // Context
 import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './components/ui';
