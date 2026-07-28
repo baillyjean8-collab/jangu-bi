@@ -272,8 +272,9 @@ export default function CreatePostPage() {
     const img = imgCropRef.current;
     if (!img) return;
     const cw = img.width, ch = img.height;
-    if (cadreId === 'libre') {
+        if (cadreId === 'libre') {
       setAspectActuel(undefined);
+      setCropTemp({ unit: '%', x: 0, y: 0, width: 100, height: 100 });
       return;
     }
     const cadre = CADRES.find(function(c) { return c.id === cadreId; });
@@ -631,7 +632,7 @@ export default function CreatePostPage() {
 
   function rendreMedia() {
     if (!activeMedia) return null;
-    const fit = objectFitPour(activeMedia);
+    const fit = 'cover';
     return (
       <>
         {activeMedia.kind === 'video' ? (
@@ -1065,7 +1066,7 @@ export default function CreatePostPage() {
           >
             {activePanel === 'recadrer' ? rendreRecadrage() : (
               <>
-            <div style={{ position: 'relative', width: '100%', maxHeight: '100%', aspectRatio: ratioEffectif(activeMedia) + ' / 1', overflow: 'hidden', borderRadius: 0, cursor: doitRemplirLeCadre(activeMedia) ? 'grab' : 'default' }}>
+          <div style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', borderRadius: 0, cursor: doitRemplirLeCadre(activeMedia) ? 'grab' : 'default' }}>
                   {rendreMedia()}
                 </div>
                 {rendreControles()}
