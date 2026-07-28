@@ -32,11 +32,14 @@ const eventRegistrationSchema = new mongoose.Schema({
       message: 'Il faut entre 1 et 20 participants par inscription.',
     },
   },
-  statutPaiement: {
+    statutPaiement: {
     type: String,
     enum: ['non_requis', 'en_attente', 'paye_ligne', 'paye_sur_place'],
     default: 'non_requis',
   },
+  montantTotal: { type: Number, default: 0, min: 0 },
+  provider: { type: String, default: null },
+  providerTransactionId: { type: String, default: null, index: true },
 }, { timestamps: true });
 
 eventRegistrationSchema.index({ postId: 1, userId: 1 }, { unique: true });
