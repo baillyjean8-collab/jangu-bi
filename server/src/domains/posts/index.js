@@ -1,6 +1,7 @@
 'use strict';
 
 const Joi = require('joi');
+const crypto = require('crypto');
 const mongoose = require('mongoose');
 const router = require('express').Router();
 const { Post, EventRegistration } = require('../../models');
@@ -9,6 +10,8 @@ const { authorize } = require('../../middlewares/authorize');
 const { asyncHandler } = require('../../middlewares/errorHandler');
 const { sendSuccess, sendCreated } = require('../../shared/utils/response');
 const { NotFoundError, AuthorizationError, ValidationError, ConflictError } = require('../../shared/errors');
+const cinetpay = require('../../shared/services/cinetpay');
+const config = require('../../config/env');
 
 const postRepo = {
   async create(data) {
@@ -179,7 +182,7 @@ async resolveReportedComment(postId, commentId, action) {
     );
   },
 
-    // ── Inscriptions aux evenements (gratuit, sans paiement pour l'instant) ──
+    // ── Inscriptions aux evenements ──
   // Le nombre de "places" se compte en personnes (participants), pas en
   // soumissions : une famille de 4 qui s'inscrit ensemble prend 4 places.
 
@@ -191,7 +194,7 @@ async resolveReportedComment(postId, commentId, action) {
     return result.length ? result[0].total : 0;
   },
 
-  async createRegistration(postId, userId, telephone, participants) {
+  async createRegistration(postId, userId, telephone, participants, champsPaiement) {
     const post = await Post.findById(postId);
     if (!post) throw new NotFoundError('Post');
     if (post.type !== 'EVENEMENT') {
@@ -209,7 +212,7 @@ async resolveReportedComment(postId, commentId, action) {
       }
     }
     try {
-      return await EventRegistration.create({ postId, userId, telephone, participants });
+      return await EventRegistration.create(Object.assign({ postId, userId, telephone, participants }, champsPaiement || {}));
     } catch (e) {
       if (e.code === 11000) {
         throw new ConflictError('Vous etes deja inscrit(e) a cet evenement');
@@ -235,18 +238,22 @@ async resolveReportedComment(postId, commentId, action) {
       .lean();
   },
 
-    async cancelRegistration(postId, userId) {
+  async cancelRegistration(postId, userId) {
     return EventRegistration.findOneAndDelete({ postId, userId });
   },
 
   async cancelRegistrationById(registrationId, userId) {
     return EventRegistration.findOneAndDelete({ _id: registrationId, userId });
   },
+
+  async findRegistrationByTransactionId(transactionId) {
+    return EventRegistration.findOne({ providerTransactionId: transactionId });
+  },
 };
 
 const postController = {
 async create(req, res) {
-const { content, imageUrl, imageUrls, videoUrl, type, eventCapacity, autoriserAnnulation, inscriptionDebut, inscriptionFin } = req.body;
+const { content, imageUrl, imageUrls, videoUrl, type, eventCapacity, autoriserAnnulation, inscriptionDebut, inscriptionFin, eventFeeAmount } = req.body;
 const parishId = req.user.parishId;
 if (!parishId) throw new AuthorizationError('No parish assigned');
 const post = await postRepo.create({
@@ -255,6 +262,7 @@ const post = await postRepo.create({
   autoriserAnnulation: autoriserAnnulation !== false,
   inscriptionDebut: inscriptionDebut ? new Date(inscriptionDebut) : null,
   inscriptionFin: inscriptionFin ? new Date(inscriptionFin) : null,
+  eventFeeAmount: (eventFeeAmount != null && eventFeeAmount !== '') ? Number(eventFeeAmount) : null,
 });
 return sendCreated(res, { post }, 'Publication creee');
 },
@@ -384,10 +392,46 @@ async resolveReported(req, res) {
         trancheAge: p.trancheAge,
       };
     });
+
+    const estPayant = post.eventFeeAmount != null && post.eventFeeAmount > 0;
+
+    if (!estPayant) {
+      const inscription = await postRepo.createRegistration(
+        req.params.id, req.user.userId, String(telephone).trim(), participantsPropres,
+        { statutPaiement: 'non_requis' }
+      );
+      return sendCreated(res, { inscription }, 'Inscription confirmee');
+    }
+
+    // ── Evenement payant : on cree l'inscription en attente de paiement,
+    // puis on demande a CinetPay un lien de paiement reel. ──
+    const montantTotal = post.eventFeeAmount * participantsPropres.length;
+    const transactionId = 'EVT-' + new mongoose.Types.ObjectId().toString() + '-' + Date.now();
+
     const inscription = await postRepo.createRegistration(
-      req.params.id, req.user.userId, String(telephone).trim(), participantsPropres
+      req.params.id, req.user.userId, String(telephone).trim(), participantsPropres,
+      { statutPaiement: 'en_attente', montantTotal: montantTotal, provider: 'cinetpay', providerTransactionId: transactionId }
     );
-    return sendCreated(res, { inscription }, 'Inscription confirmee');
+
+    try {
+      const baseServeur = req.protocol + '://' + req.get('host');
+      const { paymentUrl } = await cinetpay.creerPaiement({
+        transactionId: transactionId,
+        montant: montantTotal,
+        description: 'Inscription evenement : ' + (post.content || '').slice(0, 80),
+        retourUrl: config.client.url + '/evenement-paiement-retour?postId=' + req.params.id,
+        notifyUrl: baseServeur + '/api/posts/inscriptions/webhook/cinetpay',
+        nomClient: participantsPropres[0].nom,
+        telephoneClient: String(telephone).trim(),
+      });
+      return sendCreated(res, { inscription, paymentUrl }, 'Paiement a finaliser');
+    } catch (e) {
+      // Le paiement n'a pas pu etre initie (CinetPay pas encore configure,
+      // ou erreur reseau) : on annule l'inscription en attente pour ne pas
+      // laisser de trace fantome, et on previent clairement l'utilisateur.
+      await EventRegistration.findByIdAndDelete(inscription._id);
+      throw new ValidationError('Le paiement en ligne est momentanement indisponible : ' + e.message);
+    }
   },
 
   async listEventRegistrations(req, res) {
@@ -421,6 +465,7 @@ async resolveReported(req, res) {
       capacite: post.eventCapacity,
       placesRestantes,
       autoriserAnnulation: post.autoriserAnnulation !== false,
+      statutPaiement: inscription ? inscription.statutPaiement : null,
     });
   },
 
@@ -435,7 +480,7 @@ async resolveReported(req, res) {
     return sendSuccess(res, {}, 'Inscription annulee');
   },
 
-    async mesInscriptions(req, res) {
+  async mesInscriptions(req, res) {
     const inscriptions = await postRepo.listMesInscriptions(req.user.userId);
     return sendSuccess(res, { inscriptions });
   },
@@ -444,6 +489,29 @@ async resolveReported(req, res) {
     const supprime = await postRepo.cancelRegistrationById(req.params.registrationId, req.user.userId);
     if (!supprime) throw new NotFoundError('Inscription');
     return sendSuccess(res, {}, 'Inscription annulee');
+  },
+
+  // Webhook CinetPay : appele par CinetPay (pas par le fidele) quand un paiement
+  // change de statut. On ne fait jamais confiance au contenu recu directement :
+  // on reinterroge CinetPay avec notre propre cle API pour avoir le vrai statut.
+  async webhookCinetpay(req, res) {
+    const transactionId = req.body && (req.body.cpm_trans_id || req.body.transaction_id);
+    if (!transactionId) {
+      return sendSuccess(res, { recu: true, raison: 'transaction_id manquant' });
+    }
+    const inscription = await postRepo.findRegistrationByTransactionId(transactionId);
+    if (!inscription) {
+      return sendSuccess(res, { recu: true, raison: 'inscription inconnue' });
+    }
+    if (inscription.statutPaiement === 'paye_ligne') {
+      return sendSuccess(res, { recu: true, deja_traite: true });
+    }
+    const { reussi } = await cinetpay.verifierPaiement(transactionId);
+    if (reussi) {
+      inscription.statutPaiement = 'paye_ligne';
+      await inscription.save();
+    }
+    return sendSuccess(res, { recu: true, reussi: reussi });
   },
 
   async updateStatutPaiement(req, res) {
@@ -576,6 +644,12 @@ router.delete('/:id/inscription',
 router.delete('/inscriptions/:registrationId',
   authenticate, requireVerified,
   asyncHandler(postController.annulerInscriptionParId)
+);
+
+// Webhook CinetPay : appele par CinetPay lui-meme, jamais par le navigateur du
+// fidele. Pas d'authentification utilisateur ici (comme pour les dons).
+router.post('/inscriptions/webhook/cinetpay',
+  asyncHandler(postController.webhookCinetpay)
 );
 
 module.exports = { router, postRepo };
