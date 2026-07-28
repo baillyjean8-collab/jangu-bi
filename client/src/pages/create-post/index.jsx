@@ -689,33 +689,51 @@ export default function CreatePostPage() {
           +
         </button>
 
-        <div style={{ position: 'absolute', top: 56, right: 12, display: 'flex', flexDirection: 'column', gap: 16, zIndex: 12 }}>
-          <div onClick={function() { setActivePanel(activePanel === 'filtres' ? null : 'filtres'); }} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, cursor: 'pointer' }}>
-            <div style={{ width: 38, height: 38, borderRadius: '50%', border: 'none', background: activePanel === 'filtres' ? OR : 'rgba(0,0,0,0.45)', color: activePanel === 'filtres' ? VERT : '#fff', fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <i className="ti ti-palette" />
-            </div>
-            <span style={{ fontSize: 9, color: '#fff', fontWeight: 700 }}>Filtres</span>
+                {/* Colonne complete, icones seules sans libelle, dans l'ordre exact de la
+            maquette de reference. Seuls Ajuster/Texte/Filtres/Cadrer sont relies a
+            une vraie fonction pour l'instant ; les autres sont presents visuellement,
+            en attente d'une future fonctionnalite. */}
+        <div style={{ position: 'absolute', top: 56, right: 12, display: 'flex', flexDirection: 'column', gap: 18, zIndex: 12, alignItems: 'center' }}>
+          <div onClick={function() { setActivePanel(activePanel === 'ajuster' ? null : 'ajuster'); }} style={{ width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: activePanel === 'ajuster' ? OR : '#fff', fontSize: 20 }}>
+            <i className="ti ti-settings" />
           </div>
 
-          <div onClick={function() { setActivePanel(activePanel === 'ajuster' ? null : 'ajuster'); }} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, cursor: 'pointer' }}>
-            <div style={{ width: 38, height: 38, borderRadius: '50%', border: 'none', background: activePanel === 'ajuster' ? OR : 'rgba(0,0,0,0.45)', color: activePanel === 'ajuster' ? VERT : '#fff', fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <i className="ti ti-sun" />
-            </div>
-            <span style={{ fontSize: 9, color: '#fff', fontWeight: 700 }}>Ajuster</span>
+          <div style={{ width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'default', color: '#fff', fontSize: 20, opacity: 0.55 }}>
+            <i className="ti ti-share" />
           </div>
 
-          <div onClick={function() { setActivePanel(activePanel === 'texte' ? null : 'texte'); }} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, cursor: 'pointer' }}>
-            <div style={{ width: 38, height: 38, borderRadius: '50%', border: 'none', background: activeMedia.texteAjoute || activePanel === 'texte' ? OR : 'rgba(0,0,0,0.45)', color: activeMedia.texteAjoute || activePanel === 'texte' ? VERT : '#fff', fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              Aa
-            </div>
-            <span style={{ fontSize: 9, color: '#fff', fontWeight: 700 }}>Texte</span>
+          <div style={{ width: 3, height: 3, borderRadius: '50%', background: 'rgba(255,255,255,0.5)' }} />
+
+          <div style={{ width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'default', color: '#fff', fontSize: 20, opacity: 0.55 }}>
+            <i className="ti ti-camera-rotate" />
           </div>
 
-          <div onClick={function() { setActivePanel(activePanel === 'recadrer' ? null : 'recadrer'); }} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, cursor: 'pointer' }}>
-            <div style={{ width: 38, height: 38, borderRadius: '50%', border: 'none', background: activePanel === 'recadrer' ? OR : 'rgba(0,0,0,0.45)', color: activePanel === 'recadrer' ? VERT : '#fff', fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <i className="ti ti-crop" />
-            </div>
-            <span style={{ fontSize: 9, color: '#fff', fontWeight: 700 }}>Cadrer</span>
+          <div style={{ width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'default', color: '#fff', fontSize: 20, opacity: 0.55 }}>
+            <i className="ti ti-movie" />
+          </div>
+
+          <div onClick={function() { setActivePanel(activePanel === 'texte' ? null : 'texte'); }} style={{ width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: activeMedia.texteAjoute || activePanel === 'texte' ? OR : '#fff', fontSize: 17, fontWeight: 700 }}>
+            Aa
+          </div>
+
+          <div style={{ width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'default', color: '#fff', fontSize: 20, opacity: 0.55 }}>
+            <i className="ti ti-mood-smile" />
+          </div>
+
+          <div style={{ width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'default', color: '#fff', fontSize: 20, opacity: 0.55 }}>
+            <i className="ti ti-sparkles" />
+          </div>
+
+          <div onClick={function() { setActivePanel(activePanel === 'filtres' ? null : 'filtres'); }} style={{ width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: activePanel === 'filtres' ? OR : '#fff', fontSize: 20 }}>
+            <i className="ti ti-circles" />
+          </div>
+
+          <div onClick={function() { setActivePanel(activePanel === 'recadrer' ? null : 'recadrer'); }} style={{ width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: activePanel === 'recadrer' ? OR : '#fff', fontSize: 20 }}>
+            <i className="ti ti-crop" />
+          </div>
+
+          <div style={{ width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'default', color: '#fff', fontSize: 18, opacity: 0.55 }}>
+            <i className="ti ti-chevron-down" />
           </div>
         </div>
 
