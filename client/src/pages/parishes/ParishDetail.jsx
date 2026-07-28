@@ -76,6 +76,7 @@ export default function ParishDetail() {
 
   const [showCreate, setShowCreate] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [menuPubOuvert, setMenuPubOuvert] = useState(null);
   const [texte, setTexte] = useState('');
   const [typePub, setTypePub] = useState('NORMAL');
 
@@ -688,7 +689,7 @@ setEditZoom(1.15);
                 const estLike = likees.includes(pub._id);
                 const masquee = pub.isActive === false;
                 return (
-                  <div key={pub._id} style={{ background: "#fff", borderRadius: 16, marginBottom: 12, border: "1px solid #e8e4dc", overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.05)", opacity: masquee ? 0.6 : 1 }}>
+                                    <div key={pub._id} style={{ background: "#fff", borderRadius: 16, marginBottom: 12, border: "1px solid #e8e4dc", overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.05)", opacity: masquee ? 0.6 : 1, position: 'relative' }}>
                     <div style={{ padding: "14px 14px 10px" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
                         <div style={{ width: 40, height: 40, borderRadius: "50%", background: VERT, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, overflow: "hidden" }}>
@@ -699,6 +700,11 @@ setEditZoom(1.15);
                           <div style={{ fontSize: 11, color: "#bbb" }}>{formatTemps(pub.createdAt)}</div>
                         </div>
                         <span style={{ fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 10, background: tc.color, color: tc.tc }}>{tc.label}</span>
+                        {isOwner && (
+                          <div onClick={function(e) { e.stopPropagation(); setMenuPubOuvert(function(v) { return v === pub._id ? null : pub._id; }); }} style={{ width: 26, height: 26, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
+                            <i className="ti ti-dots-vertical" style={{ fontSize: 17, color: '#9A8E7E' }} />
+                          </div>
+                        )}
                       </div>
                       <p style={{ margin: 0, fontSize: 14, color: "#2a2a2a", lineHeight: 1.6 }}>{pub.content}</p>
                     </div>
@@ -708,17 +714,17 @@ setEditZoom(1.15);
   <img src={pub.imageUrl} alt="publication" style={{ width: '100%', display: 'block', maxHeight: 600, objectFit: 'cover', background: '#000' }} />
 )}
 
-                    {isOwner && (
-                      <div style={{ display: 'flex', gap: 6, padding: '0 14px 10px' }}>
-                        <button onClick={function() { ouvrirEdition(pub); }} style={{ flex: 1, background: 'rgba(200,168,75,0.12)', border: 'none', borderRadius: 8, padding: '6px 0', fontSize: 11, color: '#8B6020', cursor: 'pointer', fontWeight: 700 }}>
-                          <i className="ti ti-edit" style={{ fontSize: 12, verticalAlign: -1 }} /> Modifier
-                        </button>
-                        <button onClick={function() { masquerOuRepublier(pub); }} style={{ flex: 1, background: 'rgba(0,0,0,0.04)', border: 'none', borderRadius: 8, padding: '6px 0', fontSize: 11, color: '#7A6E5E', cursor: 'pointer', fontWeight: 700 }}>
-                          <i className={masquee ? 'ti ti-eye' : 'ti ti-eye-off'} style={{ fontSize: 12, verticalAlign: -1 }} /> {masquee ? 'Republier' : 'Masquer'}
-                        </button>
-                        <button onClick={function() { supprimerDefinitivement(pub); }} style={{ flex: 1, background: 'rgba(229,57,53,0.08)', border: 'none', borderRadius: 8, padding: '6px 0', fontSize: 11, color: '#e53935', cursor: 'pointer', fontWeight: 700 }}>
-                          <i className="ti ti-trash" style={{ fontSize: 12, verticalAlign: -1 }} /> Supprimer
-                        </button>
+                    {isOwner && menuPubOuvert === pub._id && (
+                      <div style={{ position: 'absolute', top: 46, right: 14, zIndex: 5, background: '#fff', borderRadius: 12, boxShadow: '0 4px 20px rgba(0,0,0,0.15)', border: '1px solid #eee', overflow: 'hidden', minWidth: 160 }}>
+                        <div onClick={function() { setMenuPubOuvert(null); ouvrirEdition(pub); }} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '11px 14px', fontSize: 12.5, color: '#3a3a3a', cursor: 'pointer', borderBottom: '1px solid #f2f2f2' }}>
+                          <i className="ti ti-edit" style={{ fontSize: 14, color: '#8B6020' }} /> Modifier
+                        </div>
+                        <div onClick={function() { setMenuPubOuvert(null); masquerOuRepublier(pub); }} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '11px 14px', fontSize: 12.5, color: '#3a3a3a', cursor: 'pointer', borderBottom: '1px solid #f2f2f2' }}>
+                          <i className={masquee ? 'ti ti-eye' : 'ti ti-eye-off'} style={{ fontSize: 14, color: '#7A6E5E' }} /> {masquee ? 'Republier' : 'Masquer'}
+                        </div>
+                        <div onClick={function() { setMenuPubOuvert(null); supprimerDefinitivement(pub); }} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '11px 14px', fontSize: 12.5, color: '#e53935', cursor: 'pointer' }}>
+                          <i className="ti ti-trash" style={{ fontSize: 14 }} /> Supprimer
+                        </div>
                       </div>
                     )}
 
