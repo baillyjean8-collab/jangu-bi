@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import AppShell from '../../components/AppShell';
 import { useAuth } from '../../context/AuthContext';
 import { postsApi, storiesApi } from '../../services/api';
@@ -36,7 +36,10 @@ const CADRES = [
 
 
 export default function CreatePostPage() {
-  const navigate = useNavigate();
+    const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const editId = searchParams.get('editId');
+  const [chargementEdition, setChargementEdition] = useState(!!editId);
   const { user } = useAuth();
   const fileInputRef = useRef(null);
   const dragRef = useRef({ actif: false, startX: 0, startY: 0, baseX: 0, baseY: 0 });
@@ -52,8 +55,38 @@ export default function CreatePostPage() {
   const [autoriserAnnulation, setAutoriserAnnulation] = useState(true);
     const [inscriptionDebut, setInscriptionDebut] = useState('');
   const [inscriptionFin, setInscriptionFin] = useState('');
-  const [estPayant, setEstPayant] = useState(false);
+    const [estPayant, setEstPayant] = useState(false);
   const [tarifParPersonne, setTarifParPersonne] = useState(1000);
+
+  useEffect(function() {
+    if (!editId) return;
+    async function chargerPourEdition() {
+      try {
+        const res = await postsApi.getOne(editId);
+        const post = res && res.data && res.data.post;
+        if (!post) { setErreur('Publication introuvable.'); return; }
+        setTexte(post.content || '');
+        setTypePub(post.type || 'NORMAL');
+        if (post.eventCapacity != null) {
+          setPlacesLimitees(true);
+          setCapaciteMax(post.eventCapacity);
+        }
+        setAutoriserAnnulation(post.autoriserAnnulation !== false);
+        if (post.inscriptionDebut) setInscriptionDebut(new Date(post.inscriptionDebut).toISOString().slice(0, 16));
+        if (post.inscriptionFin) setInscriptionFin(new Date(post.inscriptionFin).toISOString().slice(0, 16));
+        if (post.eventFeeAmount != null && post.eventFeeAmount > 0) {
+          setEstPayant(true);
+          setTarifParPersonne(post.eventFeeAmount);
+        }
+      } catch (e) {
+        setErreur(e.message || 'Impossible de charger la publication a modifier.');
+      } finally {
+        setChargementEdition(false);
+      }
+    }
+    chargerPourEdition();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editId]);
 
   const [mediaItems, setMediaItems] = useState([]);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -466,14 +499,28 @@ export default function CreatePostPage() {
 
   const premiereImage = mediaItems.find(function(m) { return m.kind === 'image'; });
 
-  async function publier() {
+    async function publier() {
     if (!texte.trim()) {
       setErreur('Ecrivez au moins une phrase avant de publier.');
       return;
     }
     setPublishing(true);
     setErreur('');
-    try {
+        try {
+      if (editId) {
+        await postsApi.update(editId, {
+          content: texte.trim(),
+          type: typePub,
+          eventCapacity: (typePub === 'EVENEMENT' && placesLimitees) ? capaciteMax : null,
+          autoriserAnnulation: typePub === 'EVENEMENT' ? autoriserAnnulation : undefined,
+          inscriptionDebut: (typePub === 'EVENEMENT' && inscriptionDebut) ? inscriptionDebut : undefined,
+          inscriptionFin: (typePub === 'EVENEMENT' && inscriptionFin) ? inscriptionFin : undefined,
+          eventFeeAmount: (typePub === 'EVENEMENT' && estPayant) ? tarifParPersonne : undefined,
+        });
+        navigate(-1);
+        return;
+      }
+
       const imagesAEnvoyer = mediaItems.filter(function(m) { return m.kind === 'image' && !m.local; });
       const imagesGravees = await Promise.all(imagesAEnvoyer.map(graverImageFinale));
       const videoValide = mediaItems.find(function(m) { return m.kind === 'video' && !m.local; });
