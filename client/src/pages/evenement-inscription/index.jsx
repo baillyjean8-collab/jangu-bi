@@ -197,9 +197,14 @@ export default function EvenementInscriptionPage() {
               <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.06)', borderRadius: 14, padding: 16, marginBottom: 18 }}>
                 <div style={{ fontSize: 10, color: '#8B6020', fontWeight: 700, marginBottom: 6, letterSpacing: '.04em' }}>EVENEMENT</div>
                 <div style={{ fontSize: 14, color: VERT, lineHeight: 1.5, marginBottom: 10, fontFamily: 'Georgia,serif' }}>{post.content}</div>
-                {post.eventCapacity != null && (
+                                {post.eventCapacity != null && (
                   <div style={{ fontSize: 11.5, color: '#8B6020', fontWeight: 700 }}>
                     {placesRestantes != null ? placesRestantes + ' place(s) restante(s) sur ' + post.eventCapacity : 'Places limitees : ' + post.eventCapacity}
+                  </div>
+                )}
+                {post.eventFeeAmount != null && post.eventFeeAmount > 0 && (
+                  <div style={{ fontSize: 11.5, color: '#8B6020', fontWeight: 700, marginTop: 4 }}>
+                    Tarif : {post.eventFeeAmount.toLocaleString('fr-FR')} FCFA / personne
                   </div>
                 )}
               </div>
