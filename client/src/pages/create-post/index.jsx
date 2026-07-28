@@ -1068,11 +1068,11 @@ export default function CreatePostPage() {
             ref={conteneurMediaRef}
             onMouseDown={activePanel === 'recadrer' ? undefined : demarrerGlisser} onMouseMove={activePanel === 'recadrer' ? undefined : bougerGlisser} onMouseUp={activePanel === 'recadrer' ? undefined : arreterGlisser} onMouseLeave={activePanel === 'recadrer' ? undefined : arreterGlisser}
             onTouchStart={activePanel === 'recadrer' ? undefined : demarrerGlisser} onTouchMove={activePanel === 'recadrer' ? undefined : bougerGlisser} onTouchEnd={activePanel === 'recadrer' ? undefined : arreterGlisser}
-            style={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000', padding: 12, boxSizing: 'border-box', position: 'relative' }}
+            style={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000', padding: 0, boxSizing: 'border-box', position: 'relative' }}
           >
             {activePanel === 'recadrer' ? rendreRecadrage() : (
               <>
-                <div style={{ position: 'relative', width: '100%', maxHeight: '100%', aspectRatio: ratioEffectif(activeMedia) + ' / 1', overflow: 'hidden', borderRadius: 4, cursor: doitRemplirLeCadre(activeMedia) ? 'grab' : 'default' }}>
+            <div style={{ position: 'relative', width: '100%', maxHeight: '100%', aspectRatio: ratioEffectif(activeMedia) + ' / 1', overflow: 'hidden', borderRadius: 0, cursor: doitRemplirLeCadre(activeMedia) ? 'grab' : 'default' }}>
                   {rendreMedia()}
                 </div>
                 {rendreControles()}
