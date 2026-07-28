@@ -388,12 +388,10 @@ setEditZoom(1.15);
     setShowCreate(true);
   }
 
-  function ouvrirEdition(post) {
-    setEditingId(post._id);
-    setTexte(post.content || '');
-    setTypePub(post.type || 'NORMAL');
-    setShowCreate(true);
+    function ouvrirEdition(post) {
+    navigate('/create?editId=' + post._id);
   }
+
 
   async function publier() {
     if (!texte.trim()) return;
