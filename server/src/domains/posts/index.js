@@ -235,8 +235,12 @@ async resolveReportedComment(postId, commentId, action) {
       .lean();
   },
 
-  async cancelRegistration(postId, userId) {
+    async cancelRegistration(postId, userId) {
     return EventRegistration.findOneAndDelete({ postId, userId });
+  },
+
+  async cancelRegistrationById(registrationId, userId) {
+    return EventRegistration.findOneAndDelete({ _id: registrationId, userId });
   },
 };
 
@@ -431,9 +435,15 @@ async resolveReported(req, res) {
     return sendSuccess(res, {}, 'Inscription annulee');
   },
 
-  async mesInscriptions(req, res) {
+    async mesInscriptions(req, res) {
     const inscriptions = await postRepo.listMesInscriptions(req.user.userId);
     return sendSuccess(res, { inscriptions });
+  },
+
+  async annulerInscriptionParId(req, res) {
+    const supprime = await postRepo.cancelRegistrationById(req.params.registrationId, req.user.userId);
+    if (!supprime) throw new NotFoundError('Inscription');
+    return sendSuccess(res, {}, 'Inscription annulee');
   },
 
   async updateStatutPaiement(req, res) {
@@ -561,6 +571,11 @@ router.get('/:id/inscriptions/moi',
 router.delete('/:id/inscription',
   authenticate, requireVerified,
   asyncHandler(postController.annulerInscription)
+);
+
+router.delete('/inscriptions/:registrationId',
+  authenticate, requireVerified,
+  asyncHandler(postController.annulerInscriptionParId)
 );
 
 module.exports = { router, postRepo };
