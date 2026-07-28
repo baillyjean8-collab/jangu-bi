@@ -307,6 +307,8 @@ return sendSuccess(res, { post });
     const updates = {};
     if (req.body.content !== undefined) updates.content = req.body.content;
     if (req.body.imageUrl !== undefined) updates.imageUrl = req.body.imageUrl;
+    if (req.body.imageUrls !== undefined) updates.imageUrls = req.body.imageUrls;
+    if (req.body.videoUrl !== undefined) updates.videoUrl = req.body.videoUrl;
     if (req.body.type !== undefined) updates.type = req.body.type;
     if (req.body.isActive !== undefined) updates.isActive = req.body.isActive;
     if (req.body.eventCapacity !== undefined) {
