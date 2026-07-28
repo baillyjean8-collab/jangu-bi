@@ -340,9 +340,18 @@ export default function EvenementInscriptionPage() {
                     <i className="ti ti-plus" /> Ajouter une personne
                   </div>
 
-                  {erreur && (
+                                    {erreur && (
                     <div style={{ marginBottom: 14, padding: '10px 14px', background: 'rgba(229,57,53,0.08)', border: '1px solid rgba(229,57,53,0.2)', borderRadius: 10, fontSize: 12, color: '#e53935' }}>
                       {erreur}
+                    </div>
+                  )}
+
+                  {post.eventFeeAmount != null && post.eventFeeAmount > 0 && (
+                    <div style={{ background: 'rgba(200,168,75,0.1)', border: '1px solid rgba(200,168,75,0.3)', borderRadius: 12, padding: '12px 14px', marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: 12, color: VERT, fontWeight: 700 }}>Montant total a payer</span>
+                      <span style={{ fontSize: 15, color: '#8B6020', fontWeight: 700, fontFamily: 'Georgia,serif' }}>
+                        {(post.eventFeeAmount * participants.length).toLocaleString('fr-FR')} FCFA
+                      </span>
                     </div>
                   )}
 
@@ -355,7 +364,7 @@ export default function EvenementInscriptionPage() {
                       cursor: envoi ? 'default' : 'pointer',
                     }}
                   >
-                    {envoi ? 'Envoi...' : 'Confirmer mon inscription'}
+                    {envoi ? 'Envoi...' : (post.eventFeeAmount > 0 ? 'Payer et confirmer mon inscription' : 'Confirmer mon inscription')}
                   </button>
                 </>
               )}
