@@ -526,10 +526,19 @@ export default function CreatePostPage() {
     setPublishing(true);
     setErreur('');
         try {
-      if (editId) {
+            if (editId) {
+        const imagesExistantesGardees = mediaItems.filter(function(m) { return m.kind === 'image' && m.dejaHeberge; }).map(function(m) { return m.url; });
+        const imagesNouvelles = mediaItems.filter(function(m) { return m.kind === 'image' && !m.dejaHeberge && !m.local; });
+        const imagesNouvellesGravees = await Promise.all(imagesNouvelles.map(graverImageFinale));
+        const toutesLesImages = imagesExistantesGardees.concat(imagesNouvellesGravees);
+        const videoExistante = mediaItems.find(function(m) { return m.kind === 'video' && m.dejaHeberge; });
+
         await postsApi.update(editId, {
           content: texte.trim(),
           type: typePub,
+          imageUrl: toutesLesImages[0] || null,
+          imageUrls: toutesLesImages,
+          videoUrl: videoExistante ? videoExistante.url : (toutesLesImages.length ? null : undefined),
           eventCapacity: (typePub === 'EVENEMENT' && placesLimitees) ? capaciteMax : null,
           autoriserAnnulation: typePub === 'EVENEMENT' ? autoriserAnnulation : undefined,
           inscriptionDebut: (typePub === 'EVENEMENT' && inscriptionDebut) ? inscriptionDebut : undefined,
@@ -875,7 +884,7 @@ export default function CreatePostPage() {
 
           {mediaItems.length > 0 && (
             <div style={{ display: 'flex', gap: 8, overflowX: 'auto', marginBottom: 10 }}>
-              {mediaItems.map(function(m, i) {
+                            {mediaItems.map(function(m, i) {
                 return (
                   <div key={i} onClick={function() { setActiveIndex(i); }} style={{ position: 'relative', flexShrink: 0, width: 56, height: 56, borderRadius: 10, overflow: 'hidden', border: i === activeIndex ? '2px solid ' + OR : '1.5px solid rgba(0,0,0,0.08)', cursor: 'pointer' }}>
                     {m.kind === 'video' ? (
@@ -883,6 +892,9 @@ export default function CreatePostPage() {
                     ) : (
                       <img src={m.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     )}
+                    <div onClick={function(e) { e.stopPropagation(); retirerMedia(i); }} style={{ position: 'absolute', top: 2, right: 2, width: 16, height: 16, borderRadius: '50%', background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                      <i className="ti ti-x" style={{ fontSize: 10, color: '#fff' }} />
+                    </div>
                   </div>
                 );
               })}
