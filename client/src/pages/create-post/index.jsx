@@ -209,7 +209,8 @@ export default function CreatePostPage() {
         offsetX: 0,
         offsetY: 0,
         cadre: 'original',
-        texteAjoute: '',
+                texteAjoute: '',
+        miroir: false,
       };
     });
     setMediaItems(function(prev) {
@@ -525,7 +526,12 @@ export default function CreatePostPage() {
         canvas.width = outputW;
         canvas.height = outputH;
         const ctx = canvas.getContext('2d');
+                if (m.miroir) {
+          ctx.translate(outputW, 0);
+          ctx.scale(-1, 1);
+        }
         ctx.drawImage(img, sx, sy, sw, sh, 0, 0, outputW, outputH);
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
 
         appliquerFiltresSurCanvas(ctx, outputW, outputH, m);
 
@@ -646,11 +652,18 @@ export default function CreatePostPage() {
     }
   }
 
-    function transformActif(m) {
+      function basculerMiroir() {
+    setMediaItems(function(prev) {
+      return prev.map(function(m, i) { return i !== activeIndex ? m : { ...m, miroir: !m.miroir }; });
+    });
+  }
+
+  function transformActif(m) {
+    const miroir = m && m.miroir ? 'scaleX(-1) ' : '';
     if (doitRemplirLeCadre(m)) {
-      return 'translate(' + ((m.offsetX || 0) * 100) + '%,' + ((m.offsetY || 0) * 100) + '%) scale(' + Math.max(m.zoom, 1) + ')';
+      return miroir + 'translate(' + ((m.offsetX || 0) * 100) + '%,' + ((m.offsetY || 0) * 100) + '%) scale(' + Math.max(m.zoom, 1) + ')';
     }
-    return 'none';
+    return miroir || 'none';
   }
 
   // Positionne l'apercu (object-position) sur le centre exact de la zone
@@ -831,15 +844,15 @@ export default function CreatePostPage() {
             aspect={aspectActuel}
             keepSelection
           >
-            <img
+                        <img
               src={activeMedia.url}
               alt=""
               onLoad={onImageLoadForCrop}
-              style={{ maxWidth: '100%', maxHeight: '100%', display: 'block' }}
+              style={{ maxWidth: '100%', maxHeight: '100%', display: 'block', transform: activeMedia.miroir ? 'scaleX(-1)' : 'none' }}
             />
           </ReactCrop>
         </div>
-        <div style={{ flexShrink: 0, display: 'flex', gap: 8, overflowX: 'auto', padding: '10px 12px 14px', background: '#000' }}>
+                <div style={{ flexShrink: 0, display: 'flex', gap: 8, overflowX: 'auto', padding: '10px 12px', background: '#000' }}>
           {CADRES.map(function(c) {
             const actif = (activeMedia.cadre || 'original') === c.id;
             return (
@@ -848,6 +861,18 @@ export default function CreatePostPage() {
               </div>
             );
           })}
+        </div>
+        <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 12px 14px', background: '#000' }}>
+          <div onClick={basculerMiroir} style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', color: activeMedia.miroir ? OR : '#fff' }}>
+            <i className="ti ti-flip-horizontal" style={{ fontSize: 17 }} />
+            <span style={{ fontSize: 11, fontWeight: 700 }}>Miroir</span>
+          </div>
+          <div onClick={function() { choisirCadre(activeMedia.cadre || 'original'); }} style={{ fontSize: 11.5, fontWeight: 700, color: 'rgba(255,255,255,0.6)', cursor: 'pointer' }}>
+            Reinitialiser
+          </div>
+          <button onClick={function() { setActivePanel(null); }} style={{ background: OR, color: VERT, border: 'none', padding: '8px 20px', borderRadius: 999, fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}>
+            Valider
+          </button>
         </div>
       </div>
     );
