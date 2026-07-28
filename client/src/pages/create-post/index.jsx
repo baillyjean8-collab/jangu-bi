@@ -755,12 +755,41 @@ export default function CreatePostPage() {
                 style={{ width: '100%', border: '1.5px solid rgba(200,168,75,0.3)', borderRadius: 10, padding: '9px 12px', fontSize: 13, boxSizing: 'border-box', fontFamily: 'Georgia,serif', color: VERT, marginBottom: 10 }}
               />
               <label style={{ fontSize: 10.5, color: '#9A8E7E', display: 'block', marginBottom: 4 }}>Fermeture des inscriptions</label>
-              <input
+                            <input
                 type="datetime-local"
                 value={inscriptionFin}
                 onChange={function(e) { setInscriptionFin(e.target.value); }}
                 style={{ width: '100%', border: '1.5px solid rgba(200,168,75,0.3)', borderRadius: 10, padding: '9px 12px', fontSize: 13, boxSizing: 'border-box', fontFamily: 'Georgia,serif', color: VERT }}
               />
+            </div>
+          )}
+
+          {typePub === 'EVENEMENT' && (
+            <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.06)', borderRadius: 12, padding: '12px 14px', marginBottom: 18 }}>
+              <div onClick={function() { setEstPayant(function(v) { return !v; }); }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
+                <div>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: VERT }}>Tarif de participation</div>
+                  <div style={{ fontSize: 10, color: '#9A8E7E' }}>Desactive : evenement gratuit</div>
+                </div>
+                <div style={{ width: 42, height: 24, borderRadius: 20, background: estPayant ? OR : '#e5e0d5', position: 'relative', transition: 'background .2s', flexShrink: 0 }}>
+                  <div style={{ width: 18, height: 18, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3, left: estPayant ? 21 : 3, transition: 'left .2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
+                </div>
+              </div>
+              {estPayant && (
+                <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(0,0,0,0.06)' }}>
+                  <label style={{ fontSize: 10.5, color: '#9A8E7E', display: 'block', marginBottom: 4 }}>Montant par personne (FCFA)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={tarifParPersonne}
+                    onChange={function(e) { setTarifParPersonne(Math.max(0, +e.target.value || 0)); }}
+                    style={{ width: '100%', border: '1.5px solid rgba(200,168,75,0.3)', borderRadius: 10, padding: '9px 12px', fontSize: 13, boxSizing: 'border-box', fontFamily: 'Georgia,serif', color: VERT, marginBottom: 8 }}
+                  />
+                  <div style={{ fontSize: 10, color: '#9A8E7E' }}>
+                    Paye via Mobile Money / carte (CinetPay). Fonctionnera une fois le compte marchand configure.
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
