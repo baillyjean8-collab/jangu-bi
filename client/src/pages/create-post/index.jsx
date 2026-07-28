@@ -12,12 +12,9 @@ const OR   = '#C8A84B';
 const IVOIRE = '#F5F0E8';
 
 const TYPES_PUB = [
-  { id: 'NORMAL',      label: 'Publication', color: 'rgba(200,168,75,0.15)', tc: '#8B6020' },
-  { id: 'ANNONCE',     label: 'Annonce',     color: '#e3f2fd',              tc: '#1565c0' },
-  { id: 'INSCRIPTION', label: 'Inscription', color: 'rgba(21,101,192,0.1)', tc: '#1565C0' },
-  { id: 'COLLECTE',    label: 'Collecte',    color: 'rgba(200,168,75,0.15)',tc: '#8B6020' },
-  { id: 'EVENEMENT',   label: 'Evenement',   color: '#e8f5e9',              tc: '#2e7d32' },
-  { id: 'MEDIA',       label: 'Media',       color: 'rgba(183,28,28,0.08)', tc: '#b71c1c' },
+  { id: 'NORMAL',    label: 'Publication', icon: 'ti-file-text' },
+  { id: 'EVENEMENT', label: 'Evenement',   icon: 'ti-calendar' },
+  { id: 'ANNONCE',   label: 'Annonce',     icon: 'ti-speakerphone' },
 ];
 
 const FILTRES = [
@@ -861,25 +858,44 @@ export default function CreatePostPage() {
 
         <div style={{ padding: 16 }}>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 18 }}>
-            <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'linear-gradient(135deg,#C8A84B,#8B7030)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: VERT }}>
-              {initiales}
-            </div>
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: VERT }}>{user?.parish?.name || ((user?.firstName || '') + ' ' + (user?.lastName || ''))}</div>
-              <div style={{ fontSize: 10, color: '#9A8E7E' }}>Visible par tous les fideles</div>
-            </div>
-          </div>
+                    <div style={{ position: 'relative', background: '#fff', borderRadius: 20, padding: '14px 14px 12px', boxShadow: '0 6px 20px rgba(30,45,20,0.08), 0 1px 3px rgba(30,45,20,0.06)', marginBottom: 18, overflow: 'hidden', backgroundImage: 'repeating-linear-gradient(115deg, rgba(200,168,75,0.035) 0px, rgba(200,168,75,0.035) 1px, transparent 1px, transparent 9px)' }}>
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: 'linear-gradient(90deg,#C8A84B,#E8D4A0,#C8A84B)' }} />
 
-          <div style={{ fontSize: 11, color: '#9A8E7E', fontWeight: 700, marginBottom: 8, letterSpacing: '.04em' }}>NATURE DE LA PUBLICATION</div>
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 18 }}>
-            {TYPES_PUB.map(function(t) {
-              return (
-                <div key={t.id} onClick={function() { setTypePub(t.id); }} style={{ padding: '6px 13px', borderRadius: 20, background: typePub === t.id ? t.color : 'rgba(0,0,0,0.04)', border: '1px solid ' + (typePub === t.id ? t.tc + '40' : 'rgba(0,0,0,0.08)'), fontSize: 11, color: typePub === t.id ? t.tc : '#7A6E5E', cursor: 'pointer', fontWeight: typePub === t.id ? 700 : 400 }}>
-                  {t.label}
-                </div>
-              );
-            })}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 12 }}>
+              <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'linear-gradient(135deg,#C8A84B,#8B7030)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: VERT, boxShadow: '0 2px 6px rgba(139,96,32,0.3)' }}>
+                {initiales}
+              </div>
+              <div>
+                <div style={{ fontSize: 12.5, fontWeight: 700, color: VERT }}>{user?.parish?.name || ((user?.firstName || '') + ' ' + (user?.lastName || ''))}</div>
+                <div style={{ fontSize: 9, color: '#b0a48f' }}>Visible par tous les fideles</div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+              {TYPES_PUB.map(function(t) {
+                const actif = typePub === t.id;
+                return (
+                  <div key={t.id} onClick={function() { setTypePub(t.id); }} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 13px', borderRadius: 20, fontSize: 11, fontWeight: 700, cursor: 'pointer', border: '1.5px solid ' + (actif ? 'rgba(200,168,75,0.55)' : 'transparent'), background: actif ? 'linear-gradient(135deg, rgba(200,168,75,0.22), rgba(200,168,75,0.1))' : 'rgba(30,45,20,0.04)', color: actif ? '#7A5518' : '#8a7c68', boxShadow: actif ? '0 2px 6px rgba(200,168,75,0.2)' : 'none' }}>
+                    <i className={'ti ' + t.icon} style={{ fontSize: 13 }} />
+                    {t.label}
+                  </div>
+                );
+              })}
+            </div>
+
+            <div style={{ height: 1, background: 'linear-gradient(90deg, transparent, rgba(200,168,75,0.25), transparent)', marginBottom: 12 }} />
+
+            <div style={{ position: 'relative', height: 56 }}>
+              <textarea
+                value={texte}
+                onChange={function(e) { setTexte(e.target.value); setErreur(''); }}
+                placeholder="Qu'avez-vous a partager avec vos fideles aujourd'hui ?"
+                style={{ width: '100%', height: '100%', border: 'none', outline: 'none', resize: 'none', fontSize: 13.5, lineHeight: 1.55, color: VERT, background: 'transparent', fontFamily: 'Georgia,serif', overflowY: 'auto', boxSizing: 'border-box' }}
+              />
+              {!texte && (
+                <i className="ti ti-feather" style={{ position: 'absolute', bottom: 0, right: 0, fontSize: 22, color: OR, opacity: 0.15, pointerEvents: 'none' }} />
+              )}
+            </div>
           </div>
 
           {typePub === 'EVENEMENT' && (
