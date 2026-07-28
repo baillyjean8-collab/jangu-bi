@@ -139,8 +139,21 @@ export default function ProfilePage() {
   const { user, updateUser } = useAuth();
   const fileRef = useRef(null);
   const [activeTab, setActiveTab] = useState(0);
-  const [mesInscriptions, setMesInscriptions] = useState([]);
+    const [mesInscriptions, setMesInscriptions] = useState([]);
   const [chargementInscriptions, setChargementInscriptions] = useState(false);
+  const [annulationEnCours, setAnnulationEnCours] = useState(null);
+
+  async function annulerUneInscription(registrationId) {
+    setAnnulationEnCours(registrationId);
+    try {
+      await postsApi.annulerInscriptionParId(registrationId);
+      setMesInscriptions(function(prev) { return prev.filter(function(i) { return i._id !== registrationId; }); });
+    } catch (e) {
+      console.log('Annulation inscription:', e.message);
+    } finally {
+      setAnnulationEnCours(null);
+    }
+  }
 
   useEffect(function() {
     if (activeTab !== 3) return;
