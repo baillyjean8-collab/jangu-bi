@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "lint": "eslint src/ --ext .jsx,.js"
   },
-  "dependencies": {
+    "dependencies": {
     "@tabler/icons-react": "^3.44.0",
     "@tabler/icons-webfont": "^3.44.0",
     "axios": "^1.6.5",
@@ -17,7 +17,8 @@
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.21.3",
     "socket.io-client": "^4.8.1",
-    "livekit-client": "^2.7.0"
+    "livekit-client": "^2.7.0",
+    "react-image-crop": "^11.1.2"
   },
   "devDependencies": {
     "@types/react": "^18.2.48",
