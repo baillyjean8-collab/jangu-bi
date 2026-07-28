@@ -4,6 +4,8 @@ import AppShell from '../../components/AppShell';
 import { useAuth } from '../../context/AuthContext';
 import { postsApi, storiesApi } from '../../services/api';
 import { uploadToCloudinary } from '../../services/cloudinary';
+import ReactCrop, { centerCrop, makeAspectCrop } from 'react-image-crop';
+import 'react-image-crop/dist/ReactCrop.css';
 
 const VERT = '#1e2d14';
 const OR   = '#C8A84B';
@@ -27,7 +29,8 @@ const FILTRES = [
 ];
 
 const CADRES = [
-  { id: 'original', label: 'Original', ratio: null },
+  { id: 'original', label: 'Originale', ratio: 'nature' },
+  { id: 'libre',    label: 'Forme libre', ratio: null },
   { id: 'carre',    label: '1:1',      ratio: 1 },
   { id: 'portrait', label: '4:5',      ratio: 0.8 },
   { id: 'story',    label: '9:16',     ratio: 0.5625 },
@@ -102,6 +105,9 @@ export default function CreatePostPage() {
   const [editionOuverte, setEditionOuverte] = useState(false);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const texteRef = useRef(null);
+  const imgCropRef = useRef(null);
+  const [cropTemp, setCropTemp] = useState(null);
+  const [aspectActuel, setAspectActuel] = useState(undefined);
 
   const initiales = ((user?.firstName?.[0] || '') + (user?.lastName?.[0] || '')).toUpperCase() || 'MD';
   const activeMedia = mediaItems[activeIndex] || null;
@@ -120,15 +126,17 @@ export default function CreatePostPage() {
 
   function ratioEffectif(m) {
     if (!m) return 1;
-    const cadre = CADRES.find(function(c) { return c.id === m.cadre; });
-    if (cadre && cadre.ratio !== null) return cadre.ratio;
+    if (m.craftedRatio) return m.craftedRatio; // un vrai recadrage a deja ete effectue
     return m.ratio || 1;
   }
 
+  // Une photo remplit tout le cadre (cover) tant qu'aucun recadrage precis n'a
+  // encore ete effectue et qu'on zoome dessus. Des qu'un recadrage reel existe,
+  // la photo est deja exactement a la bonne forme : plus besoin de la couper.
   function doitRemplirLeCadre(m) {
     if (!m) return false;
-    const cadreFixe = ratioEffectif(m) !== (m.ratio || 1);
-    return m.zoom > 1 || cadreFixe;
+    if (m.craftedRatio) return false;
+    return m.zoom > 1;
   }
 
   function objectFitPour(m) {
@@ -257,11 +265,60 @@ export default function CreatePostPage() {
     setMediaItems(function(prev) {
       return prev.map(function(m, i) {
         if (i !== activeIndex) return m;
-        return { ...m, cadre: cadreId, zoom: 1, offsetX: 0, offsetY: 0 };
+        return { ...m, cadre: cadreId };
+      });
+    });
+    const img = imgCropRef.current;
+    if (!img) return;
+    const cw = img.width, ch = img.height;
+    if (cadreId === 'libre') {
+      setAspectActuel(undefined);
+      return;
+    }
+    const cadre = CADRES.find(function(c) { return c.id === cadreId; });
+    const aspect = cadreId === 'original' ? (cw / ch) : cadre.ratio;
+    setAspectActuel(aspect);
+    const nouveauCrop = centerCrop(
+      makeAspectCrop({ unit: '%', width: 90 }, aspect, cw, ch),
+      cw, ch
+    );
+    setCropTemp(nouveauCrop);
+  }
+
+  // Initialise l'outil de recadrage a l'ouverture : reprend le recadrage deja
+  // enregistre s'il existe, sinon propose l'image entiere (comme "Originale").
+  function onImageLoadForCrop(e) {
+    const img = e.currentTarget;
+    imgCropRef.current = img;
+    const cw = img.width, ch = img.height;
+    if (activeMedia && activeMedia.cropPct) {
+      setCropTemp(activeMedia.cropPct);
+      const cadreActuel = CADRES.find(function(c) { return c.id === activeMedia.cadre; });
+      if (activeMedia.cadre === 'libre') setAspectActuel(undefined);
+      else if (activeMedia.cadre === 'original') setAspectActuel(cw / ch);
+      else setAspectActuel(cadreActuel ? cadreActuel.ratio : undefined);
+    } else {
+      setAspectActuel(cw / ch);
+      setCropTemp(centerCrop(makeAspectCrop({ unit: '%', width: 100 }, cw / ch, cw, ch), cw, ch));
+    }
+  }
+
+  function surCropChange(_pixelCrop, percentCrop) {
+    setCropTemp(percentCrop);
+  }
+
+  function surCropComplete(_pixelCrop, percentCrop) {
+    const img = imgCropRef.current;
+    if (!img || !percentCrop || !percentCrop.width) return;
+    const ratioNaturel = img.naturalWidth / img.naturalHeight;
+    const craftedRatio = (percentCrop.width / percentCrop.height) * ratioNaturel;
+    setMediaItems(function(prev) {
+      return prev.map(function(m, i) {
+        return i !== activeIndex ? m : { ...m, cropPct: percentCrop, craftedRatio: craftedRatio };
       });
     });
   }
-
+  // Texte ecrit directement sur la photo (au lieu d'un modal separe).
   function surTexteBlur(e) {
     const nouveauTexte = e.target.textContent;
     setMediaItems(function(prev) {
@@ -427,37 +484,23 @@ export default function CreatePostPage() {
       const img = new Image();
       img.onload = function() {
         const naturalW = img.naturalWidth, naturalH = img.naturalHeight;
-        const doitRogner = doitRemplirLeCadre(m);
 
-        let outputW, outputH;
-        if (doitRogner) {
-          const r = ratioEffectif(m);
-          outputW = 1080;
-          outputH = Math.round(outputW / r);
-        } else {
-          outputW = naturalW;
-          outputH = naturalH;
+        let sx = 0, sy = 0, sw = naturalW, sh = naturalH;
+        if (m.cropPct && m.cropPct.width) {
+          sx = (m.cropPct.x / 100) * naturalW;
+          sy = (m.cropPct.y / 100) * naturalH;
+          sw = (m.cropPct.width / 100) * naturalW;
+          sh = (m.cropPct.height / 100) * naturalH;
         }
+
+        const outputW = Math.round(sw);
+        const outputH = Math.round(sh);
 
         const canvas = document.createElement('canvas');
         canvas.width = outputW;
         canvas.height = outputH;
         const ctx = canvas.getContext('2d');
-
-        if (doitRogner) {
-          const echelleCouverture = Math.max(outputW / naturalW, outputH / naturalH);
-          const zoomSupp = Math.max(m.zoom, 1);
-          const echelle = echelleCouverture * zoomSupp;
-          const drawW = naturalW * echelle;
-          const drawH = naturalH * echelle;
-          const baseX = (outputW - drawW) / 2;
-          const baseY = (outputH - drawH) / 2;
-          const panX = (m.offsetX || 0) * outputW;
-          const panY = (m.offsetY || 0) * outputH;
-          ctx.drawImage(img, baseX + panX, baseY + panY, drawW, drawH);
-        } else {
-          ctx.drawImage(img, 0, 0, outputW, outputH);
-        }
+        ctx.drawImage(img, sx, sy, sw, sh, 0, 0, outputW, outputH);
 
         appliquerFiltresSurCanvas(ctx, outputW, outputH, m);
 
@@ -711,30 +754,41 @@ export default function CreatePostPage() {
           </div>
         )}
 
-        {activePanel === 'recadrer' && (
-          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.75), transparent)', padding: '26px 10px 14px', zIndex: 12 }}>
-            <div style={{ display: 'flex', gap: 8, overflowX: 'auto', marginBottom: 14 }}>
-              {CADRES.map(function(c) {
-                const actif = (activeMedia.cadre || 'original') === c.id;
-                const r = c.ratio || (activeMedia.ratio || 1);
-                const iconH = 22;
-                const iconW = Math.max(12, Math.min(30, iconH * r));
-                return (
-                  <div key={c.id} onClick={function() { choisirCadre(c.id); }} style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, padding: '6px 10px', borderRadius: 12, background: actif ? OR : 'rgba(255,255,255,0.12)', cursor: 'pointer' }}>
-                    <div style={{ width: iconW, height: iconH, border: '2px solid ' + (actif ? VERT : '#fff'), borderRadius: 2 }} />
-                    <span style={{ fontSize: 9, fontWeight: 700, color: actif ? VERT : '#fff' }}>{c.label}</span>
-                  </div>
-                );
-              })}
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <i className="ti ti-zoom-out" style={{ color: '#fff', fontSize: 13 }} />
-              <input type="range" min="1" max="2.5" step="0.05" value={activeMedia.zoom} onChange={function(e) { changerZoom(parseFloat(e.target.value)); }} style={{ flex: 1 }} />
-              <i className="ti ti-zoom-in" style={{ color: '#fff', fontSize: 13 }} />
-            </div>
-          </div>
-        )}
       </>
+    );
+  }
+
+  function rendreRecadrage() {
+    if (!activeMedia || activeMedia.kind !== 'image') return null;
+    return (
+      <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', background: '#000' }}>
+        <div style={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8, overflow: 'hidden' }}>
+          <ReactCrop
+            crop={cropTemp}
+            onChange={surCropChange}
+            onComplete={surCropComplete}
+            aspect={aspectActuel}
+            keepSelection
+          >
+            <img
+              src={activeMedia.url}
+              alt=""
+              onLoad={onImageLoadForCrop}
+              style={{ maxWidth: '100%', maxHeight: '100%', display: 'block' }}
+            />
+          </ReactCrop>
+        </div>
+        <div style={{ flexShrink: 0, display: 'flex', gap: 8, overflowX: 'auto', padding: '10px 12px 14px', background: '#000' }}>
+          {CADRES.map(function(c) {
+            const actif = (activeMedia.cadre || 'original') === c.id;
+            return (
+              <div key={c.id} onClick={function() { choisirCadre(c.id); }} style={{ flexShrink: 0, padding: '8px 14px', borderRadius: 20, background: actif ? OR : 'rgba(255,255,255,0.12)', cursor: 'pointer' }}>
+                <span style={{ fontSize: 11, fontWeight: 700, color: actif ? VERT : '#fff', whiteSpace: 'nowrap' }}>{c.label}</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
     );
   }
 
@@ -982,18 +1036,22 @@ export default function CreatePostPage() {
           </div>
           <div
             ref={conteneurMediaRef}
-            onMouseDown={demarrerGlisser} onMouseMove={bougerGlisser} onMouseUp={arreterGlisser} onMouseLeave={arreterGlisser}
-            onTouchStart={demarrerGlisser} onTouchMove={bougerGlisser} onTouchEnd={arreterGlisser}
+            onMouseDown={activePanel === 'recadrer' ? undefined : demarrerGlisser} onMouseMove={activePanel === 'recadrer' ? undefined : bougerGlisser} onMouseUp={activePanel === 'recadrer' ? undefined : arreterGlisser} onMouseLeave={activePanel === 'recadrer' ? undefined : arreterGlisser}
+            onTouchStart={activePanel === 'recadrer' ? undefined : demarrerGlisser} onTouchMove={activePanel === 'recadrer' ? undefined : bougerGlisser} onTouchEnd={activePanel === 'recadrer' ? undefined : arreterGlisser}
             style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000', padding: 12, boxSizing: 'border-box', position: 'relative' }}
           >
-            <div style={{ position: 'relative', width: '100%', maxHeight: '100%', aspectRatio: ratioEffectif(activeMedia) + ' / 1', overflow: 'hidden', borderRadius: 4, cursor: doitRemplirLeCadre(activeMedia) ? 'grab' : 'default' }}>
-              {rendreMedia()}
-            </div>
-            {rendreControles()}
+            {activePanel === 'recadrer' ? rendreRecadrage() : (
+              <>
+                <div style={{ position: 'relative', width: '100%', maxHeight: '100%', aspectRatio: ratioEffectif(activeMedia) + ' / 1', overflow: 'hidden', borderRadius: 4, cursor: doitRemplirLeCadre(activeMedia) ? 'grab' : 'default' }}>
+                  {rendreMedia()}
+                </div>
+                {rendreControles()}
+              </>
+            )}
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 16px 22px', position: 'relative', zIndex: 20 }}>
-            <button onClick={function() { setEditionOuverte(false); }} style={{ background: 'rgba(255,255,255,0.12)', color: '#fff', border: 'none', padding: '10px 20px', borderRadius: 999, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Annuler</button>
-            <button onClick={function() { setEditionOuverte(false); }} style={{ background: OR, color: VERT, border: 'none', padding: '10px 22px', borderRadius: 999, fontSize: 13.5, fontWeight: 700, cursor: 'pointer' }}>Termine</button>
+            <button onClick={function() { if (activePanel === 'recadrer') { setActivePanel(null); } else { setEditionOuverte(false); } }} style={{ background: 'rgba(255,255,255,0.12)', color: '#fff', border: 'none', padding: '10px 20px', borderRadius: 999, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Annuler</button>
+            <button onClick={function() { if (activePanel === 'recadrer') { setActivePanel(null); } else { setEditionOuverte(false); } }} style={{ background: OR, color: VERT, border: 'none', padding: '10px 22px', borderRadius: 999, fontSize: 13.5, fontWeight: 700, cursor: 'pointer' }}>Termine</button>
           </div>
         </div>
       )}
