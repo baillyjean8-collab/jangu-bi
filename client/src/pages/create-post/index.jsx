@@ -1048,7 +1048,7 @@ export default function CreatePostPage() {
 
       {editionOuverte && activeMedia && (
                 <div style={{ position: 'fixed', top: 0, bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: 430, background: '#000', zIndex: 1000, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '44px 16px 6px', position: 'relative', zIndex: 20, flexShrink: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '44px 16px 6px', position: 'relative', zIndex: 20, flexShrink: 0 }}>
             <button onClick={function() { setEditionOuverte(false); }} style={{ width: 34, height: 34, borderRadius: '50%', background: 'rgba(0,0,0,0.45)', border: 'none', color: '#fff', fontSize: 17, cursor: 'pointer' }}>‹</button>
             {mediaItems.length > 1 ? (
               <div style={{ display: 'flex', gap: 5 }}>
@@ -1056,14 +1056,19 @@ export default function CreatePostPage() {
                   return <span key={i} onClick={function() { setActiveIndex(i); }} style={{ width: i === activeIndex ? 16 : 6, height: 6, borderRadius: 3, background: i === activeIndex ? '#fff' : 'rgba(255,255,255,0.35)', transition: 'all .2s', cursor: 'pointer' }} />;
                 })}
               </div>
-            ) : <span />}
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(255,255,255,0.12)', borderRadius: 999, padding: '6px 12px', opacity: 0.6 }}>
+                <span style={{ fontSize: 11 }}>🎵</span>
+                <span style={{ fontSize: 10.5, color: '#fff', fontWeight: 700 }}>Ajouter un son</span>
+              </div>
+            )}
             <span style={{ width: 34 }} />
           </div>
           <div
             ref={conteneurMediaRef}
             onMouseDown={activePanel === 'recadrer' ? undefined : demarrerGlisser} onMouseMove={activePanel === 'recadrer' ? undefined : bougerGlisser} onMouseUp={activePanel === 'recadrer' ? undefined : arreterGlisser} onMouseLeave={activePanel === 'recadrer' ? undefined : arreterGlisser}
             onTouchStart={activePanel === 'recadrer' ? undefined : demarrerGlisser} onTouchMove={activePanel === 'recadrer' ? undefined : bougerGlisser} onTouchEnd={activePanel === 'recadrer' ? undefined : arreterGlisser}
-          style={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000', padding: 12, boxSizing: 'border-box', position: 'relative' }}
+            style={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000', padding: 12, boxSizing: 'border-box', position: 'relative' }}
           >
             {activePanel === 'recadrer' ? rendreRecadrage() : (
               <>
@@ -1074,9 +1079,40 @@ export default function CreatePostPage() {
               </>
             )}
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 16px 22px', position: 'relative', zIndex: 20, flexShrink: 0 }}>
-            <button onClick={function() { if (activePanel === 'recadrer') { setActivePanel(null); } else { setEditionOuverte(false); } }} style={{ background: 'rgba(255,255,255,0.12)', color: '#fff', border: 'none', padding: '10px 20px', borderRadius: 999, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Annuler</button>
-            <button onClick={function() { if (activePanel === 'recadrer') { setActivePanel(null); } else { setEditionOuverte(false); } }} style={{ background: OR, color: VERT, border: 'none', padding: '10px 22px', borderRadius: 999, fontSize: 13.5, fontWeight: 700, cursor: 'pointer' }}>Termine</button>
+          <div style={{ padding: '8px 12px 10px', position: 'relative', zIndex: 20, flexShrink: 0 }}>
+            <div style={{ display: 'flex', gap: 8, overflowX: 'auto', marginBottom: 10, alignItems: 'center' }}>
+              <div style={{ width: 34, height: 34, borderRadius: 8, background: 'rgba(255,255,255,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <i className="ti ti-layout-grid" style={{ color: '#fff', fontSize: 15 }} />
+              </div>
+              {mediaItems.map(function(m, i) {
+                return (
+                  <div key={i} onClick={function() { setActiveIndex(i); }} style={{ width: 34, height: 34, borderRadius: 8, overflow: 'hidden', border: i === activeIndex ? '2px solid ' + OR : '1.5px solid rgba(255,255,255,0.3)', flexShrink: 0, cursor: 'pointer' }}>
+                    {m.kind === 'video' ? (
+                      <video src={m.url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} muted />
+                    ) : (
+                      <img src={m.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    )}
+                  </div>
+                );
+              })}
+              <div onClick={ouvrirSelecteurFichiers} style={{ width: 34, height: 34, borderRadius: 8, border: '1.5px dashed rgba(255,255,255,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, cursor: 'pointer', color: OR, fontSize: 16 }}>
+                +
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.12)', borderRadius: 999, padding: '5px 14px 5px 5px' }}>
+                <div style={{ width: 24, height: 24, borderRadius: '50%', background: 'linear-gradient(135deg,#C8A84B,#8B7030)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: VERT }}>
+                  {initiales}
+                </div>
+                <span style={{ fontSize: 11, fontWeight: 700, color: '#fff' }}>Publication</span>
+              </div>
+              <button onClick={function() { if (activePanel === 'recadrer') { setActivePanel(null); } else { setEditionOuverte(false); } }} style={{ background: 'linear-gradient(135deg,#C8A84B,#8B6020)', color: VERT, border: 'none', padding: '10px 26px', borderRadius: 999, fontSize: 13.5, fontWeight: 700, cursor: 'pointer' }}>
+                Suivant
+              </button>
+            </div>
+            <div style={{ textAlign: 'center', marginTop: 8 }}>
+              <span onClick={function() { setEditionOuverte(false); }} style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', cursor: 'pointer' }}>Annuler</span>
+            </div>
           </div>
         </div>
       )}
