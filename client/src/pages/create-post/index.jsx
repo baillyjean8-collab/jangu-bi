@@ -19,10 +19,10 @@ const TYPES_PUB = [
 
 const FILTRES = [
   { id: 'normal',     label: 'Normal',     css: 'none' },
-  { id: 'vif',        label: 'Vif',        css: 'saturate(1.6) contrast(1.05)' },
-  { id: 'chaleureux', label: 'Chaleureux', css: 'sepia(0.35) saturate(1.2)' },
-  { id: 'nb',         label: 'N&B',        css: 'grayscale(1)' },
-  { id: 'contraste',  label: 'Contraste',  css: 'contrast(1.4)' },
+  { id: 'vif',        label: 'Vif',        css: 'saturate(2.1) contrast(1.2) brightness(1.03)' },
+  { id: 'chaleureux', label: 'Chaleureux', css: 'sepia(0.55) saturate(1.6) contrast(1.1)' },
+  { id: 'nb',         label: 'N&B',        css: 'grayscale(1) contrast(1.25)' },
+  { id: 'contraste',  label: 'Contraste',  css: 'contrast(1.7) saturate(1.15)' },
 ];
 
 const CADRES = [
@@ -456,16 +456,20 @@ export default function CreatePostPage() {
     const imageData = ctx.getImageData(0, 0, largeur, hauteur);
     const data = imageData.data;
 
-    if (m.filtre === 'vif') {
-      appliquerSaturationSurPixels(data, 1.6);
-      appliquerContrasteSurPixels(data, 1.05);
+        if (m.filtre === 'vif') {
+      appliquerSaturationSurPixels(data, 2.1);
+      appliquerContrasteSurPixels(data, 1.2);
+      appliquerBrightnessSurPixels(data, 1.03);
     } else if (m.filtre === 'chaleureux') {
-      appliquerSepiaSurPixels(data, 0.35);
-      appliquerSaturationSurPixels(data, 1.2);
+      appliquerSepiaSurPixels(data, 0.55);
+      appliquerSaturationSurPixels(data, 1.6);
+      appliquerContrasteSurPixels(data, 1.1);
     } else if (m.filtre === 'nb') {
       appliquerGrayscaleSurPixels(data, 1);
+      appliquerContrasteSurPixels(data, 1.25);
     } else if (m.filtre === 'contraste') {
-      appliquerContrasteSurPixels(data, 1.4);
+      appliquerContrasteSurPixels(data, 1.7);
+      appliquerSaturationSurPixels(data, 1.15);
     }
 
     const b = m.brightness != null ? m.brightness : 100;
@@ -642,12 +646,25 @@ export default function CreatePostPage() {
     }
   }
 
-  function transformActif(m) {
+    function transformActif(m) {
     if (doitRemplirLeCadre(m)) {
       return 'translate(' + ((m.offsetX || 0) * 100) + '%,' + ((m.offsetY || 0) * 100) + '%) scale(' + Math.max(m.zoom, 1) + ')';
     }
     return 'none';
   }
+
+  // Positionne l'apercu (object-position) sur le centre exact de la zone
+  // recadree choisie dans l'outil "Cadrer", au lieu de toujours centrer
+  // la photo entiere.
+  function positionApercuPour(m) {
+    if (m && m.cropPct && m.cropPct.width) {
+      const cx = m.cropPct.x + m.cropPct.width / 2;
+      const cy = m.cropPct.y + m.cropPct.height / 2;
+      return cx + '% ' + cy + '%';
+    }
+    return 'center';
+  }
+
 
   function rendreMedia() {
     if (!activeMedia) return null;
@@ -655,9 +672,9 @@ export default function CreatePostPage() {
     return (
       <>
         {activeMedia.kind === 'video' ? (
-          <video src={activeMedia.url} style={{ width: '100%', height: '100%', objectFit: fit, background: '#000', transform: transformActif(activeMedia), filter: styleFiltreActif() }} muted loop autoPlay playsInline />
+                    <video src={activeMedia.url} style={{ width: '100%', height: '100%', objectFit: fit, objectPosition: positionApercuPour(activeMedia), background: '#000', transform: transformActif(activeMedia), filter: styleFiltreActif() }} muted loop autoPlay playsInline />
         ) : (
-          <img src={activeMedia.url} alt="media" style={{ width: '100%', height: '100%', objectFit: fit, background: '#000', transform: transformActif(activeMedia), filter: styleFiltreActif() }} />
+          <img src={activeMedia.url} alt="media" style={{ width: '100%', height: '100%', objectFit: fit, objectPosition: positionApercuPour(activeMedia), background: '#000', transform: transformActif(activeMedia), filter: styleFiltreActif() }} />
         )}
 
         <div
@@ -1033,9 +1050,9 @@ export default function CreatePostPage() {
               style={{ position: 'relative', borderRadius: 14, overflow: 'hidden', marginBottom: 12, background: '#0C0A06', aspectRatio: ratioEffectif(activeMedia) + ' / 1', cursor: 'pointer' }}
             >
               {activeMedia.kind === 'video' ? (
-                <video src={activeMedia.url} onLoadedMetadata={function(e) { enregistrerRatio(e.target.videoWidth, e.target.videoHeight); }} style={{ width: '100%', height: '100%', objectFit: objectFitPour(activeMedia), background: '#000', transform: transformActif(activeMedia), filter: styleFiltreActif() }} controls playsInline />
+                                <video src={activeMedia.url} onLoadedMetadata={function(e) { enregistrerRatio(e.target.videoWidth, e.target.videoHeight); }} style={{ width: '100%', height: '100%', objectFit: objectFitPour(activeMedia), objectPosition: positionApercuPour(activeMedia), background: '#000', transform: transformActif(activeMedia), filter: styleFiltreActif() }} controls playsInline />
               ) : (
-                <img src={activeMedia.url} alt="media" draggable="false" onLoad={function(e) { enregistrerRatio(e.target.naturalWidth, e.target.naturalHeight); }} style={{ width: '100%', height: '100%', objectFit: objectFitPour(activeMedia), background: '#000', transform: transformActif(activeMedia), filter: styleFiltreActif(), pointerEvents: 'none' }} onError={function(e) { e.target.style.opacity = 0.2; }} />
+                <img src={activeMedia.url} alt="media" draggable="false" onLoad={function(e) { enregistrerRatio(e.target.naturalWidth, e.target.naturalHeight); }} style={{ width: '100%', height: '100%', objectFit: objectFitPour(activeMedia), objectPosition: positionApercuPour(activeMedia), background: '#000', transform: transformActif(activeMedia), filter: styleFiltreActif(), pointerEvents: 'none' }} onError={function(e) { e.target.style.opacity = 0.2; }} />
               )}
                             {activeMedia.texteAjoute && (
                 <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', color: '#fff', fontWeight: 700, fontSize: 16, textAlign: 'center', textShadow: '0 2px 6px rgba(0,0,0,0.6)', padding: '0 14px', fontFamily: 'Georgia,serif' }}>
