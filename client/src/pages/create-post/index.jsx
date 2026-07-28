@@ -992,12 +992,6 @@ export default function CreatePostPage() {
             </div>
           )}
 
-          <textarea
-            value={texte}
-            onChange={function(e) { setTexte(e.target.value); setErreur(''); }}
-            placeholder="Partagez une nouvelle avec vos fideles..."
-            style={{ width: '100%', border: '1.5px solid rgba(200,168,75,0.25)', borderRadius: 14, padding: 14, fontSize: 13, color: VERT, fontFamily: 'Georgia,serif', resize: 'none', height: 120, background: 'white', outline: 'none', boxSizing: 'border-box', marginBottom: 18 }}
-          />
 
                     {mediaItems.length === 0 && (
             <div style={{ fontSize: 11, color: '#9A8E7E', fontWeight: 700, marginBottom: 8, letterSpacing: '.04em' }}>MEDIA (OPTIONNEL)</div>
