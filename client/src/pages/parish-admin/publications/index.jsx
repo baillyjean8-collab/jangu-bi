@@ -64,11 +64,8 @@ export default function AdminPublications() {
     setShowCreate(true);
   }
 
-  function ouvrirEdition(post) {
-    setEditingId(post._id);
-    setTexte(post.content || post.text || '');
-    setTypePub((post.type || 'normal').toLowerCase());
-    setShowCreate(true);
+    function ouvrirEdition(post) {
+    navigate('/create?editId=' + post._id);
   }
 
   async function publier() {
