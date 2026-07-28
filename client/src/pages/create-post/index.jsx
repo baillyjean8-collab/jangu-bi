@@ -102,6 +102,7 @@ export default function CreatePostPage() {
   const [mediaItems, setMediaItems] = useState([]);
   const [activeIndex, setActiveIndex] = useState(0);
   const [activePanel, setActivePanel] = useState(null); // 'filtres' | 'ajuster' | 'recadrer' | 'texte' | null
+  const [outilsVisibles, setOutilsVisibles] = useState(true);
   const [editionOuverte, setEditionOuverte] = useState(false);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const texteRef = useRef(null);
@@ -480,6 +481,27 @@ export default function CreatePostPage() {
     ctx.putImageData(imageData, 0, 0);
   }
 
+    async function partagerPhotoActuelle() {
+    if (!activeMedia || activeMedia.kind !== 'image') return;
+    try {
+      const dataUrl = await graverImageFinale(activeMedia);
+      const reponse = await fetch(dataUrl);
+      const blob = await reponse.blob();
+      const fichier = new File([blob], 'photo-jangu-bi.jpg', { type: 'image/jpeg' });
+      if (navigator.canShare && navigator.canShare({ files: [fichier] })) {
+        await navigator.share({ files: [fichier] });
+      } else if (navigator.share) {
+        await navigator.share({ title: 'Jangu Bi' });
+      } else {
+        setErreur("Le partage n'est pas disponible sur ce navigateur.");
+      }
+    } catch (e) {
+      if (e.name !== 'AbortError') {
+        console.log('Partage:', e.message);
+      }
+    }
+  }
+
   function graverImageFinale(m) {
     return new Promise(function(resolve, reject) {
       if (m.kind !== 'image') { resolve(m.url); return; }
@@ -688,12 +710,13 @@ export default function CreatePostPage() {
             maquette de reference. Seuls Ajuster/Texte/Filtres/Cadrer sont relies a
             une vraie fonction pour l'instant ; les autres sont presents visuellement,
             en attente d'une future fonctionnalite. */}
+                {outilsVisibles ? (
         <div style={{ position: 'absolute', top: 56, right: 12, display: 'flex', flexDirection: 'column', gap: 18, zIndex: 12, alignItems: 'center' }}>
           <div onClick={function() { setActivePanel(activePanel === 'ajuster' ? null : 'ajuster'); }} style={{ width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: activePanel === 'ajuster' ? OR : '#fff', fontSize: 20 }}>
             <i className="ti ti-settings" />
           </div>
 
-          <div style={{ width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'default', color: '#fff', fontSize: 20, opacity: 0.55 }}>
+          <div onClick={partagerPhotoActuelle} style={{ width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#fff', fontSize: 20 }}>
             <i className="ti ti-share" />
           </div>
 
@@ -715,7 +738,7 @@ export default function CreatePostPage() {
             <i className="ti ti-mood-smile" />
           </div>
 
-          <div style={{ width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'default', color: '#fff', fontSize: 20, opacity: 0.55 }}>
+          <div onClick={appliquerAjustementAuto} title="Amelioration automatique" style={{ width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#fff', fontSize: 20 }}>
             <i className="ti ti-sparkles" />
           </div>
 
@@ -727,10 +750,15 @@ export default function CreatePostPage() {
             <i className="ti ti-crop" />
           </div>
 
-          <div style={{ width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'default', color: '#fff', fontSize: 18, opacity: 0.55 }}>
+          <div onClick={function() { setOutilsVisibles(false); }} title="Masquer les outils" style={{ width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#fff', fontSize: 18 }}>
             <i className="ti ti-chevron-down" />
           </div>
         </div>
+        ) : (
+          <div onClick={function() { setOutilsVisibles(true); }} title="Afficher les outils" style={{ position: 'absolute', top: 56, right: 12, width: 34, height: 34, borderRadius: '50%', background: 'rgba(0,0,0,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#fff', fontSize: 18, zIndex: 12 }}>
+            <i className="ti ti-chevron-up" />
+          </div>
+        )}
 
         {activePanel === 'filtres' && (
           <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.6), transparent)', padding: '26px 10px 10px', display: 'flex', gap: 8, overflowX: 'auto', zIndex: 12 }}>
