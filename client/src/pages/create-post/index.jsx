@@ -36,7 +36,7 @@ const CADRES = [
 
 
 export default function CreatePostPage() {
-    const navigate = useNavigate();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const editId = searchParams.get('editId');
   const [chargementEdition, setChargementEdition] = useState(!!editId);
@@ -53,9 +53,9 @@ export default function CreatePostPage() {
   const [placesLimitees, setPlacesLimitees] = useState(false);
   const [capaciteMax, setCapaciteMax] = useState(50);
   const [autoriserAnnulation, setAutoriserAnnulation] = useState(true);
-    const [inscriptionDebut, setInscriptionDebut] = useState('');
+  const [inscriptionDebut, setInscriptionDebut] = useState('');
   const [inscriptionFin, setInscriptionFin] = useState('');
-    const [estPayant, setEstPayant] = useState(false);
+  const [estPayant, setEstPayant] = useState(false);
   const [tarifParPersonne, setTarifParPersonne] = useState(1000);
 
   useEffect(function() {
@@ -65,7 +65,7 @@ export default function CreatePostPage() {
         const res = await postsApi.getOne(editId);
         const post = res && res.data && res.data.post;
         if (!post) { setErreur('Publication introuvable.'); return; }
-                setTexte(post.content || '');
+        setTexte(post.content || '');
         setTypePub(post.type || 'NORMAL');
         const imagesExistantes = (post.imageUrls && post.imageUrls.length) ? post.imageUrls : (post.imageUrl ? [post.imageUrl] : []);
         if (imagesExistantes.length > 0) {
@@ -98,13 +98,13 @@ export default function CreatePostPage() {
 
   const [mediaItems, setMediaItems] = useState([]);
   const [activeIndex, setActiveIndex] = useState(0);
-  const [activePanel, setActivePanel] = useState(null);
+  const [activePanel, setActivePanel] = useState(null); // 'filtres' | 'ajuster' | 'recadrer' | 'texte' | null
   const [editionOuverte, setEditionOuverte] = useState(false);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const texteRef = useRef(null);
 
   const initiales = ((user?.firstName?.[0] || '') + (user?.lastName?.[0] || '')).toUpperCase() || 'MD';
-    const activeMedia = mediaItems[activeIndex] || null;
+  const activeMedia = mediaItems[activeIndex] || null;
 
   function retirerMedia(i) {
     setMediaItems(function(prev) {
@@ -351,11 +351,6 @@ export default function CreatePostPage() {
 
   function clamp255(v) { return v < 0 ? 0 : v > 255 ? 255 : v; }
 
-  // Les fonctions ci-dessous appliquent chaque effet directement sur les pixels
-  // de l'image, au lieu de s'appuyer sur ctx.filter (le filtre integre du canevas),
-  // qui n'est pas fiable sur tous les telephones/navigateurs. C'est plus de code,
-  // mais ca garantit que le filtre choisi se retrouve reellement sur la photo
-  // publiee, quel que soit l'appareil de l'admin.
   function appliquerBrightnessSurPixels(data, facteur) {
     for (let i = 0; i < data.length; i += 4) {
       data[i] = clamp255(data[i] * facteur);
@@ -518,7 +513,7 @@ export default function CreatePostPage() {
 
   const premiereImage = mediaItems.find(function(m) { return m.kind === 'image'; });
 
-    async function publier() {
+  async function publier() {
     if (!texte.trim()) {
       setErreur('Ecrivez au moins une phrase avant de publier.');
       return;
@@ -526,7 +521,7 @@ export default function CreatePostPage() {
     setPublishing(true);
     setErreur('');
         try {
-            if (editId) {
+      if (editId) {
         const imagesExistantesGardees = mediaItems.filter(function(m) { return m.kind === 'image' && m.dejaHeberge; }).map(function(m) { return m.url; });
         const imagesNouvelles = mediaItems.filter(function(m) { return m.kind === 'image' && !m.dejaHeberge && !m.local; });
         const imagesNouvellesGravees = await Promise.all(imagesNouvelles.map(graverImageFinale));
@@ -620,8 +615,15 @@ export default function CreatePostPage() {
             Ecrire un texte…
           </div>
         )}
+      </>
+    );
+  }
 
-        <button onClick={retirerMediaActif} style={{ position: 'absolute', top: 12, left: 12, width: 30, height: 30, borderRadius: '50%', background: 'rgba(0,0,0,0.45)', border: 'none', color: '#fff', fontSize: 14, cursor: 'pointer', zIndex: 3 }}>
+  function rendreControles() {
+    if (!activeMedia) return null;
+    return (
+      <>
+        <button onClick={retirerMediaActif} style={{ position: 'absolute', top: 12, left: 12, width: 30, height: 30, borderRadius: '50%', background: 'rgba(0,0,0,0.45)', border: 'none', color: '#fff', fontSize: 14, cursor: 'pointer', zIndex: 12 }}>
           <i className="ti ti-x" />
         </button>
 
@@ -630,21 +632,21 @@ export default function CreatePostPage() {
             <button
               onClick={function() { if (activeIndex > 0) setActiveIndex(activeIndex - 1); }}
               disabled={activeIndex === 0}
-              style={{ position: 'absolute', top: '50%', left: 8, transform: 'translateY(-50%)', width: 30, height: 30, borderRadius: '50%', background: 'rgba(0,0,0,0.35)', border: 'none', color: '#fff', fontSize: 16, zIndex: 3, opacity: activeIndex === 0 ? 0.3 : 1 }}
+              style={{ position: 'absolute', top: '50%', left: 8, transform: 'translateY(-50%)', width: 30, height: 30, borderRadius: '50%', background: 'rgba(0,0,0,0.35)', border: 'none', color: '#fff', fontSize: 16, zIndex: 12, opacity: activeIndex === 0 ? 0.3 : 1 }}
             >‹</button>
             <button
               onClick={function() { if (activeIndex < mediaItems.length - 1) setActiveIndex(activeIndex + 1); }}
               disabled={activeIndex === mediaItems.length - 1}
-              style={{ position: 'absolute', top: '50%', right: 8, transform: 'translateY(-50%)', width: 30, height: 30, borderRadius: '50%', background: 'rgba(0,0,0,0.35)', border: 'none', color: '#fff', fontSize: 16, zIndex: 3, opacity: activeIndex === mediaItems.length - 1 ? 0.3 : 1 }}
+              style={{ position: 'absolute', top: '50%', right: 8, transform: 'translateY(-50%)', width: 30, height: 30, borderRadius: '50%', background: 'rgba(0,0,0,0.35)', border: 'none', color: '#fff', fontSize: 16, zIndex: 12, opacity: activeIndex === mediaItems.length - 1 ? 0.3 : 1 }}
             >›</button>
           </>
         )}
 
-        <button onClick={ouvrirSelecteurFichiers} style={{ position: 'absolute', top: 12, right: 56, width: 34, height: 34, borderRadius: '50%', background: 'rgba(0,0,0,0.45)', border: 'none', color: '#fff', fontSize: 16, cursor: 'pointer', zIndex: 3 }}>
+        <button onClick={ouvrirSelecteurFichiers} style={{ position: 'absolute', top: 12, right: 56, width: 34, height: 34, borderRadius: '50%', background: 'rgba(0,0,0,0.45)', border: 'none', color: '#fff', fontSize: 16, cursor: 'pointer', zIndex: 12 }}>
           +
         </button>
 
-        <div style={{ position: 'absolute', top: 56, right: 12, display: 'flex', flexDirection: 'column', gap: 16, zIndex: 3 }}>
+        <div style={{ position: 'absolute', top: 56, right: 12, display: 'flex', flexDirection: 'column', gap: 16, zIndex: 12 }}>
           <div onClick={function() { setActivePanel(activePanel === 'filtres' ? null : 'filtres'); }} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, cursor: 'pointer' }}>
             <div style={{ width: 38, height: 38, borderRadius: '50%', border: 'none', background: activePanel === 'filtres' ? OR : 'rgba(0,0,0,0.45)', color: activePanel === 'filtres' ? VERT : '#fff', fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <i className="ti ti-palette" />
@@ -675,7 +677,7 @@ export default function CreatePostPage() {
         </div>
 
         {activePanel === 'filtres' && (
-          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.6), transparent)', padding: '26px 10px 10px', display: 'flex', gap: 8, overflowX: 'auto', zIndex: 3 }}>
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.6), transparent)', padding: '26px 10px 10px', display: 'flex', gap: 8, overflowX: 'auto', zIndex: 12 }}>
             {FILTRES.map(function(f) {
               const actif = activeMedia.filtre === f.id;
               return (
@@ -689,7 +691,7 @@ export default function CreatePostPage() {
         )}
 
         {activePanel === 'ajuster' && (
-          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.75), transparent)', padding: '30px 16px 14px', zIndex: 3 }}>
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.75), transparent)', padding: '30px 16px 14px', zIndex: 12 }}>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 14, marginBottom: 10 }}>
               <span onClick={appliquerAjustementAuto} style={{ fontSize: 11, fontWeight: 700, color: OR, cursor: 'pointer' }}>Auto</span>
               <span onClick={reinitialiserAjustements} style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.6)', cursor: 'pointer' }}>Reinitialiser</span>
@@ -710,7 +712,7 @@ export default function CreatePostPage() {
         )}
 
         {activePanel === 'recadrer' && (
-          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.75), transparent)', padding: '26px 10px 14px', zIndex: 3 }}>
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.75), transparent)', padding: '26px 10px 14px', zIndex: 12 }}>
             <div style={{ display: 'flex', gap: 8, overflowX: 'auto', marginBottom: 14 }}>
               {CADRES.map(function(c) {
                 const actif = (activeMedia.cadre || 'original') === c.id;
@@ -777,7 +779,7 @@ export default function CreatePostPage() {
                 </div>
               );
             })}
-                    </div>
+          </div>
 
           {typePub === 'EVENEMENT' && (
             <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.06)', borderRadius: 12, padding: '12px 14px', marginBottom: 18 }}>
@@ -790,7 +792,7 @@ export default function CreatePostPage() {
                   <div style={{ width: 18, height: 18, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3, left: placesLimitees ? 21 : 3, transition: 'left .2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
                 </div>
               </div>
-                            {placesLimitees && (
+              {placesLimitees && (
                 <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(0,0,0,0.06)' }}>
                   <label style={{ fontSize: 10.5, color: '#9A8E7E', display: 'block', marginBottom: 4 }}>Nombre maximum de places</label>
                   <input
@@ -812,7 +814,7 @@ export default function CreatePostPage() {
                   <div style={{ fontSize: 12, fontWeight: 700, color: VERT }}>Autoriser l'annulation</div>
                   <div style={{ fontSize: 10, color: '#9A8E7E' }}>Desactive : l'inscription devient definitive</div>
                 </div>
-                                <div style={{ width: 42, height: 24, borderRadius: 20, background: autoriserAnnulation ? OR : '#e5e0d5', position: 'relative', transition: 'background .2s', flexShrink: 0 }}>
+                <div style={{ width: 42, height: 24, borderRadius: 20, background: autoriserAnnulation ? OR : '#e5e0d5', position: 'relative', transition: 'background .2s', flexShrink: 0 }}>
                   <div style={{ width: 18, height: 18, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3, left: autoriserAnnulation ? 21 : 3, transition: 'left .2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
                 </div>
               </div>
@@ -823,7 +825,7 @@ export default function CreatePostPage() {
             <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.06)', borderRadius: 12, padding: '12px 14px', marginBottom: 18 }}>
               <div style={{ fontSize: 12, fontWeight: 700, color: VERT, marginBottom: 4 }}>Periode d'inscription</div>
               <div style={{ fontSize: 10, color: '#9A8E7E', marginBottom: 10 }}>Laisse vide pour aucune limite de ce cote</div>
-                            <label style={{ fontSize: 10.5, color: '#9A8E7E', display: 'block', marginBottom: 4 }}>Ouverture des inscriptions</label>
+              <label style={{ fontSize: 10.5, color: '#9A8E7E', display: 'block', marginBottom: 4 }}>Ouverture des inscriptions</label>
               <div style={{ width: '100%', overflow: 'hidden', borderRadius: 10, marginBottom: 10 }}>
                 <input
                   type="datetime-local"
@@ -884,7 +886,7 @@ export default function CreatePostPage() {
 
           {mediaItems.length > 0 && (
             <div style={{ display: 'flex', gap: 8, overflowX: 'auto', marginBottom: 10 }}>
-                            {mediaItems.map(function(m, i) {
+              {mediaItems.map(function(m, i) {
                 return (
                   <div key={i} onClick={function() { setActiveIndex(i); }} style={{ position: 'relative', flexShrink: 0, width: 56, height: 56, borderRadius: 10, overflow: 'hidden', border: i === activeIndex ? '2px solid ' + OR : '1.5px solid rgba(0,0,0,0.08)', cursor: 'pointer' }}>
                     {m.kind === 'video' ? (
@@ -960,7 +962,7 @@ export default function CreatePostPage() {
             disabled={publishing}
             style={{ width: '100%', padding: 14, background: publishing ? 'rgba(200,168,75,0.5)' : 'linear-gradient(135deg,#C8A84B,#8B6020)', border: 'none', borderRadius: 14, color: VERT, fontWeight: 700, fontSize: 14, fontFamily: 'Georgia,serif', cursor: publishing ? 'default' : 'pointer' }}
           >
-          {publishing ? (editId ? 'Enregistrement...' : 'Publication en cours...') : (editId ? 'Enregistrer les modifications' : 'Publier')}
+            {publishing ? (editId ? 'Enregistrement...' : 'Publication en cours...') : (editId ? 'Enregistrer les modifications' : 'Publier')}
           </button>
         </div>
       </div>
@@ -982,11 +984,12 @@ export default function CreatePostPage() {
             ref={conteneurMediaRef}
             onMouseDown={demarrerGlisser} onMouseMove={bougerGlisser} onMouseUp={arreterGlisser} onMouseLeave={arreterGlisser}
             onTouchStart={demarrerGlisser} onTouchMove={bougerGlisser} onTouchEnd={arreterGlisser}
-            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000', padding: 12, boxSizing: 'border-box' }}
+            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000', padding: 12, boxSizing: 'border-box', position: 'relative' }}
           >
             <div style={{ position: 'relative', width: '100%', maxHeight: '100%', aspectRatio: ratioEffectif(activeMedia) + ' / 1', overflow: 'hidden', borderRadius: 4, cursor: doitRemplirLeCadre(activeMedia) ? 'grab' : 'default' }}>
               {rendreMedia()}
             </div>
+            {rendreControles()}
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 16px 22px', position: 'relative', zIndex: 20 }}>
             <button onClick={function() { setEditionOuverte(false); }} style={{ background: 'rgba(255,255,255,0.12)', color: '#fff', border: 'none', padding: '10px 20px', borderRadius: 999, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Annuler</button>
