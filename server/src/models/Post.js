@@ -20,7 +20,8 @@ const postSchema = new mongoose.Schema({
   type:      { type: String, enum: ['NORMAL', 'ANNONCE', 'INSCRIPTION', 'COLLECTE', 'EVENEMENT', 'MEDIA'], default: 'NORMAL' },
   // Nombre maximum de places pour un evenement (type EVENEMENT). null = illimite.
   // Utilise uniquement pour les evenements gratuits pour l'instant (pas de paiement).
-  eventCapacity: { type: Number, default: null, min: 1 },
+    eventCapacity: { type: Number, default: null, min: 1 },
+  eventFeeAmount: { type: Number, default: null, min: 0 },
   // L'admin decide, a la creation de l'evenement, si les fideles peuvent
   // annuler leur inscription ensuite, ou si c'est definitif.
     autoriserAnnulation: { type: Boolean, default: true },
