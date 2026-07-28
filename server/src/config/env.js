@@ -47,10 +47,17 @@ const config = {
     apiKey:    process.env.LIVEKIT_API_KEY || '',
     apiSecret: process.env.LIVEKIT_API_SECRET || '',
   },
-  cloudinary: {
+    cloudinary: {
     cloudName: process.env.CLOUDINARY_CLOUD_NAME || '',
     apiKey:    process.env.CLOUDINARY_API_KEY    || '',
     apiSecret: process.env.CLOUDINARY_API_SECRET || '',
+  },
+  payment: {
+    cinetpayApiKey:    process.env.CINETPAY_API_KEY    || '',
+    cinetpaySiteId:    process.env.CINETPAY_SITE_ID    || '',
+    cinetpaySecret:    process.env.CINETPAY_SECRET     || '',
+    waveSecretKey:     process.env.WAVE_SECRET_KEY     || '',
+    orangeMoneySecret: process.env.ORANGE_MONEY_SECRET || '',
   },
 };
 module.exports = config;
