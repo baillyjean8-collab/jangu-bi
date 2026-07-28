@@ -983,7 +983,9 @@ export default function CreatePostPage() {
             style={{ width: '100%', border: '1.5px solid rgba(200,168,75,0.25)', borderRadius: 14, padding: 14, fontSize: 13, color: VERT, fontFamily: 'Georgia,serif', resize: 'none', height: 120, background: 'white', outline: 'none', boxSizing: 'border-box', marginBottom: 18 }}
           />
 
-          <div style={{ fontSize: 11, color: '#9A8E7E', fontWeight: 700, marginBottom: 8, letterSpacing: '.04em' }}>MEDIA (OPTIONNEL)</div>
+                    {mediaItems.length === 0 && (
+            <div style={{ fontSize: 11, color: '#9A8E7E', fontWeight: 700, marginBottom: 8, letterSpacing: '.04em' }}>MEDIA (OPTIONNEL)</div>
+          )}
 
           {mediaItems.length > 0 && (
             <div style={{ display: 'flex', gap: 8, overflowX: 'auto', marginBottom: 10 }}>
@@ -1025,11 +1027,17 @@ export default function CreatePostPage() {
               ) : (
                 <img src={activeMedia.url} alt="media" draggable="false" onLoad={function(e) { enregistrerRatio(e.target.naturalWidth, e.target.naturalHeight); }} style={{ width: '100%', height: '100%', objectFit: objectFitPour(activeMedia), background: '#000', transform: transformActif(activeMedia), filter: styleFiltreActif(), pointerEvents: 'none' }} onError={function(e) { e.target.style.opacity = 0.2; }} />
               )}
-              {activeMedia.texteAjoute && (
+                            {activeMedia.texteAjoute && (
                 <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', color: '#fff', fontWeight: 700, fontSize: 16, textAlign: 'center', textShadow: '0 2px 6px rgba(0,0,0,0.6)', padding: '0 14px', fontFamily: 'Georgia,serif' }}>
                   {activeMedia.texteAjoute}
                 </div>
               )}
+              <div onClick={function(e) { e.stopPropagation(); retirerMedia(activeIndex); }} style={{ position: 'absolute', top: 8, right: 8, width: 26, height: 26, borderRadius: '50%', background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                <i className="ti ti-x" style={{ fontSize: 13, color: '#fff' }} />
+              </div>
+              <div onClick={function(e) { e.stopPropagation(); ouvrirSelecteurFichiers(); }} style={{ position: 'absolute', bottom: 8, left: 8, width: 28, height: 28, borderRadius: 8, background: 'rgba(255,255,255,0.25)', border: '1.5px dashed rgba(255,255,255,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#fff', fontSize: 15 }}>
+                +
+              </div>
               <div style={{ position: 'absolute', bottom: 8, right: 8, background: 'rgba(0,0,0,0.5)', color: '#fff', fontSize: 9, padding: '4px 9px', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 4 }}>
                 <i className="ti ti-edit" style={{ fontSize: 11 }} /> Modifier
               </div>
