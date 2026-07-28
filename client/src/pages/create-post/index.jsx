@@ -488,6 +488,7 @@ export default function CreatePostPage() {
         autoriserAnnulation: typePub === 'EVENEMENT' ? autoriserAnnulation : undefined,
         inscriptionDebut: (typePub === 'EVENEMENT' && inscriptionDebut) ? inscriptionDebut : undefined,
         inscriptionFin: (typePub === 'EVENEMENT' && inscriptionFin) ? inscriptionFin : undefined,
+        eventFeeAmount: (typePub === 'EVENEMENT' && estPayant) ? tarifParPersonne : undefined,
       });
 
       if (aussiEnStory && premiereImage && !premiereImage.local) {
