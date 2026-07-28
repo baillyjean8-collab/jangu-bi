@@ -748,20 +748,24 @@ export default function CreatePostPage() {
             <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.06)', borderRadius: 12, padding: '12px 14px', marginBottom: 18 }}>
               <div style={{ fontSize: 12, fontWeight: 700, color: VERT, marginBottom: 4 }}>Periode d'inscription</div>
               <div style={{ fontSize: 10, color: '#9A8E7E', marginBottom: 10 }}>Laisse vide pour aucune limite de ce cote</div>
-              <label style={{ fontSize: 10.5, color: '#9A8E7E', display: 'block', marginBottom: 4 }}>Ouverture des inscriptions</label>
-              <input
-                type="datetime-local"
-                value={inscriptionDebut}
-                onChange={function(e) { setInscriptionDebut(e.target.value); }}
-                style={{ width: '100%', border: '1.5px solid rgba(200,168,75,0.3)', borderRadius: 10, padding: '9px 12px', fontSize: 13, boxSizing: 'border-box', fontFamily: 'Georgia,serif', color: VERT, marginBottom: 10 }}
-              />
+                            <label style={{ fontSize: 10.5, color: '#9A8E7E', display: 'block', marginBottom: 4 }}>Ouverture des inscriptions</label>
+              <div style={{ width: '100%', overflow: 'hidden', borderRadius: 10, marginBottom: 10 }}>
+                <input
+                  type="datetime-local"
+                  value={inscriptionDebut}
+                  onChange={function(e) { setInscriptionDebut(e.target.value); }}
+                  style={{ width: '100%', minWidth: 0, maxWidth: '100%', border: '1.5px solid rgba(200,168,75,0.3)', borderRadius: 10, padding: '9px 12px', fontSize: 16, boxSizing: 'border-box', fontFamily: 'Georgia,serif', color: VERT, display: 'block' }}
+                />
+              </div>
               <label style={{ fontSize: 10.5, color: '#9A8E7E', display: 'block', marginBottom: 4 }}>Fermeture des inscriptions</label>
-                            <input
-                type="datetime-local"
-                value={inscriptionFin}
-                onChange={function(e) { setInscriptionFin(e.target.value); }}
-                style={{ width: '100%', border: '1.5px solid rgba(200,168,75,0.3)', borderRadius: 10, padding: '9px 12px', fontSize: 13, boxSizing: 'border-box', fontFamily: 'Georgia,serif', color: VERT }}
-              />
+              <div style={{ width: '100%', overflow: 'hidden', borderRadius: 10 }}>
+                <input
+                  type="datetime-local"
+                  value={inscriptionFin}
+                  onChange={function(e) { setInscriptionFin(e.target.value); }}
+                  style={{ width: '100%', minWidth: 0, maxWidth: '100%', border: '1.5px solid rgba(200,168,75,0.3)', borderRadius: 10, padding: '9px 12px', fontSize: 16, boxSizing: 'border-box', fontFamily: 'Georgia,serif', color: VERT, display: 'block' }}
+                />
+              </div>
             </div>
           )}
 
