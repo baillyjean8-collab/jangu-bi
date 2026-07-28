@@ -108,6 +108,7 @@ export default function CreatePostPage() {
   const imgCropRef = useRef(null);
   const [cropTemp, setCropTemp] = useState(null);
   const [aspectActuel, setAspectActuel] = useState(undefined);
+  const [reglageChoisi, setReglageChoisi] = useState('luminosite');
 
   const initiales = ((user?.firstName?.[0] || '') + (user?.lastName?.[0] || '')).toUpperCase() || 'MD';
   const activeMedia = mediaItems[activeIndex] || null;
@@ -751,26 +752,32 @@ export default function CreatePostPage() {
           </div>
         )}
 
-        {activePanel === 'ajuster' && (
-          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.75), transparent)', padding: '30px 16px 14px', zIndex: 12 }}>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 14, marginBottom: 10 }}>
-              <span onClick={appliquerAjustementAuto} style={{ fontSize: 11, fontWeight: 700, color: OR, cursor: 'pointer' }}>Auto</span>
-              <span onClick={reinitialiserAjustements} style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.6)', cursor: 'pointer' }}>Reinitialiser</span>
+                {activePanel === 'ajuster' && (function() {
+          const REGLAGES = [
+            { id: 'luminosite', label: 'Luminosite', valeur: activeMedia.brightness, min: 50, max: 150, onChange: changerBrightness },
+            { id: 'contraste', label: 'Contraste', valeur: activeMedia.contrast, min: 50, max: 150, onChange: changerContrast },
+            { id: 'saturation', label: 'Saturation', valeur: activeMedia.saturation, min: 0, max: 200, onChange: changerSaturation },
+          ];
+          const actuel = REGLAGES.find(function(r) { return r.id === reglageChoisi; }) || REGLAGES[0];
+          return (
+            <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent)', padding: '20px 10px 12px', zIndex: 12 }}>
+              <div style={{ display: 'flex', gap: 8, overflowX: 'auto', marginBottom: 12, paddingBottom: 2 }}>
+                {REGLAGES.map(function(r) {
+                  const actif = r.id === reglageChoisi;
+                  return (
+                    <div key={r.id} onClick={function() { setReglageChoisi(r.id); }} style={{ flexShrink: 0, padding: '6px 14px', borderRadius: 20, background: actif ? OR : 'rgba(255,255,255,0.12)', color: actif ? VERT : '#fff', fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                      {r.label}
+                    </div>
+                  );
+                })}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <input type="range" min={actuel.min} max={actuel.max} value={actuel.valeur} onChange={function(e) { actuel.onChange(+e.target.value); }} style={{ flex: 1 }} />
+                <span style={{ fontSize: 10, color: '#fff', width: 30, textAlign: 'right' }}>{actuel.valeur}</span>
+              </div>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-              <span style={{ fontSize: 10, color: '#fff', width: 72 }}>Luminosite</span>
-              <input type="range" min="50" max="150" value={activeMedia.brightness} onChange={function(e) { changerBrightness(+e.target.value); }} style={{ flex: 1 }} />
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-              <span style={{ fontSize: 10, color: '#fff', width: 72 }}>Contraste</span>
-              <input type="range" min="50" max="150" value={activeMedia.contrast} onChange={function(e) { changerContrast(+e.target.value); }} style={{ flex: 1 }} />
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span style={{ fontSize: 10, color: '#fff', width: 72 }}>Saturation</span>
-              <input type="range" min="0" max="200" value={activeMedia.saturation} onChange={function(e) { changerSaturation(+e.target.value); }} style={{ flex: 1 }} />
-            </div>
-          </div>
-        )}
+          );
+        })()}
 
       </>
     );
