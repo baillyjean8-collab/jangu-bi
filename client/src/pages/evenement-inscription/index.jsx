@@ -137,15 +137,20 @@ export default function EvenementInscriptionPage() {
         return;
       }
     }
-    setEnvoi(true);
+        setEnvoi(true);
     setErreur('');
     try {
-      await postsApi.inscrireEvenement(postId, {
+      const res = await postsApi.inscrireEvenement(postId, {
         telephone: telephone.trim(),
         participants: participants.map(function(p) {
           return { nom: p.nom.trim(), parishId: p.parishId || null, parishNom: p.parishNom, sexe: p.sexe, trancheAge: p.trancheAge };
         }),
       });
+      const paymentUrl = res && res.data && res.data.paymentUrl;
+      if (paymentUrl) {
+        window.location.href = paymentUrl;
+        return;
+      }
       setSuccess(true);
     } catch (e) {
       setErreur(e.message || 'Une erreur est survenue.');
