@@ -456,18 +456,24 @@ export default function ProfilePage() {
                   <div style={{ fontFamily: 'Georgia,serif', fontSize: 14, color: '#7A6E5E', textAlign: 'center' }}>Aucune inscription pour l'instant</div>
                 </div>
               )}
-              {!chargementInscriptions && mesInscriptions.map(function(ins) {
+                            {!chargementInscriptions && mesInscriptions.map(function(ins) {
                 const evt = ins.postId;
                 return (
                   <div key={ins._id} style={{ background: 'white', borderRadius: 14, padding: '12px 14px', boxShadow: '0 2px 10px rgba(13,59,46,.06)' }}>
                     <div style={{ fontSize: 12.5, fontWeight: 700, color: '#0D2B1F', fontFamily: 'Georgia,serif', marginBottom: 4 }}>
-                      {evt && evt.content ? evt.content : 'Evenement'}
+                      {evt && evt.content ? evt.content : 'Evenement (publication supprimee)'}
                     </div>
                     <div style={{ fontSize: 10.5, color: '#7A6E5E', marginBottom: 2 }}>
                       {(ins.participants || []).length} personne(s) inscrite(s)
                     </div>
-                    <div style={{ fontSize: 9.5, color: '#9A8E7E' }}>
-                    Inscrit le {ins.createdAt ? new Date(ins.createdAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Africa/Dakar' }) : ''}
+                    <div style={{ fontSize: 9.5, color: '#9A8E7E', marginBottom: 8 }}>
+                      Inscrit le {ins.createdAt ? new Date(ins.createdAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Africa/Dakar' }) : ''}
+                    </div>
+                    <div
+                      onClick={function() { if (annulationEnCours !== ins._id) annulerUneInscription(ins._id); }}
+                      style={{ fontSize: 10.5, color: '#b71c1c', fontWeight: 700, cursor: 'pointer', display: 'inline-block' }}
+                    >
+                      {annulationEnCours === ins._id ? 'Annulation...' : 'Annuler cette inscription'}
                     </div>
                   </div>
                 );
