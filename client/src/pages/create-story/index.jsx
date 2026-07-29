@@ -424,6 +424,60 @@ cursor: activeSlide.mode === 'media' ? 'grab' : 'default',
           )}
           {activeSlide.mode === 'media' && activeSlide.mediaFile && activeSlide.mediaFile.kind === 'video' && (
             <video src={activeSlide.mediaFile.previewUrl} autoPlay muted loop playsInline style={mediaStyle} />
+            {activeSlide.mode === 'media' && activeSlide.mediaFile && (
+  <div style={{ position: 'absolute', top: 60, right: 10, display: 'flex', flexDirection: 'column', gap: 16, zIndex: 6, alignItems: 'center' }}>
+    <div onClick={function() { setActivePanel(activePanel === 'filtres' ? null : 'filtres'); }} style={{ width: 34, height: 34, borderRadius: '50%', background: 'rgba(0,0,0,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: activePanel === 'filtres' ? OR : '#fff', fontSize: 18 }}>
+      <i className="ti ti-circles" />
+    </div>
+    <div onClick={function() { setActivePanel(activePanel === 'ajuster' ? null : 'ajuster'); }} style={{ width: 34, height: 34, borderRadius: '50%', background: 'rgba(0,0,0,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: activePanel === 'ajuster' ? OR : '#fff', fontSize: 18 }}>
+      <i className="ti ti-settings" />
+    </div>
+  </div>
+)}
+
+{activePanel === 'filtres' && activeSlide.mode === 'media' && (
+  <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.75), transparent)', padding: '26px 10px 14px', display: 'flex', gap: 8, overflowX: 'auto', zIndex: 6 }}>
+    {FILTRES.map(function(f) {
+      const actif = activeSlide.filtre === f.id;
+      return (
+        <div key={f.id} onClick={function() { majSlideActive({ filtre: f.id }); }} style={{ flexShrink: 0, padding: '6px 14px', borderRadius: 16, fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'Georgia,serif', background: actif ? OR : 'rgba(255,255,255,0.15)', color: actif ? VERT : IVOIRE, border: '1px solid ' + (actif ? OR : 'rgba(200,168,75,0.3)') }}>
+          {f.label}
+        </div>
+      );
+    })}
+  </div>
+)}
+
+{activePanel === 'ajuster' && activeSlide.mode === 'media' && (function() {
+  const REGLAGES = [
+    { id: 'luminosite', label: 'Luminosite', valeur: activeSlide.brightness, min: 50, max: 150, onChange: function(v) { majSlideActive({ brightness: v }); } },
+    { id: 'contraste', label: 'Contraste', valeur: activeSlide.contrast, min: 50, max: 150, onChange: function(v) { majSlideActive({ contrast: v }); } },
+    { id: 'saturation', label: 'Saturation', valeur: activeSlide.saturation, min: 0, max: 200, onChange: function(v) { majSlideActive({ saturation: v }); } },
+    { id: 'zoom', label: 'Zoom', valeur: activeSlide.zoom, min: 1, max: 2.5, step: 0.05, onChange: changerZoom },
+  ];
+  const actuel = REGLAGES.find(function(r) { return r.id === reglageChoisi; }) || REGLAGES[0];
+  return (
+    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.85), transparent)', padding: '20px 10px 14px', zIndex: 6 }}>
+      <div style={{ display: 'flex', gap: 8, overflowX: 'auto', marginBottom: 10, paddingBottom: 2 }}>
+        {REGLAGES.map(function(r) {
+          const actif = r.id === reglageChoisi;
+          return (
+            <div key={r.id} onClick={function() { setReglageChoisi(r.id); }} style={{ flexShrink: 0, padding: '6px 14px', borderRadius: 20, background: actif ? OR : 'rgba(255,255,255,0.15)', color: actif ? VERT : IVOIRE, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: 'Georgia,serif' }}>
+              {r.label}
+            </div>
+          );
+        })}
+        <div onClick={appliquerAjustementAuto} style={{ flexShrink: 0, padding: '6px 14px', fontSize: 11, fontWeight: 700, color: OR, cursor: 'pointer', whiteSpace: 'nowrap' }}>Auto</div>
+        <div onClick={reinitialiserAjustements} style={{ flexShrink: 0, padding: '6px 14px', fontSize: 11, fontWeight: 700, color: 'rgba(245,239,228,0.6)', cursor: 'pointer', whiteSpace: 'nowrap' }}>Reinitialiser</div>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        {actuel.id === 'zoom' && <i className="ti ti-zoom-in" style={{ color: OR, fontSize: 15 }} />}
+        <input type="range" min={actuel.min} max={actuel.max} step={actuel.step || 1} value={actuel.valeur} onChange={function(e) { actuel.onChange(actuel.id === 'zoom' ? parseFloat(e.target.value) : +e.target.value); }} style={{ flex: 1, accentColor: OR }} />
+        <span style={{ fontSize: 10, color: '#fff', width: 30, textAlign: 'right' }}>{actuel.id === 'zoom' ? actuel.valeur.toFixed(2) : actuel.valeur}</span>
+      </div>
+    </div>
+  );
+})()}
           )}
 
           {activeSlide.mode === 'media' && !activePanel && (
