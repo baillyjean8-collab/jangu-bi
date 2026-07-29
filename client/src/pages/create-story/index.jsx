@@ -54,7 +54,7 @@ export default function CreateStoryPage() {
   const [publishing, setPublishing] = useState(false);
   const [erreur, setErreur] = useState('');
   const [activePanel, setActivePanel] = useState(null); // 'filtres' | 'ajuster' | null
-  const [reglageChoisi, setReglageChoisi] = useState('luminosite');
+  const [outilsSupplementairesVisibles, setOutilsSupplementairesVisibles] = useState(false);
 
   function majSlideActive(champs) {
     setSlides(function(prev) {
@@ -426,14 +426,59 @@ cursor: activeSlide.mode === 'media' ? 'grab' : 'default',
             <video src={activeSlide.mediaFile.previewUrl} autoPlay muted loop playsInline style={mediaStyle} />
           )}
 
-          {activeSlide.mode === 'media' && activeSlide.mediaFile && (
-            <div style={{ position: 'absolute', top: 60, right: 10, display: 'flex', flexDirection: 'column', gap: 16, zIndex: 6, alignItems: 'center' }}>
-              <div onClick={function() { setActivePanel(activePanel === 'filtres' ? null : 'filtres'); }} style={{ width: 34, height: 34, borderRadius: '50%', background: 'rgba(0,0,0,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: activePanel === 'filtres' ? OR : '#fff', fontSize: 18 }}>
-                <i className="ti ti-circles" />
+                    {activeSlide.mode === 'media' && activeSlide.mediaFile && (
+            <div style={{ position: 'absolute', top: 60, right: 12, display: 'flex', flexDirection: 'column', gap: 16, zIndex: 6, alignItems: 'flex-end' }}>
+
+              <div onClick={function() { setActivePanel(activePanel === 'filtres' ? null : 'filtres'); }} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
+                <span style={{ color: activePanel === 'filtres' ? OR : IVOIRE, fontSize: 12.5, fontWeight: 700, fontFamily: 'Georgia,serif', whiteSpace: 'nowrap' }}>Filtres</span>
+                <div style={{ width: 38, height: 38, borderRadius: '50%', background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: activePanel === 'filtres' ? OR : '#fff', fontSize: 18 }}>
+                  <i className="ti ti-circles" />
+                </div>
               </div>
-              <div onClick={function() { setActivePanel(activePanel === 'ajuster' ? null : 'ajuster'); }} style={{ width: 34, height: 34, borderRadius: '50%', background: 'rgba(0,0,0,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: activePanel === 'ajuster' ? OR : '#fff', fontSize: 18 }}>
-                <i className="ti ti-settings" />
+
+              <div onClick={function() { setActivePanel(activePanel === 'ajuster' ? null : 'ajuster'); }} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
+                <span style={{ color: activePanel === 'ajuster' ? OR : IVOIRE, fontSize: 12.5, fontWeight: 700, fontFamily: 'Georgia,serif', whiteSpace: 'nowrap' }}>Reglages</span>
+                <div style={{ width: 38, height: 38, borderRadius: '50%', background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: activePanel === 'ajuster' ? OR : '#fff', fontSize: 18 }}>
+                  <i className="ti ti-settings" />
+                </div>
               </div>
+
+              {outilsSupplementairesVisibles && (
+                <>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'default', opacity: 0.55 }}>
+                    <span style={{ color: IVOIRE, fontSize: 12.5, fontWeight: 700, fontFamily: 'Georgia,serif', whiteSpace: 'nowrap' }}>Stickers</span>
+                    <div style={{ width: 38, height: 38, borderRadius: '50%', background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 18 }}>
+                      <i className="ti ti-mood-smile" />
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'default', opacity: 0.55 }}>
+                    <span style={{ color: IVOIRE, fontSize: 12.5, fontWeight: 700, fontFamily: 'Georgia,serif', whiteSpace: 'nowrap' }}>Audio</span>
+                    <div style={{ width: 38, height: 38, borderRadius: '50%', background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 18 }}>
+                      <i className="ti ti-music" />
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'default', opacity: 0.55 }}>
+                    <span style={{ color: IVOIRE, fontSize: 12.5, fontWeight: 700, fontFamily: 'Georgia,serif', whiteSpace: 'nowrap' }}>Effets</span>
+                    <div style={{ width: 38, height: 38, borderRadius: '50%', background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 18 }}>
+                      <i className="ti ti-sparkles" />
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'default', opacity: 0.55 }}>
+                    <span style={{ color: IVOIRE, fontSize: 12.5, fontWeight: 700, fontFamily: 'Georgia,serif', whiteSpace: 'nowrap' }}>Dessiner</span>
+                    <div style={{ width: 38, height: 38, borderRadius: '50%', background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 18 }}>
+                      <i className="ti ti-pencil" />
+                    </div>
+                  </div>
+                </>
+              )}
+
+              <div onClick={function() { setOutilsSupplementairesVisibles(function(v) { return !v; }); }} style={{ width: 38, height: 38, borderRadius: '50%', background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#fff', fontSize: 16 }}>
+                <i className={outilsSupplementairesVisibles ? 'ti ti-chevron-up' : 'ti ti-chevron-down'} />
+              </div>
+
             </div>
           )}
 
