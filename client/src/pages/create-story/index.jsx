@@ -54,6 +54,7 @@ export default function CreateStoryPage() {
   const [publishing, setPublishing] = useState(false);
   const [erreur, setErreur] = useState('');
   const [activePanel, setActivePanel] = useState(null); // 'filtres' | 'ajuster' | null
+  const [reglageChoisi, setReglageChoisi] = useState('luminosite');
   const [outilsSupplementairesVisibles, setOutilsSupplementairesVisibles] = useState(false);
 
   function majSlideActive(champs) {
@@ -362,9 +363,9 @@ export default function CreateStoryPage() {
           onTouchEnd={activeSlide.mode === 'media' ? arreterGlisser : undefined}
           style={{
             position: 'relative', width: 'auto', height: '100%', maxWidth: '100%', aspectRatio: '9 / 16',
-overflow: 'hidden',
-background: activeSlide.mode === 'texte' ? activeSlide.bgColor : '#000',
-cursor: activeSlide.mode === 'media' ? 'grab' : 'default',
+            overflow: 'hidden',
+            background: activeSlide.mode === 'texte' ? activeSlide.bgColor : '#000',
+            cursor: activeSlide.mode === 'media' ? 'grab' : 'default',
           }}
         >
           <div style={{ position: 'absolute', top: -30, right: -30, width: 120, height: 120, borderRadius: '50%', background: 'radial-gradient(circle,rgba(200,168,75,.15),transparent 70%)', pointerEvents: 'none', zIndex: 1 }} />
@@ -422,11 +423,11 @@ cursor: activeSlide.mode === 'media' ? 'grab' : 'default',
           {activeSlide.mode === 'media' && activeSlide.mediaFile && activeSlide.mediaFile.kind === 'image' && (
             <img src={activeSlide.mediaFile.previewUrl} alt="" style={mediaStyle} draggable={false} />
           )}
-                    {activeSlide.mode === 'media' && activeSlide.mediaFile && activeSlide.mediaFile.kind === 'video' && (
+          {activeSlide.mode === 'media' && activeSlide.mediaFile && activeSlide.mediaFile.kind === 'video' && (
             <video src={activeSlide.mediaFile.previewUrl} autoPlay muted loop playsInline style={mediaStyle} />
           )}
 
-                    {activeSlide.mode === 'media' && activeSlide.mediaFile && (
+          {activeSlide.mode === 'media' && activeSlide.mediaFile && (
             <div style={{ position: 'absolute', top: 60, right: 12, display: 'flex', flexDirection: 'column', gap: 16, zIndex: 6, alignItems: 'flex-end' }}>
 
               <div onClick={function() { setActivePanel(activePanel === 'filtres' ? null : 'filtres'); }} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
@@ -443,7 +444,7 @@ cursor: activeSlide.mode === 'media' ? 'grab' : 'default',
                 </div>
               </div>
 
-                            {outilsSupplementairesVisibles && (
+              {outilsSupplementairesVisibles && (
                 <>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'default', opacity: 0.55 }}>
                     <span style={{ color: IVOIRE, fontSize: 12.5, fontWeight: 700, fontFamily: 'Georgia,serif', whiteSpace: 'nowrap' }}>Audio</span>
@@ -520,7 +521,7 @@ cursor: activeSlide.mode === 'media' ? 'grab' : 'default',
           })()}
 
           {activeSlide.mode === 'media' && !activePanel && (
-<div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.75), transparent)', padding: '34px 14px 16px', zIndex: 2 }}>
+            <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.75), transparent)', padding: '34px 14px 16px', zIndex: 2 }}>
               <div
                 ref={captionRef}
                 contentEditable
@@ -537,7 +538,6 @@ cursor: activeSlide.mode === 'media' ? 'grab' : 'default',
           )}
         </div>
       </div>
-
 
       {activeSlide.mode === 'texte' && (
         <div style={{ display: 'flex', justifyContent: 'center', gap: 10, padding: '0 14px 14px' }}>
