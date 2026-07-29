@@ -897,11 +897,10 @@ function matchesSearch(post, query) {
                       Places limitees : {post.eventCapacity}
                     </div>
                   )}
-              {isAdmin && (user?.role === 'super_admin' || String(post.parishId) === String(user?.parishId || (user?.parish && user.parish._id) || '')) && (
+                            {isAdmin && (user?.role === 'super_admin' || String(post.parishId) === String(user?.parishId || (user?.parish && user.parish._id) || '')) && (
                     <div onClick={function(e) { e.stopPropagation(); navigate('/evenement/' + post._id + '/inscrits'); }} style={{ fontSize: 10, color: '#8B6020', fontWeight: 700, textDecoration: 'underline', cursor: 'pointer' }}>
                       Voir les inscrits →
                     </div>
-                  )}
                   )}
                 </div>
               )}
