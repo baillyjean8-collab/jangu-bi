@@ -78,8 +78,7 @@ export default function AdminLoginPage() {
             style={{ width: '100%', background: 'rgba(255,255,255,0.06)', border: '1.5px solid rgba(200,168,75,0.2)', borderRadius: 12, padding: '12px 14px', fontSize: 12, color: IVOIRE, outline: 'none', fontFamily: 'Georgia,serif', boxSizing: 'border-box' }}
           />
         </div>
-        <div>
-                            <div>
+                <div>
           <div style={{ fontSize: 10, color: 'rgba(200,168,75,0.7)', fontWeight: 700, letterSpacing: '.06em', marginBottom: 6 }}>MOT DE PASSE</div>
           <div style={{ position: 'relative' }}>
             <input
