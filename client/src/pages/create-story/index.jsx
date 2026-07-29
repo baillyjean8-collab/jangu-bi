@@ -472,8 +472,30 @@ export default function CreateStoryPage() {
           {activeSlide.mode === 'media' && activeSlide.mediaFile && activeSlide.mediaFile.kind === 'image' && (
             <img src={activeSlide.mediaFile.previewUrl} alt="" style={mediaStyle} draggable={false} />
           )}
-          {activeSlide.mode === 'media' && activeSlide.mediaFile && activeSlide.mediaFile.kind === 'video' && (
+                    {activeSlide.mode === 'media' && activeSlide.mediaFile && activeSlide.mediaFile.kind === 'video' && (
             <video src={activeSlide.mediaFile.previewUrl} autoPlay muted loop playsInline style={mediaStyle} />
+          )}
+
+          {activeSlide.mode === 'media' && activeSlide.mediaFile && (
+            <div
+              ref={texteIncrusteRef}
+              contentEditable
+              suppressContentEditableWarning
+              onBlur={surTexteIncrusteBlur}
+              style={{
+                position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
+                color: '#fff', fontWeight: 700, fontSize: 22, textAlign: 'center', minWidth: 30,
+                textShadow: '0 2px 8px rgba(0,0,0,0.6)', padding: '8px 20px', zIndex: 4,
+                fontFamily: 'Georgia,serif', outline: 'none', cursor: 'text',
+                border: activePanel === 'texte' ? '1.5px dashed rgba(255,255,255,0.5)' : 'none',
+                borderRadius: 8, maxWidth: '82%',
+              }}
+            />
+          )}
+          {activeSlide.mode === 'media' && activeSlide.mediaFile && !activeSlide.texteIncruste && activePanel === 'texte' && (
+            <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', color: 'rgba(255,255,255,0.55)', fontWeight: 700, fontSize: 22, fontFamily: 'Georgia,serif', pointerEvents: 'none', zIndex: 3 }}>
+              Ecrire un texte…
+            </div>
           )}
 
           {activeSlide.mode === 'media' && activeSlide.mediaFile && (
