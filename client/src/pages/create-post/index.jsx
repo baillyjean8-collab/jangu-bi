@@ -99,7 +99,7 @@ export default function CreatePostPage() {
   const [mediaItems, setMediaItems] = useState([]);
   const [activeIndex, setActiveIndex] = useState(0);
   const [activePanel, setActivePanel] = useState(null); // 'filtres' | 'ajuster' | 'recadrer' | 'texte' | null
-  const [outilsVisibles, setOutilsVisibles] = useState(true);
+  const [outilsSupplementairesVisibles, setOutilsSupplementairesVisibles] = useState(false);
   const [editionOuverte, setEditionOuverte] = useState(false);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const texteRef = useRef(null);
@@ -776,36 +776,13 @@ export default function CreatePostPage() {
             maquette de reference. Seuls Ajuster/Texte/Filtres/Cadrer sont relies a
             une vraie fonction pour l'instant ; les autres sont presents visuellement,
             en attente d'une future fonctionnalite. */}
-                {outilsVisibles ? (
-        <div style={{ position: 'absolute', top: 56, right: 12, display: 'flex', flexDirection: 'column', gap: 18, zIndex: 12, alignItems: 'center' }}>
+                        <div style={{ position: 'absolute', top: 56, right: 12, display: 'flex', flexDirection: 'column', gap: 18, zIndex: 12, alignItems: 'center' }}>
           <div onClick={function() { setActivePanel(activePanel === 'ajuster' ? null : 'ajuster'); }} style={{ width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: activePanel === 'ajuster' ? OR : '#fff', fontSize: 20 }}>
             <i className="ti ti-settings" />
           </div>
 
-          <div onClick={partagerPhotoActuelle} style={{ width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#fff', fontSize: 20 }}>
-            <i className="ti ti-share" />
-          </div>
-
-          <div style={{ width: 3, height: 3, borderRadius: '50%', background: 'rgba(255,255,255,0.5)' }} />
-
-          <div style={{ width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'default', color: '#fff', fontSize: 20, opacity: 0.55 }}>
-            <i className="ti ti-camera-rotate" />
-          </div>
-
-          <div style={{ width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'default', color: '#fff', fontSize: 20, opacity: 0.55 }}>
-            <i className="ti ti-movie" />
-          </div>
-
-          <div title="Ajouter un son (bientot disponible)" style={{ width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'default', color: '#fff', fontSize: 18, opacity: 0.55 }}>
-            <i className="ti ti-music" />
-          </div>
-
           <div onClick={function() { setActivePanel(activePanel === 'texte' ? null : 'texte'); }} style={{ width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: activeMedia.texteAjoute || activePanel === 'texte' ? OR : '#fff', fontSize: 17, fontWeight: 700 }}>
             Aa
-          </div>
-
-          <div style={{ width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'default', color: '#fff', fontSize: 20, opacity: 0.55 }}>
-            <i className="ti ti-mood-smile" />
           </div>
 
           <div onClick={appliquerAjustementAuto} title="Amelioration automatique" style={{ width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#fff', fontSize: 20 }}>
@@ -820,15 +797,36 @@ export default function CreatePostPage() {
             <i className="ti ti-crop" />
           </div>
 
-          <div onClick={function() { setOutilsVisibles(false); }} title="Masquer les outils" style={{ width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#fff', fontSize: 18 }}>
-            <i className="ti ti-chevron-down" />
+          {outilsSupplementairesVisibles && (
+            <>
+              <div onClick={partagerPhotoActuelle} style={{ width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#fff', fontSize: 20 }}>
+                <i className="ti ti-share" />
+              </div>
+
+              <div style={{ width: 3, height: 3, borderRadius: '50%', background: 'rgba(255,255,255,0.5)' }} />
+
+              <div style={{ width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'default', color: '#fff', fontSize: 20, opacity: 0.55 }}>
+                <i className="ti ti-camera-rotate" />
+              </div>
+
+              <div style={{ width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'default', color: '#fff', fontSize: 20, opacity: 0.55 }}>
+                <i className="ti ti-movie" />
+              </div>
+
+              <div title="Ajouter un son (bientot disponible)" style={{ width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'default', color: '#fff', fontSize: 18, opacity: 0.55 }}>
+                <i className="ti ti-music" />
+              </div>
+
+              <div style={{ width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'default', color: '#fff', fontSize: 20, opacity: 0.55 }}>
+                <i className="ti ti-mood-smile" />
+              </div>
+            </>
+          )}
+
+          <div onClick={function() { setOutilsSupplementairesVisibles(function(v) { return !v; }); }} title={outilsSupplementairesVisibles ? "Masquer les outils supplementaires" : "Voir plus d'outils"} style={{ width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#fff', fontSize: 18 }}>
+            <i className={outilsSupplementairesVisibles ? 'ti ti-chevron-up' : 'ti ti-chevron-down'} />
           </div>
         </div>
-        ) : (
-          <div onClick={function() { setOutilsVisibles(true); }} title="Afficher les outils" style={{ position: 'absolute', top: 56, right: 12, width: 34, height: 34, borderRadius: '50%', background: 'rgba(0,0,0,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#fff', fontSize: 18, zIndex: 12 }}>
-            <i className="ti ti-chevron-up" />
-          </div>
-        )}
 
         {activePanel === 'filtres' && (
           <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.6), transparent)', padding: '26px 10px 10px', display: 'flex', gap: 8, overflowX: 'auto', zIndex: 12 }}>
