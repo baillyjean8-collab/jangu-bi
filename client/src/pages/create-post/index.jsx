@@ -224,6 +224,7 @@ export default function CreatePostPage() {
       return next;
     });
     e.target.value = '';
+    setActivePanel(null);
     setEditionOuverte(true);
   }
 
@@ -545,6 +546,7 @@ export default function CreatePostPage() {
     return new Promise(function(resolve, reject) {
       if (m.kind !== 'image') { resolve(m.url); return; }
       const img = new Image();
+      img.crossOrigin = 'anonymous';
       img.onload = function() {
         const naturalW = img.naturalWidth, naturalH = img.naturalHeight;
 
@@ -890,6 +892,7 @@ export default function CreatePostPage() {
                 <img
                   src={activeMedia.url}
                   alt=""
+                  crossOrigin="anonymous"
                   onLoad={onImageLoadForCrop}
                   style={{ maxWidth: '100%', maxHeight: '100%', display: 'block', transform: activeMedia.miroir ? 'scaleX(-1)' : 'none' }}
                 />
@@ -1116,7 +1119,7 @@ export default function CreatePostPage() {
 
           {mediaItems.length > 0 && (
             <div
-              onClick={function() { setEditionOuverte(true); }}
+              onClick={function() { setActivePanel(null); setEditionOuverte(true); }}
               style={{ position: 'relative', borderRadius: 14, overflow: 'hidden', marginBottom: 12, background: '#0C0A06', aspectRatio: ratioEffectif(activeMedia) + ' / 1', cursor: 'pointer' }}
             >
               {activeMedia.kind === 'video' ? (
@@ -1176,7 +1179,7 @@ export default function CreatePostPage() {
       {editionOuverte && activeMedia && (
                 <div style={{ position: 'fixed', top: 0, bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: 430, background: '#000', zIndex: 1000, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
                     {activePanel !== 'recadrer' && (
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '44px 16px 6px', position: 'relative', zIndex: 20, flexShrink: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 'max(env(safe-area-inset-top), 10px) 16px 6px', position: 'relative', zIndex: 20, flexShrink: 0 }}>
                         <button onClick={function() { setEditionOuverte(false); }} style={{ width: 34, height: 34, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.25)', color: '#fff', fontSize: 17, cursor: 'pointer' }}>‹</button>
             {mediaItems.length > 1 && (
               <div style={{ display: 'flex', gap: 5 }}>
