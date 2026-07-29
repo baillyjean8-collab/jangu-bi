@@ -794,6 +794,10 @@ export default function CreatePostPage() {
             <i className="ti ti-movie" />
           </div>
 
+          <div title="Ajouter un son (bientot disponible)" style={{ width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'default', color: '#fff', fontSize: 18, opacity: 0.55 }}>
+            <i className="ti ti-music" />
+          </div>
+
           <div onClick={function() { setActivePanel(activePanel === 'texte' ? null : 'texte'); }} style={{ width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: activeMedia.texteAjoute || activePanel === 'texte' ? OR : '#fff', fontSize: 17, fontWeight: 700 }}>
             Aa
           </div>
@@ -1171,22 +1175,19 @@ export default function CreatePostPage() {
 
       {editionOuverte && activeMedia && (
                 <div style={{ position: 'fixed', top: 0, bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: 430, background: '#000', zIndex: 1000, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                    {activePanel !== 'recadrer' && (
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '44px 16px 6px', position: 'relative', zIndex: 20, flexShrink: 0 }}>
                         <button onClick={function() { setEditionOuverte(false); }} style={{ width: 34, height: 34, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.25)', color: '#fff', fontSize: 17, cursor: 'pointer' }}>‹</button>
-            {mediaItems.length > 1 ? (
+            {mediaItems.length > 1 && (
               <div style={{ display: 'flex', gap: 5 }}>
                 {mediaItems.map(function(_, i) {
                   return <span key={i} onClick={function() { setActiveIndex(i); }} style={{ width: i === activeIndex ? 16 : 6, height: 6, borderRadius: 3, background: i === activeIndex ? '#fff' : 'rgba(255,255,255,0.35)', transition: 'all .2s', cursor: 'pointer' }} />;
                 })}
               </div>
-            ) : (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(255,255,255,0.12)', borderRadius: 999, padding: '6px 12px', opacity: 0.6 }}>
-                <span style={{ fontSize: 11 }}>🎵</span>
-                <span style={{ fontSize: 10.5, color: '#fff', fontWeight: 700 }}>Ajouter un son</span>
-              </div>
             )}
             <span style={{ width: 34 }} />
           </div>
+                    )}
           <div
             ref={conteneurMediaRef}
             onMouseDown={activePanel === 'recadrer' ? undefined : demarrerGlisser} onMouseMove={activePanel === 'recadrer' ? undefined : bougerGlisser} onMouseUp={activePanel === 'recadrer' ? undefined : arreterGlisser} onMouseLeave={activePanel === 'recadrer' ? undefined : arreterGlisser}
@@ -1202,6 +1203,7 @@ export default function CreatePostPage() {
               </>
             )}
           </div>
+          {activePanel !== 'recadrer' && (
           <div style={{ padding: '8px 12px 10px', position: 'relative', zIndex: 20, flexShrink: 0 }}>
             <div style={{ display: 'flex', gap: 8, overflowX: 'auto', marginBottom: 10, alignItems: 'center' }}>
               <div style={{ width: 34, height: 34, borderRadius: 8, background: 'rgba(255,255,255,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -1223,20 +1225,15 @@ export default function CreatePostPage() {
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.12)', borderRadius: 999, padding: '5px 14px 5px 5px' }}>
-                <div style={{ width: 24, height: 24, borderRadius: '50%', background: 'linear-gradient(135deg,#C8A84B,#8B7030)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: VERT }}>
-                  {initiales}
-                </div>
-                <span style={{ fontSize: 11, fontWeight: 700, color: '#fff' }}>Publication</span>
+              <div onClick={function() { setEditionOuverte(false); }} style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.75)', cursor: 'pointer', padding: '10px 6px' }}>
+                Annuler
               </div>
               <button onClick={function() { if (activePanel === 'recadrer') { setActivePanel(null); } else { setEditionOuverte(false); } }} style={{ background: 'linear-gradient(135deg,#C8A84B,#8B6020)', color: VERT, border: 'none', padding: '10px 26px', borderRadius: 999, fontSize: 13.5, fontWeight: 700, cursor: 'pointer' }}>
                 Suivant
               </button>
             </div>
-            <div style={{ textAlign: 'center', marginTop: 8 }}>
-              <span onClick={function() { setEditionOuverte(false); }} style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', cursor: 'pointer' }}>Annuler</span>
-            </div>
           </div>
+          )}
         </div>
       )}
 
