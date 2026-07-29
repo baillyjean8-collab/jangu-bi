@@ -87,8 +87,18 @@ export default function CreatePostPage() {
     if (!outer || !activeMedia) return;
     const rect = outer.getBoundingClientRect();
     const PADDING = 12; // doit correspondre au padding du conteneur outer
+
+    // Securite supplementaire : sur Safari iOS, rect.height peut etre perime
+    // juste apres l'ouverture (barre d'adresse encore en mouvement). On ne
+    // depasse jamais la vraie hauteur visible de la fenetre a cet instant.
+    let hauteurMax = rect.height;
+    if (window.visualViewport) {
+      const limiteVisible = window.visualViewport.height - rect.top;
+      if (limiteVisible > 0) hauteurMax = Math.min(hauteurMax, limiteVisible);
+    }
+
     const availW = Math.max(0, rect.width - PADDING * 2);
-    const availH = Math.max(0, rect.height - PADDING * 2);
+    const availH = Math.max(0, hauteurMax - PADDING * 2);
     if (availW <= 0 || availH <= 0) return;
 
     const ratio = ratioEffectif(activeMedia); // largeur / hauteur
@@ -103,13 +113,44 @@ export default function CreatePostPage() {
 
   useEffect(function() {
     if (!editionOuverte) return;
-    recalculerBoxSize();
+
+    // Sur Safari iOS, la barre d'adresse peut encore etre en train de se
+    // retracter/apparaitre juste apres l'ouverture de l'edition : une mesure
+    // prise trop tot donne une hauteur fausse (cadre trop grand, decale).
+    // On mesure donc a plusieurs reprises le temps que tout se stabilise.
+    let annule = false;
+    function mesurerDifferee() {
+      requestAnimationFrame(function() {
+        if (annule) return;
+        recalculerBoxSize();
+        requestAnimationFrame(function() {
+          if (annule) return;
+          recalculerBoxSize();
+        });
+      });
+    }
+    mesurerDifferee();
+    const t1 = setTimeout(recalculerBoxSize, 80);
+    const t2 = setTimeout(recalculerBoxSize, 300);
+
     const ro = new ResizeObserver(function() { recalculerBoxSize(); });
     if (outerRef.current) ro.observe(outerRef.current);
     window.addEventListener('resize', recalculerBoxSize);
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', recalculerBoxSize);
+      window.visualViewport.addEventListener('scroll', recalculerBoxSize);
+    }
+
     return function() {
+      annule = true;
+      clearTimeout(t1);
+      clearTimeout(t2);
       ro.disconnect();
       window.removeEventListener('resize', recalculerBoxSize);
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', recalculerBoxSize);
+        window.visualViewport.removeEventListener('scroll', recalculerBoxSize);
+      }
     };
   }, [editionOuverte, recalculerBoxSize]);
 
@@ -304,11 +345,6 @@ export default function CreatePostPage() {
   const premiereImage = mediaItems.find(function(m) { return m.kind === 'image'; });
 
   // --- VRAI RECADRAGE PIXEL (baking) ---------------------------------------
-  // Calcule, a partir du zoom/deplacement/format choisis a l'ecran, la zone
-  // exacte de l'image d'origine visible dans le cadre, la decoupe reellement
-  // sur un canvas (avec les filtres actifs appliques dans la foulee), et
-  // remplace l'image par ce resultat definitif. Une fois valide, tout ce qui
-  // etait hors-cadre est realmente elimine : plus de recadrage "fantome".
   function bakerRecadrageImage(media, boxW, boxH) {
     return new Promise(function(resolve) {
       const img = new Image();
@@ -321,18 +357,12 @@ export default function CreatePostPage() {
         const offsetX = media.offsetX || 0;
         const offsetY = media.offsetY || 0;
 
-        // 1) Mappage "cover" standard : comment le navigateur place naturellement
-        // l'image dans le cadre (Wbox x Hbox) avant tout zoom/deplacement.
         const coverScale = Math.max(boxW / naturalW, boxH / naturalH);
         const dispW = naturalW * coverScale;
         const dispH = naturalH * coverScale;
         const decalX = (boxW - dispW) / 2;
         const decalY = (boxH - dispH) / 2;
 
-        // 2) Le cadre visible a l'ecran est [0,boxW] x [0,boxH]. On retrouve,
-        // par transformation inverse (zoom centre + translation), quelles
-        // coordonnees "cover" (avant zoom) correspondent aux bords du cadre.
-        // sx0 = taille/2 + (bordEcran - taille/2 - offset) / zoom
         function versAvantZoomX(bordEcran) {
           return boxW / 2 + (bordEcran - boxW / 2 - offsetX) / zoom;
         }
@@ -345,7 +375,6 @@ export default function CreatePostPage() {
         const sy0Haut = versAvantZoomY(0);
         const sy0Bas = versAvantZoomY(boxH);
 
-        // 3) Conversion de ces coordonnees "cover" vers les pixels reels de l'image d'origine.
         function versNaturelX(sx0) { return (sx0 - decalX) / coverScale; }
         function versNaturelY(sy0) { return (sy0 - decalY) / coverScale; }
 
@@ -357,7 +386,6 @@ export default function CreatePostPage() {
         let cropW = cropXFin - cropX;
         let cropH = cropYFin - cropY;
 
-        // Securite : on reste toujours dans les limites de l'image source.
         if (cropW <= 0) cropW = naturalW;
         if (cropH <= 0) cropH = naturalH;
         cropX = Math.max(0, Math.min(naturalW - cropW, cropX));
@@ -388,8 +416,6 @@ export default function CreatePostPage() {
   async function terminerEdition() {
     if (!activeMedia) { setEditionOuverte(false); return; }
 
-    // Les videos ne sont pas re-decoupees pixel par pixel ici (pas de moteur
-    // d'encodage cote client) : on garde le cadrage live (transform CSS).
     if (activeMedia.kind !== 'image') {
       setEditionOuverte(false);
       return;
@@ -434,7 +460,6 @@ export default function CreatePostPage() {
     setErreur('');
     try {
       const premiereUrlValide = mediaItems.length > 0 && !mediaItems[0].local ? mediaItems[0].url : undefined;
-      // (les photos passees par redimensionnerEnBase64 ont local=false : elles sont envoyees normalement)
       await postsApi.create({
         content: texte.trim(),
         type: typePub,
