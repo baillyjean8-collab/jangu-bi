@@ -13,7 +13,7 @@ export default function AdminLoginPage() {
   const [identifiant, setIdentifiant] = useState('');
   const [motDePasse, setMotDePasse]   = useState('');
   const [loading, setLoading]         = useState(false);
-  const [erreur, setErreur]           = useState('');
+  const [motDePasseVisible, setMotDePasseVisible] = useState(false);
 
   async function handleLogin() {
     if (!identifiant || !motDePasse) {
@@ -78,16 +78,25 @@ export default function AdminLoginPage() {
           />
         </div>
         <div>
-          <div style={{ fontSize: 10, color: 'rgba(200,168,75,0.7)', fontWeight: 700, letterSpacing: '.06em', marginBottom: 6 }}>MOT DE PASSE</div>
-          <input
-            value={motDePasse}
-            onChange={function(e) { setMotDePasse(e.target.value); }}
-            onKeyDown={function(e) { if (e.key === 'Enter') handleLogin(); }}
-            type="password"
-            placeholder="**********"
-            style={{ width: '100%', background: 'rgba(255,255,255,0.06)', border: '1.5px solid rgba(200,168,75,0.2)', borderRadius: 12, padding: '12px 14px', fontSize: 12, color: IVOIRE, outline: 'none', fontFamily: 'Georgia,serif', boxSizing: 'border-box' }}
-          />
-        </div>
+                    <div>
+            <div style={{ fontSize: 10, color: 'rgba(200,168,75,0.7)', fontWeight: 700, letterSpacing: '.06em', marginBottom: 6 }}>MOT DE PASSE</div>
+            <div style={{ position: 'relative' }}>
+              <input
+                value={motDePasse}
+                onChange={function(e) { setMotDePasse(e.target.value); }}
+                onKeyDown={function(e) { if (e.key === 'Enter') handleLogin(); }}
+                type={motDePasseVisible ? 'text' : 'password'}
+                placeholder="**********"
+                style={{ width: '100%', background: 'rgba(255,255,255,0.06)', border: '1.5px solid rgba(200,168,75,0.2)', borderRadius: 12, padding: '12px 42px 12px 14px', fontSize: 12, color: IVOIRE, outline: 'none', fontFamily: 'Georgia,serif', boxSizing: 'border-box' }}
+              />
+              <div
+                onClick={function() { setMotDePasseVisible(function(v) { return !v; }); }}
+                style={{ position: 'absolute', top: '50%', right: 12, transform: 'translateY(-50%)', cursor: 'pointer', color: 'rgba(200,168,75,0.6)', display: 'flex', alignItems: 'center' }}
+              >
+                <i className={motDePasseVisible ? 'ti ti-eye-off' : 'ti ti-eye'} style={{ fontSize: 16 }} />
+              </div>
+            </div>
+          </div>
         {erreur ? <div style={{ fontSize: 11, color: '#ef9a9a', textAlign: 'center', padding: '8px', background: 'rgba(229,57,53,0.1)', borderRadius: 8 }}>{erreur}</div> : null}
       </div>
 
