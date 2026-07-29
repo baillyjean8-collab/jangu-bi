@@ -375,7 +375,7 @@ export function LoginPage() {
             <label style={S.label}>Email</label>
             <input style={S.inputLight} type="email" placeholder="votre@email.com" value={form.email} onChange={set('email')} required/>
           </div>
-                    <div style={S.mb}>
+          <div style={S.mb}>
             <label style={S.label}>Mot de passe</label>
             <div style={{ position: 'relative' }}>
               <input style={{ ...S.inputLight, paddingRight: 42 }} type={motDePasseVisible ? 'text' : 'password'} placeholder="••••••••••" value={form.password} onChange={set('password')} required/>
@@ -383,7 +383,6 @@ export function LoginPage() {
                 <i className={motDePasseVisible ? 'ti ti-eye-off' : 'ti ti-eye'} style={{ fontSize: 16 }} />
               </div>
             </div>
-          </div>
           </div>
           <div style={{ textAlign: 'right', marginBottom: 20 }}>
             <span onClick={() => navigate('/forgot-password')} style={{ fontSize: 12, color: 'rgba(200,168,75,.7)', cursor: 'pointer' }}>Mot de passe oublié ?</span>
