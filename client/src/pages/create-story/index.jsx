@@ -443,15 +443,8 @@ cursor: activeSlide.mode === 'media' ? 'grab' : 'default',
                 </div>
               </div>
 
-              {outilsSupplementairesVisibles && (
+                            {outilsSupplementairesVisibles && (
                 <>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'default', opacity: 0.55 }}>
-                    <span style={{ color: IVOIRE, fontSize: 12.5, fontWeight: 700, fontFamily: 'Georgia,serif', whiteSpace: 'nowrap' }}>Stickers</span>
-                    <div style={{ width: 38, height: 38, borderRadius: '50%', background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 18 }}>
-                      <i className="ti ti-mood-smile" />
-                    </div>
-                  </div>
-
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'default', opacity: 0.55 }}>
                     <span style={{ color: IVOIRE, fontSize: 12.5, fontWeight: 700, fontFamily: 'Georgia,serif', whiteSpace: 'nowrap' }}>Audio</span>
                     <div style={{ width: 38, height: 38, borderRadius: '50%', background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 18 }}>
