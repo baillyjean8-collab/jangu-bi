@@ -46,6 +46,7 @@ export default function CreateStoryPage() {
   const dragRef = useRef({ actif: false, startX: 0, startY: 0, baseX: 0, baseY: 0 });
   const marcoRef = useRef(null);
   const captionRef = useRef(null);
+  const texteIncrusteRef = useRef(null);
 
   const [slides, setSlides] = useState(function() { return [nouvelleSlideTexte()]; });
   const [activeSlideIndex, setActiveSlideIndex] = useState(0);
@@ -81,11 +82,12 @@ export default function CreateStoryPage() {
     if (!file) return;
     const kind = file.type.startsWith('video/') ? 'video' : 'image';
     const previewUrl = URL.createObjectURL(file);
-    majSlideActive({
+        majSlideActive({
       mode: 'media',
       mediaFile: { file: file, previewUrl: previewUrl, kind: kind },
       filtre: 'normal', brightness: 100, contrast: 100, saturation: 100,
       zoom: 1, offsetX: 0, offsetY: 0,
+      texteIncruste: '',
     });
     setErreur('');
     e.target.value = '';
@@ -151,14 +153,28 @@ export default function CreateStoryPage() {
     majSlideActive({ zoom: valeur, offsetX: limite.x, offsetY: limite.y });
   }
 
-  function surCaptionBlur(e) {
+      function surCaptionBlur(e) {
     majSlideActive({ caption: e.target.textContent });
+  }
+    function surTexteIncrusteBlur(e) {
+    majSlideActive({ texteIncruste: e.target.textContent });
   }
   useEffect(function() {
     if (captionRef.current) {
       captionRef.current.textContent = (activeSlide && activeSlide.caption) || '';
     }
   }, [activeSlideIndex]);
+    useEffect(function() {
+    if (texteIncrusteRef.current) {
+      texteIncrusteRef.current.textContent = (activeSlide && activeSlide.texteIncruste) || '';
+    }
+  }, [activeSlideIndex]);
+
+  useEffect(function() {
+    if (activePanel === 'texte' && texteIncrusteRef.current) {
+      texteIncrusteRef.current.focus();
+    }
+  }, [activePanel]);
 
   function clamp255(v) { return v < 0 ? 0 : v > 255 ? 255 : v; }
 
@@ -253,7 +269,39 @@ export default function CreateStoryPage() {
         const panY = (reglages.offsetY || 0) * outputH;
         ctx.drawImage(img, baseX + panX, baseY + panY, drawW, drawH);
 
-        appliquerFiltresSurCanvas(ctx, outputW, outputH, reglages);
+                appliquerFiltresSurCanvas(ctx, outputW, outputH, reglages);
+
+        if (reglages.texteIncruste) {
+          const tailleFonte = Math.round(outputW * 0.065);
+          ctx.font = tailleFonte + 'px Georgia, serif';
+          ctx.fillStyle = '#ffffff';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.shadowColor = 'rgba(0,0,0,0.6)';
+          ctx.shadowBlur = 8;
+          ctx.shadowOffsetY = 2;
+
+          const maxLargeur = outputW * 0.82;
+          const mots = reglages.texteIncruste.split(' ');
+          const lignes = [];
+          let ligneActuelle = '';
+          mots.forEach(function(mot) {
+            const test = ligneActuelle ? ligneActuelle + ' ' + mot : mot;
+            if (ctx.measureText(test).width > maxLargeur && ligneActuelle) {
+              lignes.push(ligneActuelle);
+              ligneActuelle = mot;
+            } else {
+              ligneActuelle = test;
+            }
+          });
+          if (ligneActuelle) lignes.push(ligneActuelle);
+
+          const interligne = tailleFonte * 1.25;
+          const departY = outputH / 2 - ((lignes.length - 1) * interligne) / 2;
+          lignes.forEach(function(ligne, i) {
+            ctx.fillText(ligne, outputW / 2, departY + i * interligne);
+          });
+        }
 
         URL.revokeObjectURL(objectUrl);
         canvas.toBlob(function(blob) {
