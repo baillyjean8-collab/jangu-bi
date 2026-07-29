@@ -1,169 +1,164 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useRef, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import AppShell from '../../components/AppShell';
 import { useAuth } from '../../context/AuthContext';
 import { postsApi, storiesApi } from '../../services/api';
 import { uploadToCloudinary } from '../../services/cloudinary';
+import ReactCrop, { centerCrop, makeAspectCrop } from 'react-image-crop';
+import 'react-image-crop/dist/ReactCrop.css';
 
 const VERT = '#1e2d14';
-const OR = '#C8A84B';
+const OR   = '#C8A84B';
 const IVOIRE = '#F5F0E8';
 
 const TYPES_PUB = [
-  { id: 'NORMAL', label: 'Publication', color: 'rgba(200,168,75,0.15)', tc: '#8B6020' },
-  { id: 'ANNONCE', label: 'Annonce', color: '#e3f2fd', tc: '#1565c0' },
-  { id: 'INSCRIPTION', label: 'Inscription', color: 'rgba(21,101,192,0.1)', tc: '#1565C0' },
-  { id: 'COLLECTE', label: 'Collecte', color: 'rgba(200,168,75,0.15)', tc: '#8B6020' },
-  { id: 'EVENEMENT', label: 'Evenement', color: '#e8f5e9', tc: '#2e7d32' },
-  { id: 'MEDIA', label: 'Media', color: 'rgba(183,28,28,0.08)', tc: '#b71c1c' },
+  { id: 'NORMAL',    label: 'Publication', icon: 'ti-file-text' },
+  { id: 'EVENEMENT', label: 'Evenement',   icon: 'ti-calendar' },
+  { id: 'ANNONCE',   label: 'Annonce',     icon: 'ti-speakerphone' },
 ];
 
 const FILTRES = [
-  { id: 'normal', label: 'Normal', css: 'none' },
-  { id: 'vif', label: 'Vif', css: 'saturate(1.6) contrast(1.05)' },
-  { id: 'chaleureux', label: 'Chaleureux', css: 'sepia(0.35) saturate(1.2)' },
-  { id: 'nb', label: 'N&B', css: 'grayscale(1)' },
-  { id: 'contraste', label: 'Contraste', css: 'contrast(1.4)' },
+  { id: 'normal',     label: 'Normal',     css: 'none' },
+  { id: 'vif',        label: 'Vif',        css: 'saturate(2.1) contrast(1.2) brightness(1.03)' },
+  { id: 'chaleureux', label: 'Chaleureux', css: 'sepia(0.55) saturate(1.6) contrast(1.1)' },
+  { id: 'nb',         label: 'N&B',        css: 'grayscale(1) contrast(1.25)' },
+  { id: 'contraste',  label: 'Contraste',  css: 'contrast(1.7) saturate(1.15)' },
 ];
 
-// Formats standards, comme sur Facebook/Instagram/TikTok/Snap : donnent une
-// homogeneite visuelle dans le fil, quelle que soit la photo/video importee.
 const CADRES = [
-  { id: 'original', label: 'Original', ratio: null },
-  { id: 'carre', label: '1:1', ratio: 1 },
-  { id: 'portrait', label: '4:5', ratio: 0.8 },
-  { id: 'story', label: '9:16', ratio: 0.5625 },
-  { id: 'paysage', label: '16:9', ratio: 1.7778 },
+  { id: 'original', label: 'Originale', ratio: 'nature' },
+  { id: 'libre',    label: 'Forme libre', ratio: null },
+  { id: 'carre',    label: '1:1',      ratio: 1 },
+  { id: 'portrait', label: '4:5',      ratio: 0.8 },
+  { id: 'story',    label: '9:16',     ratio: 0.5625 },
+  { id: 'paysage',  label: '16:9',     ratio: 1.7778 },
 ];
 
-const AUTO_ADJUST_CSS = 'contrast(1.12) saturate(1.18) brightness(1.04)';
 
 export default function CreatePostPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const editId = searchParams.get('editId');
+  const [chargementEdition, setChargementEdition] = useState(!!editId);
   const { user } = useAuth();
   const fileInputRef = useRef(null);
   const dragRef = useRef({ actif: false, startX: 0, startY: 0, baseX: 0, baseY: 0 });
+  const conteneurMediaRef = useRef(null);
 
-  // outerRef : la zone d'edition disponible (entre le header Annuler/Modifier/Termine et le bas de l'ecran)
-  const outerRef = useRef(null);
-  // boxRef : le cadre reel de recadrage (dimensions fixes en pixels, jamais en %/aspect-ratio)
-  const boxRef = useRef(null);
-
-  const [typePub, setTypePub] = useState('NORMAL');
-  const [texte, setTexte] = useState('');
+  const [typePub, setTypePub]     = useState('NORMAL');
+  const [texte, setTexte]         = useState('');
   const [publishing, setPublishing] = useState(false);
-  const [erreur, setErreur] = useState('');
+  const [erreur, setErreur]       = useState('');
   const [aussiEnStory, setAussiEnStory] = useState(false);
+  const [placesLimitees, setPlacesLimitees] = useState(false);
+  const [capaciteMax, setCapaciteMax] = useState(50);
+  const [autoriserAnnulation, setAutoriserAnnulation] = useState(true);
+  const [inscriptionDebut, setInscriptionDebut] = useState('');
+  const [inscriptionFin, setInscriptionFin] = useState('');
+  const [estPayant, setEstPayant] = useState(false);
+  const [tarifParPersonne, setTarifParPersonne] = useState(1000);
+
+  useEffect(function() {
+    if (!editId) return;
+    async function chargerPourEdition() {
+      try {
+        const res = await postsApi.getOne(editId);
+        const post = res && res.data && res.data.post;
+        if (!post) { setErreur('Publication introuvable.'); return; }
+        setTexte(post.content || '');
+        setTypePub(post.type || 'NORMAL');
+        const imagesExistantes = (post.imageUrls && post.imageUrls.length) ? post.imageUrls : (post.imageUrl ? [post.imageUrl] : []);
+        if (imagesExistantes.length > 0) {
+          setMediaItems(imagesExistantes.map(function(url) {
+            return { url: url, kind: 'image', local: false, dejaHeberge: true };
+          }));
+        } else if (post.videoUrl) {
+          setMediaItems([{ url: post.videoUrl, kind: 'video', local: false, dejaHeberge: true }]);
+        }
+        if (post.eventCapacity != null) {
+          setPlacesLimitees(true);
+          setCapaciteMax(post.eventCapacity);
+        }
+        setAutoriserAnnulation(post.autoriserAnnulation !== false);
+        if (post.inscriptionDebut) setInscriptionDebut(new Date(post.inscriptionDebut).toISOString().slice(0, 16));
+        if (post.inscriptionFin) setInscriptionFin(new Date(post.inscriptionFin).toISOString().slice(0, 16));
+        if (post.eventFeeAmount != null && post.eventFeeAmount > 0) {
+          setEstPayant(true);
+          setTarifParPersonne(post.eventFeeAmount);
+        }
+      } catch (e) {
+        setErreur(e.message || 'Impossible de charger la publication a modifier.');
+      } finally {
+        setChargementEdition(false);
+      }
+    }
+    chargerPourEdition();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editId]);
 
   const [mediaItems, setMediaItems] = useState([]);
   const [activeIndex, setActiveIndex] = useState(0);
-  const [showFiltres, setShowFiltres] = useState(false);
-  const [showCadres, setShowCadres] = useState(false);
-  const [showTexteInput, setShowTexteInput] = useState(false);
-  const [texteTemp, setTexteTemp] = useState('');
-  const [effetsMessage, setEffetsMessage] = useState('');
+  const [activePanel, setActivePanel] = useState(null); // 'filtres' | 'ajuster' | 'recadrer' | 'texte' | null
+  const [outilsVisibles, setOutilsVisibles] = useState(true);
   const [editionOuverte, setEditionOuverte] = useState(false);
-  const [recadrageEnCours, setRecadrageEnCours] = useState(false);
-
-  // Dimensions exactes (en pixels) du cadre de recadrage affiche a l'ecran.
-  const [boxSize, setBoxSize] = useState({ width: 0, height: 0 });
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+  const texteRef = useRef(null);
+  const imgCropRef = useRef(null);
+  const [cropTemp, setCropTemp] = useState(null);
+  // Zone reellement disponible pour l'outil de recadrage (entre le haut et
+  // le bas de l'ecran d'edition), mesuree en pixels pour empecher l'image
+  // de deborder derriere les zones noires (Valider/Terminer/miniatures).
+  const cropZoneRef = useRef(null);
+  const [cropZoneSize, setCropZoneSize] = useState({ width: 0, height: 0 });
+  const [aspectActuel, setAspectActuel] = useState(undefined);
+  const [reglageChoisi, setReglageChoisi] = useState('luminosite');
 
   const initiales = ((user?.firstName?.[0] || '') + (user?.lastName?.[0] || '')).toUpperCase() || 'MD';
   const activeMedia = mediaItems[activeIndex] || null;
+
+  function retirerMedia(i) {
+    setMediaItems(function(prev) {
+      return prev.filter(function(_, idx) { return idx !== i; });
+    });
+    setActiveIndex(function(prev) {
+      if (i < prev) return prev - 1;
+      if (i === prev) return Math.max(0, prev - 1);
+      return prev;
+    });
+  }
   const yAMediaLocal = mediaItems.some(function(m) { return m.local; });
 
   function ratioEffectif(m) {
     if (!m) return 1;
-    const cadre = CADRES.find(function(c) { return c.id === m.cadre; });
-    if (cadre && cadre.ratio !== null) return cadre.ratio;
+    if (m.craftedRatio) return m.craftedRatio; // un vrai recadrage a deja ete effectue
     return m.ratio || 1;
   }
 
-  // Recalcule la taille exacte (en pixels) du cadre de recadrage pour qu'il tienne
-  // TOUJOURS dans l'espace reellement disponible (entre le header et le bas de l'ecran),
-  // sans jamais deborder derriere les zones noires ou les boutons.
-  const recalculerBoxSize = useCallback(function() {
-    const outer = outerRef.current;
-    if (!outer || !activeMedia) return;
-    const rect = outer.getBoundingClientRect();
-    const PADDING = 12; // doit correspondre au padding du conteneur outer
+  // Une photo remplit tout le cadre (cover) tant qu'aucun recadrage precis n'a
+  // encore ete effectue et qu'on zoome dessus. Des qu'un recadrage reel existe,
+  // la photo est deja exactement a la bonne forme : plus besoin de la couper.
+  function doitRemplirLeCadre(m) {
+    if (!m) return false;
+    if (m.craftedRatio) return false;
+    return m.zoom > 1;
+  }
 
-    // Securite supplementaire : sur Safari iOS, rect.height peut etre perime
-    // juste apres l'ouverture (barre d'adresse encore en mouvement). On ne
-    // depasse jamais la vraie hauteur visible de la fenetre a cet instant.
-    let hauteurMax = rect.height;
-    if (window.visualViewport) {
-      const limiteVisible = window.visualViewport.height - rect.top;
-      if (limiteVisible > 0) hauteurMax = Math.min(hauteurMax, limiteVisible);
+  function objectFitPour(m) {
+    return doitRemplirLeCadre(m) ? 'cover' : 'contain';
+  }
+
+  function limiterOffset(offsetXFrac, offsetYFrac, zoom) {
+    const marge = Math.max(zoom - 1, 0) / 2;
+    const clamp = function(v) { return Math.max(-marge, Math.min(marge, v)); };
+    return { x: clamp(offsetXFrac), y: clamp(offsetYFrac) };
+  }
+
+  function demanderQuitter() {
+    if (texte.trim() || mediaItems.length > 0) {
+      setShowLeaveConfirm(true);
+    } else {
+      navigate(-1);
     }
-
-    const availW = Math.max(0, rect.width - PADDING * 2);
-    const availH = Math.max(0, hauteurMax - PADDING * 2);
-    if (availW <= 0 || availH <= 0) return;
-
-    const ratio = ratioEffectif(activeMedia); // largeur / hauteur
-    let w = availW;
-    let h = w / ratio;
-    if (h > availH) {
-      h = availH;
-      w = h * ratio;
-    }
-    setBoxSize({ width: Math.floor(w), height: Math.floor(h) });
-  }, [activeMedia && activeMedia.cadre, activeMedia && activeMedia.ratio]);
-
-  useEffect(function() {
-    if (!editionOuverte) return;
-
-    // Sur Safari iOS, la barre d'adresse peut encore etre en train de se
-    // retracter/apparaitre juste apres l'ouverture de l'edition : une mesure
-    // prise trop tot donne une hauteur fausse (cadre trop grand, decale).
-    // On mesure donc a plusieurs reprises le temps que tout se stabilise.
-    let annule = false;
-    function mesurerDifferee() {
-      requestAnimationFrame(function() {
-        if (annule) return;
-        recalculerBoxSize();
-        requestAnimationFrame(function() {
-          if (annule) return;
-          recalculerBoxSize();
-        });
-      });
-    }
-    mesurerDifferee();
-    const t1 = setTimeout(recalculerBoxSize, 80);
-    const t2 = setTimeout(recalculerBoxSize, 300);
-
-    const ro = new ResizeObserver(function() { recalculerBoxSize(); });
-    if (outerRef.current) ro.observe(outerRef.current);
-    window.addEventListener('resize', recalculerBoxSize);
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', recalculerBoxSize);
-      window.visualViewport.addEventListener('scroll', recalculerBoxSize);
-    }
-
-    return function() {
-      annule = true;
-      clearTimeout(t1);
-      clearTimeout(t2);
-      ro.disconnect();
-      window.removeEventListener('resize', recalculerBoxSize);
-      if (window.visualViewport) {
-        window.visualViewport.removeEventListener('resize', recalculerBoxSize);
-        window.visualViewport.removeEventListener('scroll', recalculerBoxSize);
-      }
-    };
-  }, [editionOuverte, recalculerBoxSize]);
-
-  function limiterOffset(offsetX, offsetY, zoom) {
-    const el = boxRef.current;
-    if (!el) return { x: offsetX, y: offsetY };
-    const rect = el.getBoundingClientRect();
-    const maxX = (rect.width * (zoom - 1)) / 2;
-    const maxY = (rect.height * (zoom - 1)) / 2;
-    return {
-      x: Math.max(-maxX, Math.min(maxX, offsetX)),
-      y: Math.max(-maxY, Math.min(maxY, offsetY)),
-    };
   }
 
   function ouvrirSelecteurFichiers() {
@@ -211,14 +206,16 @@ export default function CreatePostPage() {
         url: r.url,
         kind: r.kind,
         filtre: 'normal',
-        auto: false,
+        brightness: 100,
+        contrast: 100,
+        saturation: 100,
         local: r.local,
-        mode: 'contain',
         zoom: 1,
         offsetX: 0,
         offsetY: 0,
-        cadre: 'portrait', // 4:5 par defaut : homogeneite garantie sans que l'admin y pense
-        texteAjoute: '',
+        cadre: 'original',
+                texteAjoute: '',
+        miroir: false,
       };
     });
     setMediaItems(function(prev) {
@@ -239,21 +236,33 @@ export default function CreatePostPage() {
     if (mediaItems.length <= 1) setEditionOuverte(false);
   }
 
-  function toggleAutoAjust() {
+  function changerBrightness(valeur) {
     setMediaItems(function(prev) {
-      return prev.map(function(m, i) {
-        if (i !== activeIndex) return m;
-        return { ...m, auto: !m.auto };
-      });
+      return prev.map(function(m, i) { return i !== activeIndex ? m : { ...m, brightness: valeur }; });
     });
   }
 
-  function toggleRognage() {
+  function changerContrast(valeur) {
     setMediaItems(function(prev) {
-      return prev.map(function(m, i) {
-        if (i !== activeIndex) return m;
-        return { ...m, mode: m.mode === 'cover' ? 'contain' : 'cover' };
-      });
+      return prev.map(function(m, i) { return i !== activeIndex ? m : { ...m, contrast: valeur }; });
+    });
+  }
+
+  function changerSaturation(valeur) {
+    setMediaItems(function(prev) {
+      return prev.map(function(m, i) { return i !== activeIndex ? m : { ...m, saturation: valeur }; });
+    });
+  }
+
+  function appliquerAjustementAuto() {
+    setMediaItems(function(prev) {
+      return prev.map(function(m, i) { return i !== activeIndex ? m : { ...m, brightness: 104, contrast: 112, saturation: 118 }; });
+    });
+  }
+
+  function reinitialiserAjustements() {
+    setMediaItems(function(prev) {
+      return prev.map(function(m, i) { return i !== activeIndex ? m : { ...m, brightness: 100, contrast: 100, saturation: 100 }; });
     });
   }
 
@@ -261,39 +270,134 @@ export default function CreatePostPage() {
     setMediaItems(function(prev) {
       return prev.map(function(m, i) {
         if (i !== activeIndex) return m;
-        return { ...m, cadre: cadreId, zoom: 1, offsetX: 0, offsetY: 0 };
+        return { ...m, cadre: cadreId };
       });
     });
-    setShowCadres(false);
+    const img = imgCropRef.current;
+    if (!img) return;
+    const cw = img.width, ch = img.height;
+        if (cadreId === 'libre') {
+      setAspectActuel(undefined);
+      setCropTemp({ unit: '%', x: 0, y: 0, width: 100, height: 100 });
+      return;
+    }
+    const cadre = CADRES.find(function(c) { return c.id === cadreId; });
+    const aspect = cadreId === 'original' ? (cw / ch) : cadre.ratio;
+    setAspectActuel(aspect);
+    const nouveauCrop = centerCrop(
+      makeAspectCrop({ unit: '%', width: 90 }, aspect, cw, ch),
+      cw, ch
+    );
+    setCropTemp(nouveauCrop);
   }
 
-  function validerTexte() {
+  // Initialise l'outil de recadrage a l'ouverture : reprend le recadrage deja
+  // enregistre s'il existe, sinon propose l'image entiere (comme "Originale").
+  function onImageLoadForCrop(e) {
+    const img = e.currentTarget;
+    imgCropRef.current = img;
+    const cw = img.width, ch = img.height;
+    if (activeMedia && activeMedia.cropPct) {
+      setCropTemp(activeMedia.cropPct);
+      const cadreActuel = CADRES.find(function(c) { return c.id === activeMedia.cadre; });
+      if (activeMedia.cadre === 'libre') setAspectActuel(undefined);
+      else if (activeMedia.cadre === 'original') setAspectActuel(cw / ch);
+      else setAspectActuel(cadreActuel ? cadreActuel.ratio : undefined);
+    } else {
+      setAspectActuel(cw / ch);
+      setCropTemp(centerCrop(makeAspectCrop({ unit: '%', width: 100 }, cw / ch, cw, ch), cw, ch));
+    }
+  }
+
+  function surCropChange(_pixelCrop, percentCrop) {
+    setCropTemp(percentCrop);
+  }
+
+  function surCropComplete(_pixelCrop, percentCrop) {
+    const img = imgCropRef.current;
+    if (!img || !percentCrop || !percentCrop.width) return;
+    const ratioNaturel = img.naturalWidth / img.naturalHeight;
+    const craftedRatio = (percentCrop.width / percentCrop.height) * ratioNaturel;
+    setMediaItems(function(prev) {
+      return prev.map(function(m, i) {
+        return i !== activeIndex ? m : { ...m, cropPct: percentCrop, craftedRatio: craftedRatio };
+      });
+    });
+  }
+  // Texte ecrit directement sur la photo (au lieu d'un modal separe).
+  function surTexteBlur(e) {
+    const nouveauTexte = e.target.textContent;
     setMediaItems(function(prev) {
       return prev.map(function(m, i) {
         if (i !== activeIndex) return m;
-        return { ...m, texteAjoute: texteTemp };
+        return { ...m, texteAjoute: nouveauTexte };
       });
     });
-    setShowTexteInput(false);
   }
+
+  useEffect(function() {
+    if (texteRef.current) {
+      texteRef.current.textContent = (activeMedia && activeMedia.texteAjoute) || '';
+    }
+  }, [activeIndex, editionOuverte]);
+
+  useEffect(function() {
+    if (activePanel === 'texte' && texteRef.current) {
+      texteRef.current.focus();
+    }
+  }, [activePanel]);
+
+  // Mesure la zone reellement disponible pour l'outil de recadrage. Sur
+  // Safari iOS, la barre d'adresse peut encore bouger juste apres l'ouverture
+  // du panneau : on mesure a plusieurs reprises le temps que ca se stabilise,
+  // pour ne jamais laisser l'image deborder derriere les boutons du bas.
+  useEffect(function() {
+    if (activePanel !== 'recadrer') return;
+    let annule = false;
+    function mesurer() {
+      const el = cropZoneRef.current;
+      if (!el || annule) return;
+      const rect = el.getBoundingClientRect();
+      setCropZoneSize({ width: Math.floor(rect.width), height: Math.floor(rect.height) });
+    }
+    requestAnimationFrame(function() {
+      requestAnimationFrame(mesurer);
+    });
+    const t1 = setTimeout(mesurer, 80);
+    const t2 = setTimeout(mesurer, 300);
+    const ro = new ResizeObserver(mesurer);
+    if (cropZoneRef.current) ro.observe(cropZoneRef.current);
+    window.addEventListener('resize', mesurer);
+    if (window.visualViewport) window.visualViewport.addEventListener('resize', mesurer);
+    return function() {
+      annule = true;
+      clearTimeout(t1);
+      clearTimeout(t2);
+      ro.disconnect();
+      window.removeEventListener('resize', mesurer);
+      if (window.visualViewport) window.visualViewport.removeEventListener('resize', mesurer);
+    };
+  }, [activePanel]);
 
   function demarrerGlisser(e) {
     if (!activeMedia) return;
-    const cadreFixe = ratioEffectif(activeMedia) !== (activeMedia.ratio || 1);
-    if (activeMedia.mode !== 'cover' && !cadreFixe) return;
+    if (!doitRemplirLeCadre(activeMedia)) return;
     const point = e.touches ? e.touches[0] : e;
     dragRef.current = { actif: true, startX: point.clientX, startY: point.clientY, baseX: activeMedia.offsetX, baseY: activeMedia.offsetY };
   }
 
   function bougerGlisser(e) {
     if (!dragRef.current.actif) return;
+    const el = conteneurMediaRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
     const point = e.touches ? e.touches[0] : e;
-    const dx = point.clientX - dragRef.current.startX;
-    const dy = point.clientY - dragRef.current.startY;
+    const dxFrac = (point.clientX - dragRef.current.startX) / rect.width;
+    const dyFrac = (point.clientY - dragRef.current.startY) / rect.height;
     setMediaItems(function(prev) {
       return prev.map(function(m, i) {
         if (i !== activeIndex) return m;
-        const limite = limiterOffset(dragRef.current.baseX + dx, dragRef.current.baseY + dy, Math.max(m.zoom, 1));
+        const limite = limiterOffset(dragRef.current.baseX + dxFrac, dragRef.current.baseY + dyFrac, Math.max(m.zoom, 1));
         return { ...m, offsetX: limite.x, offsetY: limite.y };
       });
     });
@@ -322,13 +426,189 @@ export default function CreatePostPage() {
     });
   }
 
-  function styleFiltreActif() {
-    if (!activeMedia) return 'none';
+  function calculerFiltreCss(m) {
+    if (!m) return 'none';
     const parts = [];
-    if (activeMedia.auto) parts.push(AUTO_ADJUST_CSS);
-    const f = FILTRES.find(function(x) { return x.id === activeMedia.filtre; });
+    const f = FILTRES.find(function(x) { return x.id === m.filtre; });
     if (f && f.css !== 'none') parts.push(f.css);
+    const b = m.brightness != null ? m.brightness : 100;
+    const c = m.contrast != null ? m.contrast : 100;
+    const s = m.saturation != null ? m.saturation : 100;
+    if (b !== 100 || c !== 100 || s !== 100) {
+      parts.push('brightness(' + b + '%) contrast(' + c + '%) saturate(' + s + '%)');
+    }
     return parts.length ? parts.join(' ') : 'none';
+  }
+
+  function styleFiltreActif() {
+    return calculerFiltreCss(activeMedia);
+  }
+
+  function clamp255(v) { return v < 0 ? 0 : v > 255 ? 255 : v; }
+
+  function appliquerBrightnessSurPixels(data, facteur) {
+    for (let i = 0; i < data.length; i += 4) {
+      data[i] = clamp255(data[i] * facteur);
+      data[i + 1] = clamp255(data[i + 1] * facteur);
+      data[i + 2] = clamp255(data[i + 2] * facteur);
+    }
+  }
+  function appliquerContrasteSurPixels(data, facteur) {
+    for (let i = 0; i < data.length; i += 4) {
+      data[i] = clamp255((data[i] - 128) * facteur + 128);
+      data[i + 1] = clamp255((data[i + 1] - 128) * facteur + 128);
+      data[i + 2] = clamp255((data[i + 2] - 128) * facteur + 128);
+    }
+  }
+  function appliquerSaturationSurPixels(data, facteur) {
+    for (let i = 0; i < data.length; i += 4) {
+      const r = data[i], g = data[i + 1], b = data[i + 2];
+      const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+      data[i] = clamp255(lum + (r - lum) * facteur);
+      data[i + 1] = clamp255(lum + (g - lum) * facteur);
+      data[i + 2] = clamp255(lum + (b - lum) * facteur);
+    }
+  }
+  function appliquerGrayscaleSurPixels(data, facteur) {
+    for (let i = 0; i < data.length; i += 4) {
+      const r = data[i], g = data[i + 1], b = data[i + 2];
+      const gris = 0.299 * r + 0.587 * g + 0.114 * b;
+      data[i] = clamp255(r + (gris - r) * facteur);
+      data[i + 1] = clamp255(g + (gris - g) * facteur);
+      data[i + 2] = clamp255(b + (gris - b) * facteur);
+    }
+  }
+  function appliquerSepiaSurPixels(data, facteur) {
+    for (let i = 0; i < data.length; i += 4) {
+      const r = data[i], g = data[i + 1], b = data[i + 2];
+      const sr = 0.393 * r + 0.769 * g + 0.189 * b;
+      const sg = 0.349 * r + 0.686 * g + 0.168 * b;
+      const sb = 0.272 * r + 0.534 * g + 0.131 * b;
+      data[i] = clamp255(r + (sr - r) * facteur);
+      data[i + 1] = clamp255(g + (sg - g) * facteur);
+      data[i + 2] = clamp255(b + (sb - b) * facteur);
+    }
+  }
+
+  function appliquerFiltresSurCanvas(ctx, largeur, hauteur, m) {
+    const imageData = ctx.getImageData(0, 0, largeur, hauteur);
+    const data = imageData.data;
+
+        if (m.filtre === 'vif') {
+      appliquerSaturationSurPixels(data, 2.1);
+      appliquerContrasteSurPixels(data, 1.2);
+      appliquerBrightnessSurPixels(data, 1.03);
+    } else if (m.filtre === 'chaleureux') {
+      appliquerSepiaSurPixels(data, 0.55);
+      appliquerSaturationSurPixels(data, 1.6);
+      appliquerContrasteSurPixels(data, 1.1);
+    } else if (m.filtre === 'nb') {
+      appliquerGrayscaleSurPixels(data, 1);
+      appliquerContrasteSurPixels(data, 1.25);
+    } else if (m.filtre === 'contraste') {
+      appliquerContrasteSurPixels(data, 1.7);
+      appliquerSaturationSurPixels(data, 1.15);
+    }
+
+    const b = m.brightness != null ? m.brightness : 100;
+    const c = m.contrast != null ? m.contrast : 100;
+    const s = m.saturation != null ? m.saturation : 100;
+    if (b !== 100) appliquerBrightnessSurPixels(data, b / 100);
+    if (c !== 100) appliquerContrasteSurPixels(data, c / 100);
+    if (s !== 100) appliquerSaturationSurPixels(data, s / 100);
+
+    ctx.putImageData(imageData, 0, 0);
+  }
+
+    async function partagerPhotoActuelle() {
+    if (!activeMedia || activeMedia.kind !== 'image') return;
+    try {
+      const dataUrl = await graverImageFinale(activeMedia);
+      const reponse = await fetch(dataUrl);
+      const blob = await reponse.blob();
+      const fichier = new File([blob], 'photo-jangu-bi.jpg', { type: 'image/jpeg' });
+      if (navigator.canShare && navigator.canShare({ files: [fichier] })) {
+        await navigator.share({ files: [fichier] });
+      } else if (navigator.share) {
+        await navigator.share({ title: 'Jangu Bi' });
+      } else {
+        setErreur("Le partage n'est pas disponible sur ce navigateur.");
+      }
+    } catch (e) {
+      if (e.name !== 'AbortError') {
+        console.log('Partage:', e.message);
+      }
+    }
+  }
+
+  function graverImageFinale(m) {
+    return new Promise(function(resolve, reject) {
+      if (m.kind !== 'image') { resolve(m.url); return; }
+      const img = new Image();
+      img.onload = function() {
+        const naturalW = img.naturalWidth, naturalH = img.naturalHeight;
+
+        let sx = 0, sy = 0, sw = naturalW, sh = naturalH;
+        if (m.cropPct && m.cropPct.width) {
+          sx = (m.cropPct.x / 100) * naturalW;
+          sy = (m.cropPct.y / 100) * naturalH;
+          sw = (m.cropPct.width / 100) * naturalW;
+          sh = (m.cropPct.height / 100) * naturalH;
+        }
+
+        const outputW = Math.round(sw);
+        const outputH = Math.round(sh);
+
+        const canvas = document.createElement('canvas');
+        canvas.width = outputW;
+        canvas.height = outputH;
+        const ctx = canvas.getContext('2d');
+                if (m.miroir) {
+          ctx.translate(outputW, 0);
+          ctx.scale(-1, 1);
+        }
+        ctx.drawImage(img, sx, sy, sw, sh, 0, 0, outputW, outputH);
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+        appliquerFiltresSurCanvas(ctx, outputW, outputH, m);
+
+        if (m.texteAjoute) {
+          const tailleFonte = Math.round(outputW * 0.06);
+          ctx.font = tailleFonte + 'px Georgia, serif';
+          ctx.fillStyle = '#ffffff';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.shadowColor = 'rgba(0,0,0,0.6)';
+          ctx.shadowBlur = 8;
+          ctx.shadowOffsetY = 2;
+
+          const maxLargeur = outputW * 0.82;
+          const mots = m.texteAjoute.split(' ');
+          const lignes = [];
+          let ligneActuelle = '';
+          mots.forEach(function(mot) {
+            const test = ligneActuelle ? ligneActuelle + ' ' + mot : mot;
+            if (ctx.measureText(test).width > maxLargeur && ligneActuelle) {
+              lignes.push(ligneActuelle);
+              ligneActuelle = mot;
+            } else {
+              ligneActuelle = test;
+            }
+          });
+          if (ligneActuelle) lignes.push(ligneActuelle);
+
+          const interligne = tailleFonte * 1.25;
+          const departY = outputH / 2 - ((lignes.length - 1) * interligne) / 2;
+          lignes.forEach(function(ligne, i) {
+            ctx.fillText(ligne, outputW / 2, departY + i * interligne);
+          });
+        }
+
+        resolve(canvas.toDataURL('image/jpeg', 0.88));
+      };
+      img.onerror = function() { reject(new Error("Impossible de graver l'image.")); };
+      img.src = m.url;
+    });
   }
 
   function enregistrerRatio(largeur, hauteur) {
@@ -336,120 +616,13 @@ export default function CreatePostPage() {
     setMediaItems(function(prev) {
       return prev.map(function(m, i) {
         if (i !== activeIndex) return m;
-        if (m.ratio) return m; // deja mesure, ne pas ecraser
+        if (m.ratio) return m;
         return { ...m, ratio: largeur / hauteur };
       });
     });
   }
 
   const premiereImage = mediaItems.find(function(m) { return m.kind === 'image'; });
-
-  // --- VRAI RECADRAGE PIXEL (baking) ---------------------------------------
-  function bakerRecadrageImage(media, boxW, boxH) {
-    return new Promise(function(resolve) {
-      const img = new Image();
-      img.onload = function() {
-        const naturalW = img.naturalWidth;
-        const naturalH = img.naturalHeight;
-        if (!naturalW || !naturalH || !boxW || !boxH) { resolve(media.url); return; }
-
-        const zoom = Math.max(media.zoom || 1, 1);
-        const offsetX = media.offsetX || 0;
-        const offsetY = media.offsetY || 0;
-
-        const coverScale = Math.max(boxW / naturalW, boxH / naturalH);
-        const dispW = naturalW * coverScale;
-        const dispH = naturalH * coverScale;
-        const decalX = (boxW - dispW) / 2;
-        const decalY = (boxH - dispH) / 2;
-
-        function versAvantZoomX(bordEcran) {
-          return boxW / 2 + (bordEcran - boxW / 2 - offsetX) / zoom;
-        }
-        function versAvantZoomY(bordEcran) {
-          return boxH / 2 + (bordEcran - boxH / 2 - offsetY) / zoom;
-        }
-
-        const sx0Gauche = versAvantZoomX(0);
-        const sx0Droite = versAvantZoomX(boxW);
-        const sy0Haut = versAvantZoomY(0);
-        const sy0Bas = versAvantZoomY(boxH);
-
-        function versNaturelX(sx0) { return (sx0 - decalX) / coverScale; }
-        function versNaturelY(sy0) { return (sy0 - decalY) / coverScale; }
-
-        let cropX = versNaturelX(sx0Gauche);
-        let cropXFin = versNaturelX(sx0Droite);
-        let cropY = versNaturelY(sy0Haut);
-        let cropYFin = versNaturelY(sy0Bas);
-
-        let cropW = cropXFin - cropX;
-        let cropH = cropYFin - cropY;
-
-        if (cropW <= 0) cropW = naturalW;
-        if (cropH <= 0) cropH = naturalH;
-        cropX = Math.max(0, Math.min(naturalW - cropW, cropX));
-        cropY = Math.max(0, Math.min(naturalH - cropH, cropY));
-        cropW = Math.min(cropW, naturalW - cropX);
-        cropH = Math.min(cropH, naturalH - cropY);
-
-        const ratio = boxW / boxH;
-        const OUT_MAX = 1280;
-        let outW = OUT_MAX;
-        let outH = OUT_MAX / ratio;
-        if (outH > OUT_MAX) { outH = OUT_MAX; outW = OUT_MAX * ratio; }
-
-        const canvas = document.createElement('canvas');
-        canvas.width = Math.round(outW);
-        canvas.height = Math.round(outH);
-        const ctx = canvas.getContext('2d');
-        try { ctx.filter = styleFiltreActif(); } catch (e) { /* filtre CSS non supporte, on ignore */ }
-        ctx.drawImage(img, cropX, cropY, cropW, cropH, 0, 0, canvas.width, canvas.height);
-
-        resolve(canvas.toDataURL('image/jpeg', 0.9));
-      };
-      img.onerror = function() { resolve(media.url); };
-      img.src = media.url;
-    });
-  }
-
-  async function terminerEdition() {
-    if (!activeMedia) { setEditionOuverte(false); return; }
-
-    if (activeMedia.kind !== 'image') {
-      setEditionOuverte(false);
-      return;
-    }
-
-    const boxW = boxSize.width;
-    const boxH = boxSize.height;
-    if (!boxW || !boxH) { setEditionOuverte(false); return; }
-
-    setRecadrageEnCours(true);
-    try {
-      const nouvelleUrl = await bakerRecadrageImage(activeMedia, boxW, boxH);
-      setMediaItems(function(prev) {
-        return prev.map(function(m, i) {
-          if (i !== activeIndex) return m;
-          return {
-            ...m,
-            url: nouvelleUrl,
-            local: false,
-            ratio: boxW / boxH,
-            zoom: 1,
-            offsetX: 0,
-            offsetY: 0,
-            filtre: 'normal',
-            auto: false,
-          };
-        });
-      });
-    } finally {
-      setRecadrageEnCours(false);
-      setEditionOuverte(false);
-    }
-  }
-  // --------------------------------------------------------------------------
 
   async function publier() {
     if (!texte.trim()) {
@@ -458,20 +631,56 @@ export default function CreatePostPage() {
     }
     setPublishing(true);
     setErreur('');
-    try {
-      const premiereUrlValide = mediaItems.length > 0 && !mediaItems[0].local ? mediaItems[0].url : undefined;
+        try {
+      if (editId) {
+        const imagesExistantesGardees = mediaItems.filter(function(m) { return m.kind === 'image' && m.dejaHeberge; }).map(function(m) { return m.url; });
+        const imagesNouvelles = mediaItems.filter(function(m) { return m.kind === 'image' && !m.dejaHeberge && !m.local; });
+        const imagesNouvellesGravees = await Promise.all(imagesNouvelles.map(graverImageFinale));
+        const toutesLesImages = imagesExistantesGardees.concat(imagesNouvellesGravees);
+        const videoExistante = mediaItems.find(function(m) { return m.kind === 'video' && m.dejaHeberge; });
+
+        await postsApi.update(editId, {
+          content: texte.trim(),
+          type: typePub,
+          imageUrl: toutesLesImages[0] || null,
+          imageUrls: toutesLesImages,
+          videoUrl: videoExistante ? videoExistante.url : (toutesLesImages.length ? null : undefined),
+          eventCapacity: (typePub === 'EVENEMENT' && placesLimitees) ? capaciteMax : null,
+          autoriserAnnulation: typePub === 'EVENEMENT' ? autoriserAnnulation : undefined,
+          inscriptionDebut: (typePub === 'EVENEMENT' && inscriptionDebut) ? inscriptionDebut : undefined,
+          inscriptionFin: (typePub === 'EVENEMENT' && inscriptionFin) ? inscriptionFin : undefined,
+          eventFeeAmount: (typePub === 'EVENEMENT' && estPayant) ? tarifParPersonne : undefined,
+        });
+        navigate(-1);
+        return;
+      }
+
+      const imagesAEnvoyer = mediaItems.filter(function(m) { return m.kind === 'image' && !m.local; });
+      const imagesGravees = await Promise.all(imagesAEnvoyer.map(graverImageFinale));
+      const videoValide = mediaItems.find(function(m) { return m.kind === 'video' && !m.local; });
+
       await postsApi.create({
         content: texte.trim(),
         type: typePub,
-        imageUrl: premiereUrlValide,
+        imageUrl: imagesGravees[0],
+        imageUrls: imagesGravees,
+        videoUrl: videoValide ? videoValide.url : undefined,
+        eventCapacity: (typePub === 'EVENEMENT' && placesLimitees) ? capaciteMax : null,
+        autoriserAnnulation: typePub === 'EVENEMENT' ? autoriserAnnulation : undefined,
+        inscriptionDebut: (typePub === 'EVENEMENT' && inscriptionDebut) ? inscriptionDebut : undefined,
+        inscriptionFin: (typePub === 'EVENEMENT' && inscriptionFin) ? inscriptionFin : undefined,
+        eventFeeAmount: (typePub === 'EVENEMENT' && estPayant) ? tarifParPersonne : undefined,
       });
+
       if (aussiEnStory && premiereImage && !premiereImage.local) {
         try {
-          await storiesApi.create({ imageUrl: premiereImage.url, caption: texte.trim() });
+          const imageStoryGravee = await graverImageFinale(premiereImage);
+          await storiesApi.create({ imageUrl: imageStoryGravee, caption: texte.trim() });
         } catch (e) {
           console.log('Story:', e.message);
         }
       }
+
       navigate(-1);
     } catch (e) {
       setErreur(e?.message || 'Une erreur est survenue, veuillez reessayer.');
@@ -480,102 +689,143 @@ export default function CreatePostPage() {
     }
   }
 
-  function transformActif(m) {
-    const cadreFixe = ratioEffectif(m) !== (m.ratio || 1);
-    if (m.mode === 'cover' || cadreFixe) {
-      return 'translate(' + m.offsetX + 'px,' + m.offsetY + 'px) scale(' + Math.max(m.zoom, 1) + ')';
-    }
-    return 'none';
+      function basculerMiroir() {
+    setMediaItems(function(prev) {
+      return prev.map(function(m, i) { return i !== activeIndex ? m : { ...m, miroir: !m.miroir }; });
+    });
   }
+
+  function transformActif(m) {
+    const miroir = m && m.miroir ? 'scaleX(-1) ' : '';
+    if (doitRemplirLeCadre(m)) {
+      return miroir + 'translate(' + ((m.offsetX || 0) * 100) + '%,' + ((m.offsetY || 0) * 100) + '%) scale(' + Math.max(m.zoom, 1) + ')';
+    }
+    return miroir || 'none';
+  }
+
+  // Positionne l'apercu (object-position) sur le centre exact de la zone
+  // recadree choisie dans l'outil "Cadrer", au lieu de toujours centrer
+  // la photo entiere.
+  function positionApercuPour(m) {
+    if (m && m.cropPct && m.cropPct.width) {
+      const cx = m.cropPct.x + m.cropPct.width / 2;
+      const cy = m.cropPct.y + m.cropPct.height / 2;
+      return cx + '% ' + cy + '%';
+    }
+    return 'center';
+  }
+
 
   function rendreMedia() {
     if (!activeMedia) return null;
+    const fit = 'cover';
     return (
       <>
         {activeMedia.kind === 'video' ? (
-          <video src={activeMedia.url} onLoadedMetadata={function(e) { enregistrerRatio(e.target.videoWidth, e.target.videoHeight); }} style={{ width: '100%', height: '100%', objectFit: 'cover', transform: transformActif(activeMedia), filter: styleFiltreActif(), pointerEvents: 'none' }} muted loop autoPlay playsInline />
+                    <video src={activeMedia.url} style={{ width: '100%', height: '100%', objectFit: fit, objectPosition: positionApercuPour(activeMedia), background: '#000', transform: transformActif(activeMedia), filter: styleFiltreActif() }} muted loop autoPlay playsInline />
         ) : (
-          <img src={activeMedia.url} alt="media" draggable="false" onLoad={function(e) { enregistrerRatio(e.target.naturalWidth, e.target.naturalHeight); }} style={{ width: '100%', height: '100%', objectFit: 'cover', transform: transformActif(activeMedia), filter: styleFiltreActif(), pointerEvents: 'none' }} onError={function(e) { e.target.style.opacity = 0.2; }} />
+          <img src={activeMedia.url} alt="media" style={{ width: '100%', height: '100%', objectFit: fit, objectPosition: positionApercuPour(activeMedia), background: '#000', transform: transformActif(activeMedia), filter: styleFiltreActif() }} />
         )}
 
-        {activeMedia.texteAjoute && (
-          <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', color: '#fff', fontWeight: 700, fontSize: 22, textAlign: 'center', textShadow: '0 2px 8px rgba(0,0,0,0.6)', padding: '0 20px', zIndex: 2, pointerEvents: 'none', fontFamily: 'Georgia,serif' }}>
-            {activeMedia.texteAjoute}
+        <div
+          ref={texteRef}
+          contentEditable
+          suppressContentEditableWarning
+          onBlur={surTexteBlur}
+          style={{
+            position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
+            color: '#fff', fontWeight: 700, fontSize: 22, textAlign: 'center', minWidth: 30,
+            textShadow: '0 2px 8px rgba(0,0,0,0.6)', padding: '8px 20px', zIndex: 4,
+            fontFamily: 'Georgia,serif', outline: 'none', cursor: 'text',
+            border: activePanel === 'texte' ? '1.5px dashed rgba(255,255,255,0.5)' : 'none',
+            borderRadius: 8,
+          }}
+        />
+        {!activeMedia.texteAjoute && activePanel === 'texte' && (
+          <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', color: 'rgba(255,255,255,0.55)', fontWeight: 700, fontSize: 22, fontFamily: 'Georgia,serif', pointerEvents: 'none', zIndex: 3 }}>
+            Ecrire un texte…
           </div>
         )}
+      </>
+    );
+  }
 
-        <button onClick={retirerMediaActif} style={{ position: 'absolute', top: 12, left: 12, width: 30, height: 30, borderRadius: '50%', background: 'rgba(0,0,0,0.45)', border: 'none', color: '#fff', fontSize: 14, cursor: 'pointer', zIndex: 3 }}>
-          <i className="ti ti-x" />
-        </button>
-
+  function rendreControles() {
+        if (!activeMedia) return null;
+    return (
+      <>
         {mediaItems.length > 1 && (
-          <div style={{ position: 'absolute', top: 16, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 4, zIndex: 3 }}>
-            {mediaItems.map(function(_, i) {
-              return (
-                <div key={i} onClick={function() { setActiveIndex(i); }} style={{ width: i === activeIndex ? 16 : 6, height: 6, borderRadius: 3, background: i === activeIndex ? '#fff' : 'rgba(255,255,255,0.4)', cursor: 'pointer', transition: 'all .2s' }} />
-              );
-            })}
-          </div>
+          <>
+            <button
+              onClick={function() { if (activeIndex > 0) setActiveIndex(activeIndex - 1); }}
+              disabled={activeIndex === 0}
+              style={{ position: 'absolute', top: '50%', left: 8, transform: 'translateY(-50%)', width: 30, height: 30, borderRadius: '50%', background: 'rgba(0,0,0,0.35)', border: 'none', color: '#fff', fontSize: 16, zIndex: 12, opacity: activeIndex === 0 ? 0.3 : 1 }}
+            >‹</button>
+            <button
+              onClick={function() { if (activeIndex < mediaItems.length - 1) setActiveIndex(activeIndex + 1); }}
+              disabled={activeIndex === mediaItems.length - 1}
+              style={{ position: 'absolute', top: '50%', right: 8, transform: 'translateY(-50%)', width: 30, height: 30, borderRadius: '50%', background: 'rgba(0,0,0,0.35)', border: 'none', color: '#fff', fontSize: 16, zIndex: 12, opacity: activeIndex === mediaItems.length - 1 ? 0.3 : 1 }}
+            >›</button>
+          </>
         )}
 
-        <button onClick={ouvrirSelecteurFichiers} style={{ position: 'absolute', top: 12, right: 56, width: 34, height: 34, borderRadius: '50%', background: 'rgba(0,0,0,0.45)', border: 'none', color: '#fff', fontSize: 16, cursor: 'pointer', zIndex: 3 }}>
-          +
-        </button>
 
-        <div style={{ position: 'absolute', top: 12, right: 12, display: 'flex', flexDirection: 'column', gap: 10, zIndex: 3 }}>
-          <button onClick={function() { setShowCadres(function(v) { return !v; }); setShowFiltres(false); }} style={{ width: 34, height: 34, borderRadius: '50%', border: 'none', cursor: 'pointer', background: showCadres ? OR : 'rgba(0,0,0,0.45)', color: showCadres ? VERT : '#fff', fontSize: 14 }} title="Format">
-            <i className="ti ti-aspect-ratio" />
-          </button>
-          <button onClick={toggleRognage} style={{ width: 34, height: 34, borderRadius: '50%', border: 'none', cursor: 'pointer', background: activeMedia.mode === 'cover' ? OR : 'rgba(0,0,0,0.45)', color: activeMedia.mode === 'cover' ? VERT : '#fff', fontSize: 14 }} title="Rogner">
-            <i className="ti ti-crop" />
-          </button>
-          <button onClick={toggleAutoAjust} style={{ width: 34, height: 34, borderRadius: '50%', border: 'none', cursor: 'pointer', background: activeMedia.auto ? OR : 'rgba(0,0,0,0.45)', color: activeMedia.auto ? VERT : '#fff', fontSize: 14 }} title="Ajustement automatique">
-            <i className="ti ti-sparkles" />
-          </button>
-          <button onClick={function() { setShowFiltres(function(v) { return !v; }); setShowCadres(false); }} style={{ width: 34, height: 34, borderRadius: '50%', border: 'none', cursor: 'pointer', background: showFiltres ? OR : 'rgba(0,0,0,0.45)', color: showFiltres ? VERT : '#fff', fontSize: 14 }} title="Filtres">
-            <i className="ti ti-palette" />
-          </button>
-          <button onClick={function() { setTexteTemp(activeMedia.texteAjoute || ''); setShowTexteInput(true); }} style={{ width: 34, height: 34, borderRadius: '50%', border: 'none', cursor: 'pointer', background: activeMedia.texteAjoute ? OR : 'rgba(0,0,0,0.45)', color: activeMedia.texteAjoute ? VERT : '#fff', fontSize: 13, fontWeight: 700 }} title="Ajouter du texte">
+                {/* Colonne complete, icones seules sans libelle, dans l'ordre exact de la
+            maquette de reference. Seuls Ajuster/Texte/Filtres/Cadrer sont relies a
+            une vraie fonction pour l'instant ; les autres sont presents visuellement,
+            en attente d'une future fonctionnalite. */}
+                {outilsVisibles ? (
+        <div style={{ position: 'absolute', top: 56, right: 12, display: 'flex', flexDirection: 'column', gap: 18, zIndex: 12, alignItems: 'center' }}>
+          <div onClick={function() { setActivePanel(activePanel === 'ajuster' ? null : 'ajuster'); }} style={{ width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: activePanel === 'ajuster' ? OR : '#fff', fontSize: 20 }}>
+            <i className="ti ti-settings" />
+          </div>
+
+          <div onClick={partagerPhotoActuelle} style={{ width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#fff', fontSize: 20 }}>
+            <i className="ti ti-share" />
+          </div>
+
+          <div style={{ width: 3, height: 3, borderRadius: '50%', background: 'rgba(255,255,255,0.5)' }} />
+
+          <div style={{ width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'default', color: '#fff', fontSize: 20, opacity: 0.55 }}>
+            <i className="ti ti-camera-rotate" />
+          </div>
+
+          <div style={{ width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'default', color: '#fff', fontSize: 20, opacity: 0.55 }}>
+            <i className="ti ti-movie" />
+          </div>
+
+          <div onClick={function() { setActivePanel(activePanel === 'texte' ? null : 'texte'); }} style={{ width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: activeMedia.texteAjoute || activePanel === 'texte' ? OR : '#fff', fontSize: 17, fontWeight: 700 }}>
             Aa
-          </button>
-          <button onClick={function() { setEffetsMessage('Effets avances bientot disponibles.'); setTimeout(function() { setEffetsMessage(''); }, 2500); }} style={{ width: 34, height: 34, borderRadius: '50%', border: 'none', cursor: 'pointer', background: 'rgba(0,0,0,0.45)', color: '#fff', fontSize: 14 }} title="Effets">
-            <i className="ti ti-sun" />
-          </button>
+          </div>
+
+          <div style={{ width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'default', color: '#fff', fontSize: 20, opacity: 0.55 }}>
+            <i className="ti ti-mood-smile" />
+          </div>
+
+          <div onClick={appliquerAjustementAuto} title="Amelioration automatique" style={{ width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#fff', fontSize: 20 }}>
+            <i className="ti ti-sparkles" />
+          </div>
+
+          <div onClick={function() { setActivePanel(activePanel === 'filtres' ? null : 'filtres'); }} style={{ width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: activePanel === 'filtres' ? OR : '#fff', fontSize: 20 }}>
+            <i className="ti ti-circles" />
+          </div>
+
+          <div onClick={function() { setActivePanel(activePanel === 'recadrer' ? null : 'recadrer'); }} style={{ width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: activePanel === 'recadrer' ? OR : '#fff', fontSize: 20 }}>
+            <i className="ti ti-crop" />
+          </div>
+
+          <div onClick={function() { setOutilsVisibles(false); }} title="Masquer les outils" style={{ width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#fff', fontSize: 18 }}>
+            <i className="ti ti-chevron-down" />
+          </div>
         </div>
-
-        {(activeMedia.mode === 'cover' || ratioEffectif(activeMedia) !== (activeMedia.ratio || 1)) && (
-          <div style={{ position: 'absolute', bottom: showFiltres || showCadres ? 74 : 14, left: 14, right: 70, zIndex: 3, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <i className="ti ti-zoom-out" style={{ color: '#fff', fontSize: 13 }} />
-            <input type="range" min="1" max="2.5" step="0.05" value={activeMedia.zoom} onChange={function(e) { changerZoom(parseFloat(e.target.value)); }} style={{ flex: 1 }} />
-            <i className="ti ti-zoom-in" style={{ color: '#fff', fontSize: 13 }} />
+        ) : (
+          <div onClick={function() { setOutilsVisibles(true); }} title="Afficher les outils" style={{ position: 'absolute', top: 56, right: 12, width: 34, height: 34, borderRadius: '50%', background: 'rgba(0,0,0,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#fff', fontSize: 18, zIndex: 12 }}>
+            <i className="ti ti-chevron-up" />
           </div>
         )}
 
-        {effetsMessage && (
-          <div style={{ position: 'absolute', bottom: (showFiltres || showCadres) ? 74 : 12, left: 12, right: 12, background: 'rgba(0,0,0,0.7)', color: '#fff', fontSize: 10, padding: '6px 10px', borderRadius: 8, textAlign: 'center', zIndex: 4 }}>
-            {effetsMessage}
-          </div>
-        )}
-
-        {showCadres && (
-          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.6), transparent)', padding: '26px 10px 10px', display: 'flex', gap: 8, overflowX: 'auto', zIndex: 3 }}>
-            {CADRES.map(function(c) {
-              const actif = (activeMedia.cadre || 'portrait') === c.id;
-              const r = c.ratio || (activeMedia.ratio || 1);
-              const iconH = 22;
-              const iconW = Math.max(12, Math.min(30, iconH * r));
-              return (
-                <div key={c.id} onClick={function() { choisirCadre(c.id); }} style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, padding: '6px 10px', borderRadius: 12, background: actif ? OR : 'rgba(255,255,255,0.12)', cursor: 'pointer' }}>
-                  <div style={{ width: iconW, height: iconH, border: '2px solid ' + (actif ? VERT : '#fff'), borderRadius: 2 }} />
-                  <span style={{ fontSize: 9, fontWeight: 700, color: actif ? VERT : '#fff' }}>{c.label}</span>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {showFiltres && (
-          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.6), transparent)', padding: '26px 10px 10px', display: 'flex', gap: 8, overflowX: 'auto', zIndex: 3 }}>
+        {activePanel === 'filtres' && (
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.6), transparent)', padding: '26px 10px 10px', display: 'flex', gap: 8, overflowX: 'auto', zIndex: 12 }}>
             {FILTRES.map(function(f) {
               const actif = activeMedia.filtre === f.id;
               return (
@@ -587,13 +837,92 @@ export default function CreatePostPage() {
             })}
           </div>
         )}
+
+                {activePanel === 'ajuster' && (function() {
+          const REGLAGES = [
+            { id: 'luminosite', label: 'Luminosite', valeur: activeMedia.brightness, min: 50, max: 150, onChange: changerBrightness },
+            { id: 'contraste', label: 'Contraste', valeur: activeMedia.contrast, min: 50, max: 150, onChange: changerContrast },
+            { id: 'saturation', label: 'Saturation', valeur: activeMedia.saturation, min: 0, max: 200, onChange: changerSaturation },
+          ];
+          const actuel = REGLAGES.find(function(r) { return r.id === reglageChoisi; }) || REGLAGES[0];
+          return (
+            <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent)', padding: '20px 10px 12px', zIndex: 12 }}>
+              <div style={{ display: 'flex', gap: 8, overflowX: 'auto', marginBottom: 12, paddingBottom: 2 }}>
+                {REGLAGES.map(function(r) {
+                  const actif = r.id === reglageChoisi;
+                  return (
+                    <div key={r.id} onClick={function() { setReglageChoisi(r.id); }} style={{ flexShrink: 0, padding: '6px 14px', borderRadius: 20, background: actif ? OR : 'rgba(255,255,255,0.12)', color: actif ? VERT : '#fff', fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                      {r.label}
+                    </div>
+                  );
+                })}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <input type="range" min={actuel.min} max={actuel.max} value={actuel.valeur} onChange={function(e) { actuel.onChange(+e.target.value); }} style={{ flex: 1 }} />
+                <span style={{ fontSize: 10, color: '#fff', width: 30, textAlign: 'right' }}>{actuel.valeur}</span>
+              </div>
+            </div>
+          );
+        })()}
+
       </>
+    );
+  }
+
+  function rendreRecadrage() {
+    if (!activeMedia || activeMedia.kind !== 'image') return null;
+    return (
+      <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', background: '#000' }}>
+        <div ref={cropZoneRef} style={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8, overflow: 'hidden', boxSizing: 'border-box' }}>
+          {cropZoneSize.width > 0 && cropZoneSize.height > 0 && (
+            <div style={{ width: Math.max(0, cropZoneSize.width - 16), height: Math.max(0, cropZoneSize.height - 16), display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+              <ReactCrop
+                crop={cropTemp}
+                onChange={surCropChange}
+                onComplete={surCropComplete}
+                aspect={aspectActuel}
+                keepSelection
+              >
+                <img
+                  src={activeMedia.url}
+                  alt=""
+                  onLoad={onImageLoadForCrop}
+                  style={{ maxWidth: '100%', maxHeight: '100%', display: 'block', transform: activeMedia.miroir ? 'scaleX(-1)' : 'none' }}
+                />
+              </ReactCrop>
+            </div>
+          )}
+        </div>
+                <div style={{ flexShrink: 0, display: 'flex', gap: 8, overflowX: 'auto', padding: '10px 12px', background: '#000' }}>
+          {CADRES.map(function(c) {
+            const actif = (activeMedia.cadre || 'original') === c.id;
+            return (
+              <div key={c.id} onClick={function() { choisirCadre(c.id); }} style={{ flexShrink: 0, padding: '8px 14px', borderRadius: 20, background: actif ? OR : 'rgba(255,255,255,0.12)', cursor: 'pointer' }}>
+                <span style={{ fontSize: 11, fontWeight: 700, color: actif ? VERT : '#fff', whiteSpace: 'nowrap' }}>{c.label}</span>
+              </div>
+            );
+          })}
+        </div>
+        <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 12px 14px', background: '#000' }}>
+          <div onClick={basculerMiroir} style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', color: activeMedia.miroir ? OR : '#fff' }}>
+            <i className="ti ti-flip-horizontal" style={{ fontSize: 17 }} />
+            <span style={{ fontSize: 11, fontWeight: 700 }}>Miroir</span>
+          </div>
+          <div onClick={function() { choisirCadre(activeMedia.cadre || 'original'); }} style={{ fontSize: 11.5, fontWeight: 700, color: 'rgba(255,255,255,0.6)', cursor: 'pointer' }}>
+            Reinitialiser
+          </div>
+          <button onClick={function() { setActivePanel(null); }} style={{ background: OR, color: VERT, border: 'none', padding: '8px 20px', borderRadius: 999, fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}>
+            Valider
+          </button>
+        </div>
+      </div>
     );
   }
 
   return (
     <AppShell>
       <div style={{ minHeight: '100vh', background: IVOIRE }}>
+
         <input
           ref={fileInputRef}
           type="file"
@@ -604,42 +933,174 @@ export default function CreatePostPage() {
         />
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '44px 16px 16px', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
-          <button onClick={() => navigate(-1)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+          <button onClick={demanderQuitter} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
             <i className="ti ti-arrow-left" style={{ fontSize: 20, color: VERT }} />
           </button>
           <div style={{ fontFamily: 'Georgia,serif', fontSize: 17, fontWeight: 700, color: VERT }}>Nouvelle publication</div>
         </div>
 
         <div style={{ padding: 16 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 18 }}>
-            <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'linear-gradient(135deg,#C8A84B,#8B7030)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: VERT }}>
-              {initiales}
+
+                    <div style={{ position: 'relative', background: '#fff', borderRadius: 20, padding: '14px 14px 12px', boxShadow: '0 6px 20px rgba(30,45,20,0.08), 0 1px 3px rgba(30,45,20,0.06)', marginBottom: 18, overflow: 'hidden', backgroundImage: 'repeating-linear-gradient(115deg, rgba(200,168,75,0.035) 0px, rgba(200,168,75,0.035) 1px, transparent 1px, transparent 9px)' }}>
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: 'linear-gradient(90deg,#C8A84B,#E8D4A0,#C8A84B)' }} />
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 12 }}>
+              <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'linear-gradient(135deg,#C8A84B,#8B7030)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: VERT, boxShadow: '0 2px 6px rgba(139,96,32,0.3)' }}>
+                {initiales}
+              </div>
+              <div>
+                <div style={{ fontSize: 12.5, fontWeight: 700, color: VERT }}>{user?.parish?.name || ((user?.firstName || '') + ' ' + (user?.lastName || ''))}</div>
+                <div style={{ fontSize: 9, color: '#b0a48f' }}>Visible par tous les fideles</div>
+              </div>
             </div>
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: VERT }}>{user?.parish?.name || ((user?.firstName || '') + ' ' + (user?.lastName || ''))}</div>
-              <div style={{ fontSize: 10, color: '#9A8E7E' }}>Visible par tous les fideles</div>
+
+            <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+              {TYPES_PUB.map(function(t) {
+                const actif = typePub === t.id;
+                return (
+                  <div key={t.id} onClick={function() { setTypePub(t.id); }} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 13px', borderRadius: 20, fontSize: 11, fontWeight: 700, cursor: 'pointer', border: '1.5px solid ' + (actif ? 'rgba(200,168,75,0.55)' : 'transparent'), background: actif ? 'linear-gradient(135deg, rgba(200,168,75,0.22), rgba(200,168,75,0.1))' : 'rgba(30,45,20,0.04)', color: actif ? '#7A5518' : '#8a7c68', boxShadow: actif ? '0 2px 6px rgba(200,168,75,0.2)' : 'none' }}>
+                    <i className={'ti ' + t.icon} style={{ fontSize: 13 }} />
+                    {t.label}
+                  </div>
+                );
+              })}
+            </div>
+
+            <div style={{ height: 1, background: 'linear-gradient(90deg, transparent, rgba(200,168,75,0.25), transparent)', marginBottom: 12 }} />
+
+            <div style={{ position: 'relative', height: 56 }}>
+              <textarea
+                value={texte}
+                onChange={function(e) { setTexte(e.target.value); setErreur(''); }}
+                placeholder="Qu'avez-vous a partager avec vos fideles aujourd'hui ?"
+                style={{ width: '100%', height: '100%', border: 'none', outline: 'none', resize: 'none', fontSize: 13.5, lineHeight: 1.55, color: VERT, background: 'transparent', fontFamily: 'Georgia,serif', overflowY: 'auto', boxSizing: 'border-box' }}
+              />
+              {!texte && (
+                <i className="ti ti-feather" style={{ position: 'absolute', bottom: 0, right: 0, fontSize: 22, color: OR, opacity: 0.15, pointerEvents: 'none' }} />
+              )}
             </div>
           </div>
 
-          <div style={{ fontSize: 11, color: '#9A8E7E', fontWeight: 700, marginBottom: 8, letterSpacing: '.04em' }}>NATURE DE LA PUBLICATION</div>
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 18 }}>
-            {TYPES_PUB.map(function(t) {
-              return (
-                <div key={t.id} onClick={function() { setTypePub(t.id); }} style={{ padding: '6px 13px', borderRadius: 20, background: typePub === t.id ? t.color : 'rgba(0,0,0,0.04)', border: '1px solid ' + (typePub === t.id ? t.tc + '40' : 'rgba(0,0,0,0.08)'), fontSize: 11, color: typePub === t.id ? t.tc : '#7A6E5E', cursor: 'pointer', fontWeight: typePub === t.id ? 700 : 400 }}>
-                  {t.label}
+          {typePub === 'EVENEMENT' && (
+            <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.06)', borderRadius: 12, padding: '12px 14px', marginBottom: 18 }}>
+              <div onClick={function() { setPlacesLimitees(function(v) { return !v; }); }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
+                <div>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: VERT }}>Limiter le nombre de places</div>
+                  <div style={{ fontSize: 10, color: '#9A8E7E' }}>Laisse desactive si illimite</div>
                 </div>
-              );
-            })}
-          </div>
+                <div style={{ width: 42, height: 24, borderRadius: 20, background: placesLimitees ? OR : '#e5e0d5', position: 'relative', transition: 'background .2s', flexShrink: 0 }}>
+                  <div style={{ width: 18, height: 18, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3, left: placesLimitees ? 21 : 3, transition: 'left .2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
+                </div>
+              </div>
+              {placesLimitees && (
+                <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(0,0,0,0.06)' }}>
+                  <label style={{ fontSize: 10.5, color: '#9A8E7E', display: 'block', marginBottom: 4 }}>Nombre maximum de places</label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={capaciteMax}
+                    onChange={function(e) { setCapaciteMax(Math.max(1, +e.target.value || 1)); }}
+                    style={{ width: '100%', border: '1.5px solid rgba(200,168,75,0.3)', borderRadius: 10, padding: '9px 12px', fontSize: 13, boxSizing: 'border-box', fontFamily: 'Georgia,serif', color: VERT }}
+                  />
+                </div>
+              )}
+            </div>
+          )}
 
-          <textarea
-            value={texte}
-            onChange={function(e) { setTexte(e.target.value); setErreur(''); }}
-            placeholder="Partagez une nouvelle avec vos fideles..."
-            style={{ width: '100%', border: '1.5px solid rgba(200,168,75,0.25)', borderRadius: 14, padding: 14, fontSize: 13, color: VERT, fontFamily: 'Georgia,serif', resize: 'none', height: 120, background: 'white', outline: 'none', boxSizing: 'border-box', marginBottom: 18 }}
-          />
+          {typePub === 'EVENEMENT' && (
+            <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.06)', borderRadius: 12, padding: '12px 14px', marginBottom: 18 }}>
+              <div onClick={function() { setAutoriserAnnulation(function(v) { return !v; }); }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
+                <div>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: VERT }}>Autoriser l'annulation</div>
+                  <div style={{ fontSize: 10, color: '#9A8E7E' }}>Desactive : l'inscription devient definitive</div>
+                </div>
+                <div style={{ width: 42, height: 24, borderRadius: 20, background: autoriserAnnulation ? OR : '#e5e0d5', position: 'relative', transition: 'background .2s', flexShrink: 0 }}>
+                  <div style={{ width: 18, height: 18, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3, left: autoriserAnnulation ? 21 : 3, transition: 'left .2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
+                </div>
+              </div>
+            </div>
+          )}
 
-          <div style={{ fontSize: 11, color: '#9A8E7E', fontWeight: 700, marginBottom: 8, letterSpacing: '.04em' }}>MEDIA (OPTIONNEL)</div>
+          {typePub === 'EVENEMENT' && (
+            <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.06)', borderRadius: 12, padding: '12px 14px', marginBottom: 18 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: VERT, marginBottom: 4 }}>Periode d'inscription</div>
+              <div style={{ fontSize: 10, color: '#9A8E7E', marginBottom: 10 }}>Laisse vide pour aucune limite de ce cote</div>
+              <label style={{ fontSize: 10.5, color: '#9A8E7E', display: 'block', marginBottom: 4 }}>Ouverture des inscriptions</label>
+              <div style={{ width: '100%', overflow: 'hidden', borderRadius: 10, marginBottom: 10 }}>
+                <input
+                  type="datetime-local"
+                  value={inscriptionDebut}
+                  onChange={function(e) { setInscriptionDebut(e.target.value); }}
+                  style={{ width: '100%', minWidth: 0, maxWidth: '100%', border: '1.5px solid rgba(200,168,75,0.3)', borderRadius: 10, padding: '9px 12px', fontSize: 16, boxSizing: 'border-box', fontFamily: 'Georgia,serif', color: VERT, display: 'block' }}
+                />
+              </div>
+              <label style={{ fontSize: 10.5, color: '#9A8E7E', display: 'block', marginBottom: 4 }}>Fermeture des inscriptions</label>
+              <div style={{ width: '100%', overflow: 'hidden', borderRadius: 10 }}>
+                <input
+                  type="datetime-local"
+                  value={inscriptionFin}
+                  onChange={function(e) { setInscriptionFin(e.target.value); }}
+                  style={{ width: '100%', minWidth: 0, maxWidth: '100%', border: '1.5px solid rgba(200,168,75,0.3)', borderRadius: 10, padding: '9px 12px', fontSize: 16, boxSizing: 'border-box', fontFamily: 'Georgia,serif', color: VERT, display: 'block' }}
+                />
+              </div>
+            </div>
+          )}
+
+          {typePub === 'EVENEMENT' && (
+            <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.06)', borderRadius: 12, padding: '12px 14px', marginBottom: 18 }}>
+              <div onClick={function() { setEstPayant(function(v) { return !v; }); }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
+                <div>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: VERT }}>Tarif de participation</div>
+                  <div style={{ fontSize: 10, color: '#9A8E7E' }}>Desactive : evenement gratuit</div>
+                </div>
+                <div style={{ width: 42, height: 24, borderRadius: 20, background: estPayant ? OR : '#e5e0d5', position: 'relative', transition: 'background .2s', flexShrink: 0 }}>
+                  <div style={{ width: 18, height: 18, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3, left: estPayant ? 21 : 3, transition: 'left .2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
+                </div>
+              </div>
+              {estPayant && (
+                <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(0,0,0,0.06)' }}>
+                  <label style={{ fontSize: 10.5, color: '#9A8E7E', display: 'block', marginBottom: 4 }}>Montant par personne (FCFA)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={tarifParPersonne}
+                    onChange={function(e) { setTarifParPersonne(Math.max(0, +e.target.value || 0)); }}
+                    style={{ width: '100%', border: '1.5px solid rgba(200,168,75,0.3)', borderRadius: 10, padding: '9px 12px', fontSize: 13, boxSizing: 'border-box', fontFamily: 'Georgia,serif', color: VERT, marginBottom: 8 }}
+                  />
+                  <div style={{ fontSize: 10, color: '#9A8E7E' }}>
+                    Paye via Mobile Money / carte (CinetPay). Fonctionnera une fois le compte marchand configure.
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+
+                    {mediaItems.length === 0 && (
+            <div style={{ fontSize: 11, color: '#9A8E7E', fontWeight: 700, marginBottom: 8, letterSpacing: '.04em' }}>MEDIA (OPTIONNEL)</div>
+          )}
+
+          {mediaItems.length > 0 && (
+            <div style={{ display: 'flex', gap: 8, overflowX: 'auto', marginBottom: 10 }}>
+              {mediaItems.map(function(m, i) {
+                return (
+                  <div key={i} onClick={function() { setActiveIndex(i); }} style={{ position: 'relative', flexShrink: 0, width: 56, height: 56, borderRadius: 10, overflow: 'hidden', border: i === activeIndex ? '2px solid ' + OR : '1.5px solid rgba(0,0,0,0.08)', cursor: 'pointer' }}>
+                    {m.kind === 'video' ? (
+                      <video src={m.url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} muted />
+                    ) : (
+                      <img src={m.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    )}
+                    <div onClick={function(e) { e.stopPropagation(); retirerMedia(i); }} style={{ position: 'absolute', top: 2, right: 2, width: 16, height: 16, borderRadius: '50%', background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                      <i className="ti ti-x" style={{ fontSize: 10, color: '#fff' }} />
+                    </div>
+                  </div>
+                );
+              })}
+              <div onClick={ouvrirSelecteurFichiers} style={{ flexShrink: 0, width: 56, height: 56, borderRadius: 10, border: '1.5px dashed rgba(200,168,75,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: OR, fontSize: 20 }}>
+                +
+              </div>
+            </div>
+          )}
 
           {mediaItems.length === 0 && (
             <div onClick={ouvrirSelecteurFichiers} style={{ background: 'rgba(200,168,75,0.06)', border: '1.5px dashed rgba(200,168,75,0.35)', borderRadius: 14, padding: '34px 16px', textAlign: 'center', marginBottom: 12, cursor: 'pointer' }}>
@@ -655,15 +1116,21 @@ export default function CreatePostPage() {
               style={{ position: 'relative', borderRadius: 14, overflow: 'hidden', marginBottom: 12, background: '#0C0A06', aspectRatio: ratioEffectif(activeMedia) + ' / 1', cursor: 'pointer' }}
             >
               {activeMedia.kind === 'video' ? (
-                <video src={activeMedia.url} style={{ width: '100%', height: '100%', objectFit: 'cover', transform: transformActif(activeMedia), filter: styleFiltreActif() }} muted loop autoPlay playsInline />
+                                <video src={activeMedia.url} onLoadedMetadata={function(e) { enregistrerRatio(e.target.videoWidth, e.target.videoHeight); }} style={{ width: '100%', height: '100%', objectFit: objectFitPour(activeMedia), objectPosition: positionApercuPour(activeMedia), background: '#000', transform: transformActif(activeMedia), filter: styleFiltreActif() }} controls playsInline />
               ) : (
-                <img src={activeMedia.url} alt="media" style={{ width: '100%', height: '100%', objectFit: 'cover', transform: transformActif(activeMedia), filter: styleFiltreActif() }} />
+                <img src={activeMedia.url} alt="media" draggable="false" onLoad={function(e) { enregistrerRatio(e.target.naturalWidth, e.target.naturalHeight); }} style={{ width: '100%', height: '100%', objectFit: objectFitPour(activeMedia), objectPosition: positionApercuPour(activeMedia), background: '#000', transform: transformActif(activeMedia), filter: styleFiltreActif(), pointerEvents: 'none' }} onError={function(e) { e.target.style.opacity = 0.2; }} />
               )}
-              {activeMedia.texteAjoute && (
+                            {activeMedia.texteAjoute && (
                 <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', color: '#fff', fontWeight: 700, fontSize: 16, textAlign: 'center', textShadow: '0 2px 6px rgba(0,0,0,0.6)', padding: '0 14px', fontFamily: 'Georgia,serif' }}>
                   {activeMedia.texteAjoute}
                 </div>
               )}
+              <div onClick={function(e) { e.stopPropagation(); retirerMedia(activeIndex); }} style={{ position: 'absolute', top: 8, right: 8, width: 26, height: 26, borderRadius: '50%', background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                <i className="ti ti-x" style={{ fontSize: 13, color: '#fff' }} />
+              </div>
+              <div onClick={function(e) { e.stopPropagation(); ouvrirSelecteurFichiers(); }} style={{ position: 'absolute', bottom: 8, left: 8, width: 28, height: 28, borderRadius: 8, background: 'rgba(255,255,255,0.25)', border: '1.5px dashed rgba(255,255,255,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#fff', fontSize: 15 }}>
+                +
+              </div>
               <div style={{ position: 'absolute', bottom: 8, right: 8, background: 'rgba(0,0,0,0.5)', color: '#fff', fontSize: 9, padding: '4px 9px', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 4 }}>
                 <i className="ti ti-edit" style={{ fontSize: 11 }} /> Modifier
               </div>
@@ -697,56 +1164,96 @@ export default function CreatePostPage() {
             disabled={publishing}
             style={{ width: '100%', padding: 14, background: publishing ? 'rgba(200,168,75,0.5)' : 'linear-gradient(135deg,#C8A84B,#8B6020)', border: 'none', borderRadius: 14, color: VERT, fontWeight: 700, fontSize: 14, fontFamily: 'Georgia,serif', cursor: publishing ? 'default' : 'pointer' }}
           >
-            {publishing ? 'Publication en cours...' : 'Publier'}
+            {publishing ? (editId ? 'Enregistrement...' : 'Publication en cours...') : (editId ? 'Enregistrer les modifications' : 'Publier')}
           </button>
         </div>
       </div>
 
       {editionOuverte && activeMedia && (
-        <div style={{ position: 'fixed', top: 0, bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: 430, background: '#000', zIndex: 1000, display: 'flex', flexDirection: 'column' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '44px 16px 12px' }}>
-            <div onClick={function() { if (!recadrageEnCours) setEditionOuverte(false); }} style={{ color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>Annuler</div>
-            <div style={{ color: '#fff', fontSize: 13, fontWeight: 700 }}>Modifier</div>
-            <div onClick={function() { if (!recadrageEnCours) terminerEdition(); }} style={{ color: recadrageEnCours ? 'rgba(200,168,75,0.5)' : OR, fontSize: 14, fontWeight: 700, cursor: recadrageEnCours ? 'default' : 'pointer' }}>
-              {recadrageEnCours ? 'Recadrage...' : 'Termine'}
-            </div>
-          </div>
-
-          <div
-            ref={outerRef}
-            onMouseMove={bougerGlisser} onMouseUp={arreterGlisser} onMouseLeave={arreterGlisser}
-            onTouchMove={bougerGlisser} onTouchEnd={arreterGlisser}
-            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000', padding: 12, boxSizing: 'border-box', overflow: 'hidden' }}
-          >
-            {boxSize.width > 0 && boxSize.height > 0 && (
-              <div
-                ref={boxRef}
-                onMouseDown={demarrerGlisser}
-                onTouchStart={demarrerGlisser}
-                style={{ position: 'relative', width: boxSize.width, height: boxSize.height, overflow: 'hidden', borderRadius: 4, cursor: activeMedia.mode === 'cover' ? 'grab' : 'default' }}
-              >
-                {rendreMedia()}
+                <div style={{ position: 'fixed', top: 0, bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: 430, background: '#000', zIndex: 1000, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '44px 16px 6px', position: 'relative', zIndex: 20, flexShrink: 0 }}>
+                        <button onClick={function() { setEditionOuverte(false); }} style={{ width: 34, height: 34, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.25)', color: '#fff', fontSize: 17, cursor: 'pointer' }}>‹</button>
+            {mediaItems.length > 1 ? (
+              <div style={{ display: 'flex', gap: 5 }}>
+                {mediaItems.map(function(_, i) {
+                  return <span key={i} onClick={function() { setActiveIndex(i); }} style={{ width: i === activeIndex ? 16 : 6, height: 6, borderRadius: 3, background: i === activeIndex ? '#fff' : 'rgba(255,255,255,0.35)', transition: 'all .2s', cursor: 'pointer' }} />;
+                })}
+              </div>
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(255,255,255,0.12)', borderRadius: 999, padding: '6px 12px', opacity: 0.6 }}>
+                <span style={{ fontSize: 11 }}>🎵</span>
+                <span style={{ fontSize: 10.5, color: '#fff', fontWeight: 700 }}>Ajouter un son</span>
               </div>
             )}
+            <span style={{ width: 34 }} />
           </div>
-
-          {showTexteInput && (
-            <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100, padding: 20 }}>
-              <div style={{ background: '#F5F0E8', borderRadius: 16, padding: 18, width: '100%', maxWidth: 360 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: VERT, marginBottom: 10, fontFamily: 'Georgia,serif' }}>Texte sur l'image</div>
-                <textarea
-                  value={texteTemp}
-                  onChange={function(e) { setTexteTemp(e.target.value); }}
-                  placeholder="Ecrivez votre texte..."
-                  style={{ width: '100%', height: 70, border: '1.5px solid rgba(200,168,75,0.25)', borderRadius: 10, padding: 10, fontSize: 13, color: VERT, fontFamily: 'Georgia,serif', resize: 'none', boxSizing: 'border-box', marginBottom: 12 }}
-                />
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <button onClick={function() { setShowTexteInput(false); }} style={{ flex: 1, padding: 10, background: 'none', border: '1.5px solid #e5e0d5', borderRadius: 10, color: '#7A6E5E', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>Annuler</button>
-                  <button onClick={validerTexte} style={{ flex: 1, padding: 10, background: 'linear-gradient(135deg,#1e2d14,#0a140a)', border: 'none', borderRadius: 10, color: OR, fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>Valider</button>
+          <div
+            ref={conteneurMediaRef}
+            onMouseDown={activePanel === 'recadrer' ? undefined : demarrerGlisser} onMouseMove={activePanel === 'recadrer' ? undefined : bougerGlisser} onMouseUp={activePanel === 'recadrer' ? undefined : arreterGlisser} onMouseLeave={activePanel === 'recadrer' ? undefined : arreterGlisser}
+            onTouchStart={activePanel === 'recadrer' ? undefined : demarrerGlisser} onTouchMove={activePanel === 'recadrer' ? undefined : bougerGlisser} onTouchEnd={activePanel === 'recadrer' ? undefined : arreterGlisser}
+            style={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000', padding: 0, boxSizing: 'border-box', position: 'relative' }}
+          >
+            {activePanel === 'recadrer' ? rendreRecadrage() : (
+              <>
+          <div style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', borderRadius: 0, cursor: doitRemplirLeCadre(activeMedia) ? 'grab' : 'default' }}>
+                  {rendreMedia()}
                 </div>
+                {rendreControles()}
+              </>
+            )}
+          </div>
+          <div style={{ padding: '8px 12px 10px', position: 'relative', zIndex: 20, flexShrink: 0 }}>
+            <div style={{ display: 'flex', gap: 8, overflowX: 'auto', marginBottom: 10, alignItems: 'center' }}>
+              <div style={{ width: 34, height: 34, borderRadius: 8, background: 'rgba(255,255,255,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <i className="ti ti-layout-grid" style={{ color: '#fff', fontSize: 15 }} />
+              </div>
+              {mediaItems.map(function(m, i) {
+                return (
+                  <div key={i} onClick={function() { setActiveIndex(i); }} style={{ width: 34, height: 34, borderRadius: 8, overflow: 'hidden', border: i === activeIndex ? '2px solid ' + OR : '1.5px solid rgba(255,255,255,0.3)', flexShrink: 0, cursor: 'pointer' }}>
+                    {m.kind === 'video' ? (
+                      <video src={m.url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} muted />
+                    ) : (
+                      <img src={m.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    )}
+                  </div>
+                );
+              })}
+              <div onClick={ouvrirSelecteurFichiers} style={{ width: 34, height: 34, borderRadius: 8, border: '1.5px dashed rgba(255,255,255,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, cursor: 'pointer', color: OR, fontSize: 16 }}>
+                +
               </div>
             </div>
-          )}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.12)', borderRadius: 999, padding: '5px 14px 5px 5px' }}>
+                <div style={{ width: 24, height: 24, borderRadius: '50%', background: 'linear-gradient(135deg,#C8A84B,#8B7030)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: VERT }}>
+                  {initiales}
+                </div>
+                <span style={{ fontSize: 11, fontWeight: 700, color: '#fff' }}>Publication</span>
+              </div>
+              <button onClick={function() { if (activePanel === 'recadrer') { setActivePanel(null); } else { setEditionOuverte(false); } }} style={{ background: 'linear-gradient(135deg,#C8A84B,#8B6020)', color: VERT, border: 'none', padding: '10px 26px', borderRadius: 999, fontSize: 13.5, fontWeight: 700, cursor: 'pointer' }}>
+                Suivant
+              </button>
+            </div>
+            <div style={{ textAlign: 'center', marginTop: 8 }}>
+              <span onClick={function() { setEditionOuverte(false); }} style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', cursor: 'pointer' }}>Annuler</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showLeaveConfirm && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1200, padding: 24 }}>
+          <div style={{ background: '#fff', borderRadius: 16, padding: '20px 18px', width: '100%', maxWidth: 340, textAlign: 'center' }}>
+            <div style={{ fontFamily: 'Georgia,serif', fontSize: 15, fontWeight: 700, color: VERT, marginBottom: 6 }}>Quitter sans publier ?</div>
+            <div style={{ fontSize: 12, color: '#7A6E5E', marginBottom: 18, lineHeight: 1.5 }}>Le texte et les photos ajoutes seront perdus.</div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button onClick={function() { setShowLeaveConfirm(false); }} style={{ flex: 1, padding: 11, background: 'linear-gradient(135deg,#1e2d14,#0a140a)', border: 'none', borderRadius: 10, color: OR, fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>
+                Continuer la publication
+              </button>
+              <button onClick={function() { navigate(-1); }} style={{ flex: 1, padding: 11, background: 'none', border: '1.5px solid #e5e0d5', borderRadius: 10, color: '#b71c1c', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>
+                Quitter
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </AppShell>
