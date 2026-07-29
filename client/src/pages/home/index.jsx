@@ -497,13 +497,14 @@ function matchesSearch(post, query) {
   const storyGroups = (function() {
     const map = {};
     const order = [];
-    realStories.forEach(function(s) {
+        realStories.forEach(function(s) {
       const pid = s.parishId && s.parishId._id ? String(s.parishId._id) : ('inconnu-' + s._id);
       if (!map[pid]) {
         map[pid] = {
           parishId: pid,
           nom: s.parishId && s.parishId.name ? s.parishId.name : 'Paroisse',
           initiales: s.parishId && s.parishId.name ? s.parishId.name.substring(0,2).toUpperCase() : 'PA',
+          logo: s.parishId && s.parishId.logoUrl ? s.parishId.logoUrl : null,
           slides: [],
         };
         order.push(pid);
@@ -519,12 +520,14 @@ function matchesSearch(post, query) {
         seen: !!(user && Array.isArray(s.views) && s.views.some(function(v) { return String(v) === String(user._id); })),
       });
     });
-    order.forEach(function(pid) {
+        order.forEach(function(pid) {
       map[pid].slides.sort(function(a, b) { return new Date(a.createdAt) - new Date(b.createdAt); });
     });
+
     return order.map(function(pid) {
       const g = map[pid];
       g.allSeen = g.slides.every(function(sl) { return sl.seen; });
+      g.derniere = g.slides[g.slides.length - 1];
       return g;
     });
   })();
@@ -709,33 +712,35 @@ function matchesSearch(post, query) {
             )}
             {storyGroups.map((g, i) => (
               <div
-                key={g.parishId}
-                onClick={() => openStoryGroup(i)}
-                style={{
-                  position: 'relative', width: 78, height: 108, borderRadius: 14, overflow: 'hidden',
-                  flexShrink: 0, cursor: 'pointer', border: g.allSeen ? '2px solid #B8B8B8' : '2px solid #C8A84B',
-                  background: g.slides[0].type === 'texte' ? (g.slides[0].bg || '#2E5C3E') : '#1e2d14',
-                }}
-              >
-                {g.slides[0].type === 'image' && (
-                  <img src={g.slides[0].imageUrl} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-                )}
-                {g.slides[0].type === 'video' && (
-                  <video src={g.slides[0].videoUrl} muted style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-                )}
-                {g.slides[0].type === 'texte' && (
-                  <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8 }}>
-                    <div style={{ color: 'white', fontSize: 9, fontFamily: 'Georgia,serif', textAlign: 'center', lineHeight: 1.3 }}>{g.slides[0].storyText}</div>
-                  </div>
-                )}
-                {g.slides.length > 1 && (
-                  <div style={{ position: 'absolute', top: 6, right: 6, background: 'rgba(0,0,0,0.55)', borderRadius: 10, padding: '2px 6px', fontSize: 8, color: 'white', fontWeight: 700 }}>{g.slides.length}</div>
-                )}
-                <div style={{
-                  position: 'absolute', top: 6, left: 6, width: 26, height: 26, borderRadius: '50%',
-                  border: g.allSeen ? '2px solid #B8B8B8' : '2px solid #C8A84B', background: '#1e2d14', display: 'flex',
-                  alignItems: 'center', justifyContent: 'center', fontSize: 9, color: 'white', fontWeight: 700,
-                }}>{g.initiales}</div>
+                              key={g.parishId}
+              onClick={() => openStoryGroup(i)}
+              style={{
+                position: 'relative', width: 78, height: 108, borderRadius: 14, overflow: 'hidden',
+                flexShrink: 0, cursor: 'pointer', border: g.allSeen ? '2px solid #B8B8B8' : '2px solid #C8A84B',
+                background: g.derniere.type === 'texte' ? (g.derniere.bg || '#2E5C3E') : '#1e2d14',
+              }}
+            >
+              {g.derniere.type === 'image' && (
+                <img src={g.derniere.imageUrl} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+              )}
+              {g.derniere.type === 'video' && (
+                <video src={g.derniere.videoUrl} muted style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+              )}
+              {g.derniere.type === 'texte' && (
+                <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8 }}>
+                  <div style={{ color: 'white', fontSize: 9, fontFamily: 'Georgia,serif', textAlign: 'center', lineHeight: 1.3 }}>{g.derniere.storyText}</div>
+                </div>
+              )}
+              {g.slides.length > 1 && (
+                <div style={{ position: 'absolute', top: 6, right: 6, background: 'rgba(0,0,0,0.55)', borderRadius: 10, padding: '2px 6px', fontSize: 8, color: 'white', fontWeight: 700 }}>{g.slides.length}</div>
+              )}
+              <div style={{
+                position: 'absolute', top: 6, left: 6, width: 26, height: 26, borderRadius: '50%',
+                border: g.allSeen ? '2px solid #B8B8B8' : '2px solid #C8A84B', background: '#1e2d14', display: 'flex',
+                alignItems: 'center', justifyContent: 'center', fontSize: 9, color: 'white', fontWeight: 700, overflow: 'hidden',
+              }}>
+                {g.logo ? <img src={g.logo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : g.initiales}
+              </div>
                 <div style={{
                   position: 'absolute', bottom: 0, left: 0, right: 0,
                   background: 'linear-gradient(to top, rgba(0,0,0,0.7), transparent)', padding: '18px 6px 6px',
@@ -1097,12 +1102,12 @@ return (
                 </div>
               ))}
             </div>
-            <div style={{ position: 'absolute', top: 58, left: 14, display: 'flex', alignItems: 'center', gap: 8, zIndex: 3 }}>
-              <div style={{ width: 30, height: 30, borderRadius: '50%', background: '#1e2d14', border: '1.5px solid #C8A84B', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 10, fontWeight: 700 }}>
-                {storyGroups[storyGroupIndex].initiales}
-              </div>
-              <span style={{ color: 'white', fontSize: 12, fontWeight: 700 }}>{storyGroups[storyGroupIndex].nom}</span>
-            </div>
+                    <div style={{ position: 'absolute', top: 58, left: 14, display: 'flex', alignItems: 'center', gap: 8, zIndex: 3 }}>
+          <div style={{ width: 30, height: 30, borderRadius: '50%', background: '#1e2d14', border: '1.5px solid #C8A84B', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 10, fontWeight: 700, overflow: 'hidden' }}>
+            {storyGroups[storyGroupIndex].logo ? <img src={storyGroups[storyGroupIndex].logo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : storyGroups[storyGroupIndex].initiales}
+          </div>
+          <span style={{ color: 'white', fontSize: 12, fontWeight: 700 }}>{storyGroups[storyGroupIndex].nom}</span>
+        </div>
             <button onClick={closeStory} style={{ position: 'absolute', top: 56, right: 14, background: 'rgba(0,0,0,0.4)', border: 'none', borderRadius: '50%', width: 28, height: 28, color: 'white', fontSize: 14, cursor: 'pointer', zIndex: 3 }}>✕</button>
             <div style={{
               position: 'absolute', inset: 0, display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
