@@ -750,9 +750,9 @@ export default function CreatePostPage() {
   }
 
 
-  function rendreMedia() {
+    function rendreMedia() {
     if (!activeMedia) return null;
-    const fit = 'cover';
+    const fit = objectFitPour(activeMedia);
     return (
       <>
         {activeMedia.kind === 'video' ? (
@@ -1211,7 +1211,7 @@ export default function CreatePostPage() {
           >
             {activePanel === 'recadrer' ? rendreRecadrage() : (
               <>
-          <div style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', borderRadius: 0, cursor: doitRemplirLeCadre(activeMedia) ? 'grab' : 'default' }}>
+                    <div style={{ position: 'relative', width: '100%', height: 'auto', maxHeight: '100%', aspectRatio: ratioEffectif(activeMedia) + ' / 1', overflow: 'hidden', borderRadius: 0, cursor: doitRemplirLeCadre(activeMedia) ? 'grab' : 'default' }}>
                   {rendreMedia()}
                 </div>
                 {rendreControles()}
