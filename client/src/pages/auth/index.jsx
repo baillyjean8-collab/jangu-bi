@@ -379,8 +379,19 @@ export function LoginPage() {
             <label style={S.label}>Mot de passe</label>
             <div style={{ position: 'relative' }}>
               <input style={{ ...S.inputLight, paddingRight: 42 }} type={motDePasseVisible ? 'text' : 'password'} placeholder="••••••••••" value={form.password} onChange={set('password')} required/>
-              <div onClick={() => setMotDePasseVisible(v => !v)} style={{ position: 'absolute', top: '50%', right: 12, transform: 'translateY(-50%)', cursor: 'pointer', color: 'rgba(30,45,20,0.5)', display: 'flex', alignItems: 'center' }}>
-                <i className={motDePasseVisible ? 'ti ti-eye-off' : 'ti ti-eye'} style={{ fontSize: 16 }} />
+                            <div onClick={() => setMotDePasseVisible(v => !v)} style={{ position: 'absolute', top: '50%', right: 12, transform: 'translateY(-50%)', cursor: 'pointer', color: 'rgba(30,45,20,0.5)', display: 'flex', alignItems: 'center' }}>
+                {motDePasseVisible ? (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 3l18 18" />
+                    <path d="M10.58 10.58a2 2 0 0 0 2.83 2.83" />
+                    <path d="M9.88 5.09A9.77 9.77 0 0 1 12 5c5 0 9 4 10 7-.35 1.06-1.02 2.2-1.97 3.24M6.6 6.6C4.4 8 2.9 9.9 2 12c1 3 5 7 10 7 1.06 0 2.06-.17 3-.47" />
+                  </svg>
+                ) : (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
+                )}
               </div>
             </div>
           </div>
