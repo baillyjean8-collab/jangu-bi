@@ -55,7 +55,7 @@ export default function CreateStoryPage() {
   const [erreur, setErreur] = useState('');
   const [activePanel, setActivePanel] = useState(null); // 'filtres' | 'ajuster' | null
   const [reglageChoisi, setReglageChoisi] = useState('luminosite');
-  const [outilsSupplementairesVisibles, setOutilsSupplementairesVisibles] = useState(false);
+  const [outilsSupplementairesVisibles, setOutilsSupplementairesVisibles] = useState(true);
 
   function majSlideActive(champs) {
     setSlides(function(prev) {
