@@ -98,8 +98,7 @@ export default function CreatePostPage() {
 
   const [mediaItems, setMediaItems] = useState([]);
   const [activeIndex, setActiveIndex] = useState(0);
-  const [activePanel, setActivePanel] = useState(null); // 'filtres' | 'ajuster' | 'recadrer' | 'texte' | null
-  const [outilsSupplementairesVisibles, setOutilsSupplementairesVisibles] = useState(false);
+  const [activePanel, setActivePanel] = useState(null); // 'filtres' | 'ajuster' | 'recadrer' | 'texte' | 'couper' | null
   const [editionOuverte, setEditionOuverte] = useState(false);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const texteRef = useRef(null);
@@ -418,6 +417,39 @@ export default function CreatePostPage() {
     });
   }
 
+  function enregistrerDureeVideo(duree) {
+    if (!duree) return;
+    setMediaItems(function(prev) {
+      return prev.map(function(m, i) {
+        if (i !== activeIndex) return m;
+        if (m.duree) return m;
+        return { ...m, duree: duree, trimDebut: 0, trimFin: duree };
+      });
+    });
+  }
+
+  function changerTrimDebut(valeur) {
+    setMediaItems(function(prev) {
+      return prev.map(function(m, i) {
+        if (i !== activeIndex) return m;
+        const fin = m.trimFin != null ? m.trimFin : m.duree;
+        const debut = Math.min(valeur, Math.max(0, fin - 0.3));
+        return { ...m, trimDebut: debut };
+      });
+    });
+  }
+
+  function changerTrimFin(valeur) {
+    setMediaItems(function(prev) {
+      return prev.map(function(m, i) {
+        if (i !== activeIndex) return m;
+        const debut = m.trimDebut || 0;
+        const fin = Math.max(valeur, debut + 0.3);
+        return { ...m, trimFin: fin };
+      });
+    });
+  }
+
   function choisirFiltre(filtreId) {
     setMediaItems(function(prev) {
       return prev.map(function(m, i) {
@@ -724,7 +756,7 @@ export default function CreatePostPage() {
     return (
       <>
         {activeMedia.kind === 'video' ? (
-                    <video src={activeMedia.url} style={{ width: '100%', height: '100%', objectFit: fit, objectPosition: positionApercuPour(activeMedia), background: '#000', transform: transformActif(activeMedia), filter: styleFiltreActif() }} muted loop autoPlay playsInline />
+                    <video src={activeMedia.url} onLoadedMetadata={function(e) { enregistrerDureeVideo(e.target.duration); }} style={{ width: '100%', height: '100%', objectFit: fit, objectPosition: positionApercuPour(activeMedia), background: '#000', transform: transformActif(activeMedia), filter: styleFiltreActif() }} muted loop autoPlay playsInline />
         ) : (
           <img src={activeMedia.url} alt="media" style={{ width: '100%', height: '100%', objectFit: fit, objectPosition: positionApercuPour(activeMedia), background: '#000', transform: transformActif(activeMedia), filter: styleFiltreActif() }} />
         )}
@@ -771,12 +803,12 @@ export default function CreatePostPage() {
           </>
         )}
 
-
-                {/* Colonne complete, icones seules sans libelle, dans l'ordre exact de la
-            maquette de reference. Seuls Ajuster/Texte/Filtres/Cadrer sont relies a
-            une vraie fonction pour l'instant ; les autres sont presents visuellement,
-            en attente d'une future fonctionnalite. */}
-                        <div style={{ position: 'absolute', top: 56, right: 12, display: 'flex', flexDirection: 'column', gap: 18, zIndex: 12, alignItems: 'center' }}>
+                {/* Colonne d'icones a droite : uniquement les outils reels (Ajuster,
+            Texte, Amelioration auto, Filtres, Cadrer, et Couper pour les videos).
+            Les anciennes icones placeholder (partage, rotation camera, son, emoji)
+            ont ete retirees car elles ne servaient a rien. Colonne remontee pour
+            commencer juste sous la zone noire du haut. */}
+                        <div style={{ position: 'absolute', top: 10, right: 12, display: 'flex', flexDirection: 'column', gap: 18, zIndex: 12, alignItems: 'center' }}>
           <div onClick={function() { setActivePanel(activePanel === 'ajuster' ? null : 'ajuster'); }} style={{ width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: activePanel === 'ajuster' ? OR : '#fff', fontSize: 20 }}>
             <i className="ti ti-settings" />
           </div>
@@ -793,39 +825,17 @@ export default function CreatePostPage() {
             <i className="ti ti-circles" />
           </div>
 
-          <div onClick={function() { setActivePanel(activePanel === 'recadrer' ? null : 'recadrer'); }} style={{ width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: activePanel === 'recadrer' ? OR : '#fff', fontSize: 20 }}>
-            <i className="ti ti-crop" />
-          </div>
-
-          {outilsSupplementairesVisibles && (
-            <>
-              <div onClick={partagerPhotoActuelle} style={{ width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#fff', fontSize: 20 }}>
-                <i className="ti ti-share" />
-              </div>
-
-              <div style={{ width: 3, height: 3, borderRadius: '50%', background: 'rgba(255,255,255,0.5)' }} />
-
-              <div style={{ width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'default', color: '#fff', fontSize: 20, opacity: 0.55 }}>
-                <i className="ti ti-camera-rotate" />
-              </div>
-
-              <div style={{ width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'default', color: '#fff', fontSize: 20, opacity: 0.55 }}>
-                <i className="ti ti-movie" />
-              </div>
-
-              <div title="Ajouter un son (bientot disponible)" style={{ width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'default', color: '#fff', fontSize: 18, opacity: 0.55 }}>
-                <i className="ti ti-music" />
-              </div>
-
-              <div style={{ width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'default', color: '#fff', fontSize: 20, opacity: 0.55 }}>
-                <i className="ti ti-mood-smile" />
-              </div>
-            </>
+          {activeMedia.kind === 'image' && (
+            <div onClick={function() { setActivePanel(activePanel === 'recadrer' ? null : 'recadrer'); }} style={{ width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: activePanel === 'recadrer' ? OR : '#fff', fontSize: 20 }}>
+              <i className="ti ti-crop" />
+            </div>
           )}
 
-          <div onClick={function() { setOutilsSupplementairesVisibles(function(v) { return !v; }); }} title={outilsSupplementairesVisibles ? "Masquer les outils supplementaires" : "Voir plus d'outils"} style={{ width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#fff', fontSize: 18 }}>
-            <i className={outilsSupplementairesVisibles ? 'ti ti-chevron-up' : 'ti ti-chevron-down'} />
-          </div>
+          {activeMedia.kind === 'video' && (
+            <div onClick={function() { setActivePanel(activePanel === 'couper' ? null : 'couper'); }} title="Couper la video" style={{ width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: activePanel === 'couper' ? OR : '#fff', fontSize: 20 }}>
+              <i className="ti ti-scissors" />
+            </div>
+          )}
         </div>
 
         {activePanel === 'filtres' && (
@@ -869,57 +879,63 @@ export default function CreatePostPage() {
           );
         })()}
 
+        {activePanel === 'couper' && activeMedia.kind === 'video' && (function() {
+          const duree = activeMedia.duree || 0;
+          const debut = activeMedia.trimDebut || 0;
+          const fin = activeMedia.trimFin != null ? activeMedia.trimFin : duree;
+          function formaterTemps(s) {
+            const m = Math.floor(s / 60);
+            const sec = Math.floor(s % 60);
+            return m + ':' + (sec < 10 ? '0' : '') + sec;
+          }
+          return (
+            <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.85), transparent)', padding: '24px 14px 12px', zIndex: 12 }}>
+              <div style={{ fontSize: 11, color: '#fff', fontWeight: 700, marginBottom: 10, textAlign: 'center' }}>
+                {formaterTemps(debut)} — {formaterTemps(fin)} <span style={{ color: 'rgba(255,255,255,0.5)', fontWeight: 400 }}>/ {formaterTemps(duree)}</span>
+              </div>
+              <div style={{ marginBottom: 6 }}>
+                <label style={{ fontSize: 9.5, color: 'rgba(255,255,255,0.6)' }}>Debut</label>
+                <input type="range" min={0} max={duree || 0} step={0.1} value={debut} onChange={function(e) { changerTrimDebut(+e.target.value); }} style={{ width: '100%' }} disabled={!duree} />
+              </div>
+              <div>
+                <label style={{ fontSize: 9.5, color: 'rgba(255,255,255,0.6)' }}>Fin</label>
+                <input type="range" min={0} max={duree || 0} step={0.1} value={fin} onChange={function(e) { changerTrimFin(+e.target.value); }} style={{ width: '100%' }} disabled={!duree} />
+              </div>
+            </div>
+          );
+        })()}
+
       </>
     );
   }
 
+  // Ne rend plus que la zone de recadrage elle-meme : les chips de format et
+  // la barre Miroir/Reinitialiser/Valider vivent maintenant dans la barre du
+  // bas commune (voir plus bas), pour que l'ecran garde exactement la meme
+  // taille qu'au depart et ne "s'agrandisse" plus a l'ouverture de l'outil.
   function rendreRecadrage() {
     if (!activeMedia || activeMedia.kind !== 'image') return null;
     return (
-      <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', background: '#000' }}>
-        <div ref={cropZoneRef} style={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8, overflow: 'hidden', boxSizing: 'border-box' }}>
-          {cropZoneSize.width > 0 && cropZoneSize.height > 0 && (
-            <div style={{ width: Math.max(0, cropZoneSize.width - 16), height: Math.max(0, cropZoneSize.height - 16), display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-              <ReactCrop
-                crop={cropTemp}
-                onChange={surCropChange}
-                onComplete={surCropComplete}
-                aspect={aspectActuel}
-                keepSelection
-              >
-                <img
-                  src={activeMedia.url}
-                  alt=""
-                  crossOrigin="anonymous"
-                  onLoad={onImageLoadForCrop}
-                  style={{ maxWidth: '100%', maxHeight: '100%', display: 'block', transform: activeMedia.miroir ? 'scaleX(-1)' : 'none' }}
-                />
-              </ReactCrop>
-            </div>
-          )}
-        </div>
-                <div style={{ flexShrink: 0, display: 'flex', gap: 8, overflowX: 'auto', padding: '10px 12px', background: '#000' }}>
-          {CADRES.map(function(c) {
-            const actif = (activeMedia.cadre || 'original') === c.id;
-            return (
-              <div key={c.id} onClick={function() { choisirCadre(c.id); }} style={{ flexShrink: 0, padding: '8px 14px', borderRadius: 20, background: actif ? OR : 'rgba(255,255,255,0.12)', cursor: 'pointer' }}>
-                <span style={{ fontSize: 11, fontWeight: 700, color: actif ? VERT : '#fff', whiteSpace: 'nowrap' }}>{c.label}</span>
-              </div>
-            );
-          })}
-        </div>
-        <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 12px 14px', background: '#000' }}>
-          <div onClick={basculerMiroir} style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', color: activeMedia.miroir ? OR : '#fff' }}>
-            <i className="ti ti-flip-horizontal" style={{ fontSize: 17 }} />
-            <span style={{ fontSize: 11, fontWeight: 700 }}>Miroir</span>
+      <div ref={cropZoneRef} style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8, overflow: 'hidden', boxSizing: 'border-box', background: '#000' }}>
+        {cropZoneSize.width > 0 && cropZoneSize.height > 0 && (
+          <div style={{ width: Math.max(0, cropZoneSize.width - 16), height: Math.max(0, cropZoneSize.height - 16), display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+            <ReactCrop
+              crop={cropTemp}
+              onChange={surCropChange}
+              onComplete={surCropComplete}
+              aspect={aspectActuel}
+              keepSelection
+            >
+              <img
+                src={activeMedia.url}
+                alt=""
+                crossOrigin="anonymous"
+                onLoad={onImageLoadForCrop}
+                style={{ maxWidth: '100%', maxHeight: '100%', display: 'block', transform: activeMedia.miroir ? 'scaleX(-1)' : 'none' }}
+              />
+            </ReactCrop>
           </div>
-          <div onClick={function() { choisirCadre(activeMedia.cadre || 'original'); }} style={{ fontSize: 11.5, fontWeight: 700, color: 'rgba(255,255,255,0.6)', cursor: 'pointer' }}>
-            Reinitialiser
-          </div>
-          <button onClick={function() { setActivePanel(null); }} style={{ background: OR, color: VERT, border: 'none', padding: '8px 20px', borderRadius: 999, fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}>
-            Valider
-          </button>
-        </div>
+        )}
       </div>
     );
   }
@@ -1176,9 +1192,8 @@ export default function CreatePostPage() {
 
       {editionOuverte && activeMedia && (
                 <div style={{ position: 'fixed', top: 0, bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: 430, background: '#000', zIndex: 1000, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                    {activePanel !== 'recadrer' && (
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 'max(env(safe-area-inset-top), 10px) 16px 6px', position: 'relative', zIndex: 20, flexShrink: 0 }}>
-                        <button onClick={function() { setEditionOuverte(false); }} style={{ width: 34, height: 34, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.25)', color: '#fff', fontSize: 17, cursor: 'pointer' }}>‹</button>
+                        <button onClick={function() { if (activePanel) { setActivePanel(null); } else { setEditionOuverte(false); } }} style={{ width: 34, height: 34, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.25)', color: '#fff', fontSize: 17, cursor: 'pointer' }}>‹</button>
             {mediaItems.length > 1 && (
               <div style={{ display: 'flex', gap: 5 }}>
                 {mediaItems.map(function(_, i) {
@@ -1188,7 +1203,6 @@ export default function CreatePostPage() {
             )}
             <span style={{ width: 34 }} />
           </div>
-                    )}
           <div
             ref={conteneurMediaRef}
             onMouseDown={activePanel === 'recadrer' ? undefined : demarrerGlisser} onMouseMove={activePanel === 'recadrer' ? undefined : bougerGlisser} onMouseUp={activePanel === 'recadrer' ? undefined : arreterGlisser} onMouseLeave={activePanel === 'recadrer' ? undefined : arreterGlisser}
@@ -1204,37 +1218,64 @@ export default function CreatePostPage() {
               </>
             )}
           </div>
-          {activePanel !== 'recadrer' && (
           <div style={{ padding: '8px 12px 10px', position: 'relative', zIndex: 20, flexShrink: 0 }}>
-            <div style={{ display: 'flex', gap: 8, overflowX: 'auto', marginBottom: 10, alignItems: 'center' }}>
-              <div style={{ width: 34, height: 34, borderRadius: 8, background: 'rgba(255,255,255,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <i className="ti ti-layout-grid" style={{ color: '#fff', fontSize: 15 }} />
-              </div>
-              {mediaItems.map(function(m, i) {
-                return (
-                  <div key={i} onClick={function() { setActiveIndex(i); }} style={{ width: 34, height: 34, borderRadius: 8, overflow: 'hidden', border: i === activeIndex ? '2px solid ' + OR : '1.5px solid rgba(255,255,255,0.3)', flexShrink: 0, cursor: 'pointer' }}>
-                    {m.kind === 'video' ? (
-                      <video src={m.url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} muted />
-                    ) : (
-                      <img src={m.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    )}
+            {activePanel === 'recadrer' ? (
+              <>
+                <div style={{ display: 'flex', gap: 8, overflowX: 'auto', marginBottom: 10 }}>
+                  {CADRES.map(function(c) {
+                    const actif = (activeMedia.cadre || 'original') === c.id;
+                    return (
+                      <div key={c.id} onClick={function() { choisirCadre(c.id); }} style={{ flexShrink: 0, padding: '8px 14px', borderRadius: 20, background: actif ? OR : 'rgba(255,255,255,0.12)', cursor: 'pointer' }}>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: actif ? VERT : '#fff', whiteSpace: 'nowrap' }}>{c.label}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div onClick={basculerMiroir} style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', color: activeMedia.miroir ? OR : '#fff' }}>
+                    <i className="ti ti-flip-horizontal" style={{ fontSize: 17 }} />
+                    <span style={{ fontSize: 11, fontWeight: 700 }}>Miroir</span>
                   </div>
-                );
-              })}
-              <div onClick={ouvrirSelecteurFichiers} style={{ width: 34, height: 34, borderRadius: 8, border: '1.5px dashed rgba(255,255,255,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, cursor: 'pointer', color: OR, fontSize: 16 }}>
-                +
-              </div>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div onClick={function() { setEditionOuverte(false); }} style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.75)', cursor: 'pointer', padding: '10px 6px' }}>
-                Annuler
-              </div>
-              <button onClick={function() { if (activePanel === 'recadrer') { setActivePanel(null); } else { setEditionOuverte(false); } }} style={{ background: 'linear-gradient(135deg,#C8A84B,#8B6020)', color: VERT, border: 'none', padding: '10px 26px', borderRadius: 999, fontSize: 13.5, fontWeight: 700, cursor: 'pointer' }}>
-                Suivant
-              </button>
-            </div>
+                  <div onClick={function() { choisirCadre(activeMedia.cadre || 'original'); }} style={{ fontSize: 11.5, fontWeight: 700, color: 'rgba(255,255,255,0.6)', cursor: 'pointer' }}>
+                    Reinitialiser
+                  </div>
+                  <button onClick={function() { setActivePanel(null); }} style={{ background: OR, color: VERT, border: 'none', padding: '8px 20px', borderRadius: 999, fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}>
+                    Valider
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div style={{ display: 'flex', gap: 8, overflowX: 'auto', marginBottom: 10, alignItems: 'center' }}>
+                  <div style={{ width: 34, height: 34, borderRadius: 8, background: 'rgba(255,255,255,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <i className="ti ti-layout-grid" style={{ color: '#fff', fontSize: 15 }} />
+                  </div>
+                  {mediaItems.map(function(m, i) {
+                    return (
+                      <div key={i} onClick={function() { setActiveIndex(i); }} style={{ width: 34, height: 34, borderRadius: 8, overflow: 'hidden', border: i === activeIndex ? '2px solid ' + OR : '1.5px solid rgba(255,255,255,0.3)', flexShrink: 0, cursor: 'pointer' }}>
+                        {m.kind === 'video' ? (
+                          <video src={m.url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} muted />
+                        ) : (
+                          <img src={m.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        )}
+                      </div>
+                    );
+                  })}
+                  <div onClick={ouvrirSelecteurFichiers} style={{ width: 34, height: 34, borderRadius: 8, border: '1.5px dashed rgba(255,255,255,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, cursor: 'pointer', color: OR, fontSize: 16 }}>
+                    +
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div onClick={function() { setEditionOuverte(false); }} style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.75)', cursor: 'pointer', padding: '10px 6px' }}>
+                    Annuler
+                  </div>
+                  <button onClick={function() { setEditionOuverte(false); }} style={{ background: 'linear-gradient(135deg,#C8A84B,#8B6020)', color: VERT, border: 'none', padding: '10px 26px', borderRadius: 999, fontSize: 13.5, fontWeight: 700, cursor: 'pointer' }}>
+                    Suivant
+                  </button>
+                </div>
+              </>
+            )}
           </div>
-          )}
         </div>
       )}
 
