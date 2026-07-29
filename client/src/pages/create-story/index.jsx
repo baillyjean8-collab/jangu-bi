@@ -53,6 +53,8 @@ export default function CreateStoryPage() {
 
   const [publishing, setPublishing] = useState(false);
   const [erreur, setErreur] = useState('');
+  const [activePanel, setActivePanel] = useState(null); // 'filtres' | 'ajuster' | null
+  const [reglageChoisi, setReglageChoisi] = useState('luminosite');
 
   function majSlideActive(champs) {
     setSlides(function(prev) {
@@ -348,7 +350,7 @@ export default function CreateStoryPage() {
         </div>
       )}
 
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 14px 10px', minHeight: 0 }}>
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, minHeight: 0 }}>
         <div
           ref={marcoRef}
           onMouseDown={activeSlide.mode === 'media' ? demarrerGlisser : undefined}
@@ -359,11 +361,10 @@ export default function CreateStoryPage() {
           onTouchMove={activeSlide.mode === 'media' ? bougerGlisser : undefined}
           onTouchEnd={activeSlide.mode === 'media' ? arreterGlisser : undefined}
           style={{
-            position: 'relative', width: '100%', maxWidth: 300, aspectRatio: '9 / 16', maxHeight: '100%',
-            borderRadius: 20, overflow: 'hidden', border: '2px solid #C8A84B',
-            boxShadow: '0 8px 30px rgba(0,0,0,0.5)',
-            background: activeSlide.mode === 'texte' ? activeSlide.bgColor : '#000',
-            cursor: activeSlide.mode === 'media' ? 'grab' : 'default',
+            position: 'relative', width: 'auto', height: '100%', maxWidth: '100%', aspectRatio: '9 / 16',
+overflow: 'hidden',
+background: activeSlide.mode === 'texte' ? activeSlide.bgColor : '#000',
+cursor: activeSlide.mode === 'media' ? 'grab' : 'default',
           }}
         >
           <div style={{ position: 'absolute', top: -30, right: -30, width: 120, height: 120, borderRadius: '50%', background: 'radial-gradient(circle,rgba(200,168,75,.15),transparent 70%)', pointerEvents: 'none', zIndex: 1 }} />
@@ -425,8 +426,8 @@ export default function CreateStoryPage() {
             <video src={activeSlide.mediaFile.previewUrl} autoPlay muted loop playsInline style={mediaStyle} />
           )}
 
-          {activeSlide.mode === 'media' && (
-            <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.75), transparent)', padding: '34px 14px 16px', zIndex: 2 }}>
+          {activeSlide.mode === 'media' && !activePanel && (
+<div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.75), transparent)', padding: '34px 14px 16px', zIndex: 2 }}>
               <div
                 ref={captionRef}
                 contentEditable
