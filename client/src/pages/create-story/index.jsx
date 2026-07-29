@@ -340,6 +340,7 @@ export default function CreateStoryPage() {
           const fichierGrave = await graverImageStory(s.mediaFile.file, {
             filtre: s.filtre, brightness: s.brightness, contrast: s.contrast, saturation: s.saturation,
             zoom: s.zoom, offsetX: s.offsetX, offsetY: s.offsetY,
+            texteIncruste: s.texteIncruste,
           });
           const url = await uploadToCloudinary(fichierGrave, 'image');
           await storiesApi.create({ type: 'image', imageUrl: url, caption: (s.caption || '').trim() });
@@ -477,6 +478,13 @@ export default function CreateStoryPage() {
 
           {activeSlide.mode === 'media' && activeSlide.mediaFile && (
             <div style={{ position: 'absolute', top: 60, right: 12, display: 'flex', flexDirection: 'column', gap: 16, zIndex: 6, alignItems: 'flex-end' }}>
+
+                            <div onClick={function() { setActivePanel(activePanel === 'texte' ? null : 'texte'); }} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
+                <span style={{ color: (activeSlide.texteIncruste || activePanel === 'texte') ? OR : IVOIRE, fontSize: 12.5, fontWeight: 700, fontFamily: 'Georgia,serif', whiteSpace: 'nowrap' }}>Texte</span>
+                <div style={{ width: 38, height: 38, borderRadius: '50%', background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: (activeSlide.texteIncruste || activePanel === 'texte') ? OR : '#fff', fontSize: 16, fontWeight: 700, fontFamily: 'Georgia,serif' }}>
+                  Aa
+                </div>
+              </div>
 
               <div onClick={function() { setActivePanel(activePanel === 'filtres' ? null : 'filtres'); }} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
                 <span style={{ color: activePanel === 'filtres' ? OR : IVOIRE, fontSize: 12.5, fontWeight: 700, fontFamily: 'Georgia,serif', whiteSpace: 'nowrap' }}>Filtres</span>
