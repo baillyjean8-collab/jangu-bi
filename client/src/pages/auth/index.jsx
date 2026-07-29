@@ -170,7 +170,6 @@ function SelectParoisse({ value, onChange, error }) {
         style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           padding: '0 0.75rem', height: '2.5rem',
-background: 'rgba(255,255,255,0.05)',
           border: `1px solid ${error ? 'var(--color-border-danger)' : 'var(--color-border-tertiary)'}`,
           background: 'var(--color-background-primary)',
           cursor: 'pointer', outline: 'none',
@@ -316,6 +315,7 @@ export function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
+  const [motDePasseVisible, setMotDePasseVisible] = useState(false);
 
   function set(field) {
     return (e) => { setForm(f => ({ ...f, [field]: e.target.value })); setError(''); };
@@ -375,9 +375,15 @@ export function LoginPage() {
             <label style={S.label}>Email</label>
             <input style={S.inputLight} type="email" placeholder="votre@email.com" value={form.email} onChange={set('email')} required/>
           </div>
-          <div style={S.mb}>
+                    <div style={S.mb}>
             <label style={S.label}>Mot de passe</label>
-            <input style={S.inputLight} type="password" placeholder="••••••••••" value={form.password} onChange={set('password')} required/>
+            <div style={{ position: 'relative' }}>
+              <input style={{ ...S.inputLight, paddingRight: 42 }} type={motDePasseVisible ? 'text' : 'password'} placeholder="••••••••••" value={form.password} onChange={set('password')} required/>
+              <div onClick={() => setMotDePasseVisible(v => !v)} style={{ position: 'absolute', top: '50%', right: 12, transform: 'translateY(-50%)', cursor: 'pointer', color: 'rgba(30,45,20,0.5)', display: 'flex', alignItems: 'center' }}>
+                <i className={motDePasseVisible ? 'ti ti-eye-off' : 'ti ti-eye'} style={{ fontSize: 16 }} />
+              </div>
+            </div>
+          </div>
           </div>
           <div style={{ textAlign: 'right', marginBottom: 20 }}>
             <span onClick={() => navigate('/forgot-password')} style={{ fontSize: 12, color: 'rgba(200,168,75,.7)', cursor: 'pointer' }}>Mot de passe oublié ?</span>
