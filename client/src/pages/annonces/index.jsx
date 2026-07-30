@@ -573,26 +573,9 @@ export default function AnnoncesPage() {
                     </p>
                   </div>
                 )}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#71717A', fontWeight: 600 }}>
-                    <span>🗓️</span> {item.jour} {item.date}
-                  </div>
-                  {eventsAdmin ? (
-                    <button onClick={function() { supprimerAnnonce(item._id); }} style={{
-                      padding: '7px 16px', borderRadius: 10, border: 'none', cursor: 'pointer',
-                      background: 'rgba(198,40,40,0.1)', color: '#c62828', fontWeight: 700, fontSize: 12,
-                    }}>
-                      Supprimer
-                    </button>
-                  ) : (
-                    <button style={{
-                      padding: '7px 16px', borderRadius: 10, border: 'none', cursor: 'pointer',
-                      background: VERT, color: OR, fontWeight: 700, fontSize: 12,
-                    }}>
-                      S'inscrire →
-                    </button>
-                  )}
-                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#71717A', fontWeight: 600 }}>
+                  <span>🗓️</span> {item.jour} {item.date}
+                </div>
               </div>
             ))}
           </div>
