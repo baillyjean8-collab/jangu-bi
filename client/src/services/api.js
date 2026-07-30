@@ -273,6 +273,9 @@ export const demandesApi = {
   getMine: function() {
     return apiFetch('/demandes/mes-demandes');
   },
+  getForAdmin: function() {
+    return apiFetch('/demandes');
+  },
   updateStatut: function(id, statut, noteAdmin) {
     return apiFetch('/demandes/' + id + '/statut', {
       method: 'PATCH', body: JSON.stringify({ statut: statut, noteAdmin: noteAdmin })
