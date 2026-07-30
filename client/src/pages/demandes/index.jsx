@@ -4,6 +4,7 @@ import waveLogo    from '../../assets/wave.webp';
 import orangeLogo  from '../../assets/orange-money.png';
 import freeLogo    from '../../assets/free-money.png';
 import visaLogo    from '../../assets/visa-mastercard.webp';
+import { demandesApi } from '../../services/api';
 
 
 // ── Liste des paroisses enregistrées ────────────────────────────────────────
@@ -207,6 +208,7 @@ export default function DemandesPage() {
   const [pourQui, setPourQui] = useState('moi');
   const [modeSelectionne, setModeSelectionne] = useState(null);
   const [ref] = useState(genRef());
+  const [demandeEnvoyee, setDemandeEnvoyee] = useState(null);
   const [filtre, setFiltre] = useState('tout');
   const [paroisse, setParoisse]         = useState('');
   const [paroisseRdv, setParoisseRdv]   = useState('');
@@ -220,6 +222,45 @@ export default function DemandesPage() {
   const [intention, setIntention] = useState('');
   const [rdvMotif, setRdvMotif] = useState('Confession');
   const [rdvMessage, setRdvMessage] = useState('');
+
+    async function creerDemandeActe() {
+    const payload = {
+      type: serviceActif.id,
+      titre: serviceActif.titre,
+      montant: serviceActif.prix,
+      pourQui: pourQui,
+      nomBeneficiaire: pourQui === 'autre' ? nomPrenom : '',
+      lienParente: formAutre.lien || '',
+      telephoneContact: formAutre.tel || '',
+      paroisseConcernee: serviceActif.id === 'messe' ? paroisseMesse : paroisse,
+      pretreOfficiant: pretreOfficiant,
+      dateEvenement: (serviceActif.id === 'messe' ? dateMesse : dateEvt) || null,
+      intentionMesse: intention,
+      momentMesse: momentMesse,
+    };
+    try {
+      const res = await demandesApi.create(payload);
+      setDemandeEnvoyee(res && res.data && res.data.demande);
+    } catch (e) {
+      console.log('Creation demande:', e.message);
+    }
+  }
+
+  async function creerDemandeRdv() {
+    const payload = {
+      type: 'rdv',
+      titre: 'Rendez-vous avec un pretre',
+      montant: 0,
+      rdvMotif: rdvMotif,
+      rdvMessage: rdvMessage,
+    };
+    try {
+      const res = await demandesApi.create(payload);
+      setDemandeEnvoyee(res && res.data && res.data.demande);
+    } catch (e) {
+      console.log('Creation demande rdv:', e.message);
+    }
+  }
 
   const servicesFiltres = SERVICES.filter(s => {
     if (filtre==='tout') return true;
@@ -323,7 +364,7 @@ export default function DemandesPage() {
             <div style={{ fontSize:11, fontWeight:700, color:'#7A6E5E', marginBottom:7 }}>Message (optionnel)</div>
             <textarea value={rdvMessage} onChange={e=>setRdvMessage(e.target.value)} placeholder="Décrivez brièvement le sujet si vous le souhaitez..." rows={3} style={{ width:'100%', border:'1.5px solid #e5e0d5', borderRadius:12, padding:'11px 14px', fontFamily:'Georgia,serif', fontSize:12, color:VERT, background:'#faf8f4', outline:'none', resize:'none' }} />
           </div>
-          <button onClick={()=>setEtape('succes-rdv')} style={{ width:'100%', padding:14, background:'linear-gradient(135deg,#C8A84B,#8B6020)', border:'none', borderRadius:14, color:VERT, fontWeight:700, fontSize:14, fontFamily:'Georgia,serif', cursor:'pointer' }}>
+            <button onClick={async ()=>{ await creerDemandeRdv(); setEtape('succes-rdv'); }} style={{ width:'100%', padding:14, background:'linear-gradient(135deg,#C8A84B,#8B6020)', border:'none', borderRadius:14, color:VERT, fontWeight:700, fontSize:14, fontFamily:'Georgia,serif', cursor:'pointer' }}>
             Envoyer la demande ✦
           </button>
           <div style={{ textAlign:'center', fontSize:9, color:'#9A8E7E', marginTop:8 }}>La paroisse vous confirmera par SMS ou appel</div>
@@ -518,7 +559,7 @@ export default function DemandesPage() {
     <AppShell>
       <div style={{ minHeight:'100vh', background:IVOIRE, backgroundImage:BOGOLAN, paddingBottom:90 }}>
         {hdr('Carte bancaire', 'paiement')}
-        <FormulaireCarteModal montant={serviceActif?.prix||0} onPayer={()=>setEtape('succes-acte')} onRetour={()=>setEtape('paiement')} />
+                <FormulaireCarteModal montant={serviceActif?.prix||0} onPayer={async ()=>{ await creerDemandeActe(); setEtape('succes-acte'); }} onRetour={()=>setEtape('paiement')} />
       </div>
     </AppShell>
   );
@@ -528,7 +569,7 @@ export default function DemandesPage() {
     <AppShell>
       <div style={{ minHeight:'100vh', background:IVOIRE, backgroundImage:BOGOLAN, paddingBottom:90 }}>
         {hdr('Code de paiement', 'paiement')}
-        <EcranUSSD mode={modeSelectionne} montant={serviceActif?.prix||0} onValide={()=>setEtape('succes-acte')} onRetour={()=>setEtape('paiement')} />
+        <EcranUSSD mode={modeSelectionne} montant={serviceActif?.prix||0} onValide={async ()=>{ await creerDemandeActe(); setEtape('succes-acte'); }} onRetour={()=>setEtape('paiement')} />
       </div>
     </AppShell>
   );
@@ -544,7 +585,7 @@ export default function DemandesPage() {
             Votre demande a été transmise à la paroisse. Vous recevrez une confirmation sous 24 à 48h.
           </div>
           <div style={{ background:'rgba(200,168,75,0.08)', border:'1px solid rgba(200,168,75,0.2)', borderRadius:14, padding:14, marginBottom:18, textAlign:'left' }}>
-            {[['Référence', ref],['Service', serviceActif?.titre],['Date souhaitée', dateMesse || 'Flexible'],['Moment', momentMesse === 'matin' ? 'Matin (avant 12h)' : momentMesse === 'soir' ? 'Soir (après 17h)' : 'Au choix du prêtre'],['Statut','En attente'],['Montant payé', (serviceActif?.prix||0).toLocaleString('fr-SN')+' FCFA']].map(([k,v],i)=>(
+          {[['Référence', (demandeEnvoyee && demandeEnvoyee.reference) || ref],['Service', serviceActif?.titre],['Date souhaitée', dateMesse || 'Flexible'],['Moment', momentMesse === 'matin' ? 'Matin (avant 12h)' : momentMesse === 'soir' ? 'Soir (après 17h)' : 'Au choix du prêtre'],['Statut','En attente'],['Montant payé', (serviceActif?.prix||0).toLocaleString('fr-SN')+' FCFA']].map(([k,v],i)=>(
               <div key={i} style={{ display:'flex', justifyContent:'space-between', marginBottom:i<3?8:0 }}>
                 <span style={{ fontSize:10, color:'#7A6E5E' }}>{k}</span>
                 <span style={{ fontSize:10, fontWeight:700, color:i===3?OR:VERT }}>{v}</span>
