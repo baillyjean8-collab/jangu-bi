@@ -61,12 +61,15 @@ const demandeController = {
     return sendSuccess(res, { demandes });
   },
 
-  async updateStatut(req, res) {
+    async updateStatut(req, res) {
     const demande = await demandeRepo.findById(req.params.id);
     if (!demande) throw new NotFoundError('Demande');
     const statutsValides = ['en_attente', 'validee', 'rejetee'];
     if (!statutsValides.includes(req.body.statut)) {
       throw new ValidationError('Statut invalide');
+    }
+    if (req.body.statut === 'rejetee' && (!req.body.noteAdmin || !String(req.body.noteAdmin).trim())) {
+      throw new ValidationError('Le motif du rejet est requis');
     }
     demande.statut = req.body.statut;
     demande.dateTraitement = req.body.statut !== 'en_attente' ? new Date() : null;
