@@ -292,22 +292,7 @@ export default function DemandesPage() {
             ))}
           </div>
 
-          {/* Demandes en cours */}
-          <div style={{ fontFamily:'Georgia,serif', fontSize:13, fontWeight:700, color:VERT, marginBottom:9 }}>Mes demandes en cours</div>
-          {[
-            { icon:'💧', bg:'#E3F2FD', titre:'Extrait de baptême', date:'28 juin 2026', statut:'En cours', sc:'#FFF8E1', st:'#8B6020' },
-            { icon:'⛪', bg:'#E8F5E9', titre:'Demande de messe',   date:'25 juin 2026', statut:'Validée',  sc:'rgba(16,185,129,0.12)', st:'#065F46' },
-          ].map((d,i)=>(
-            <div key={i} style={{ background:'white', borderRadius:14, padding:13, border:'1px solid rgba(0,0,0,0.06)', display:'flex', alignItems:'center', gap:11, marginBottom:8 }}>
-              <div style={{ width:36, height:36, borderRadius:10, background:d.bg, display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, flexShrink:0 }}>{d.icon}</div>
-              <div style={{ flex:1 }}>
-                <div style={{ fontSize:12, fontWeight:700, color:VERT }}>{d.titre}</div>
-                <div style={{ fontSize:9, color:'#7A6E5E', marginTop:2 }}>Envoyée le {d.date}</div>
-              </div>
-              <span style={{ display:'inline-block', padding:'2px 10px', borderRadius:20, fontSize:9, fontWeight:700, background:d.sc, color:d.st }}>{d.statut}</span>
-            </div>
-          ))}
-        </div>
+                  </div>
       </div>
     </AppShell>
   );
