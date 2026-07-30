@@ -1753,21 +1753,23 @@ export default function BibliothequePage() {
           const pages = decouperEnPages(a.texte);
           const derniere = pageActuelle === pages.length - 1;
 
-          function pageSuivante() {
+                    function pageSuivante() {
             if (pageActuelle >= pages.length - 1 || pageEnTransition !== null) return;
+            const ancienne = pageActuelle;
             setDirectionAnimation('suivant');
-            setPageEnTransition(pageActuelle);
+            setPageEnTransition(ancienne);
+            setPageActuelle(ancienne + 1);
             setTimeout(function() {
-              setPageActuelle(function(p) { return p + 1; });
               setPageEnTransition(null);
             }, 750);
           }
           function pagePrecedente() {
             if (pageActuelle <= 0 || pageEnTransition !== null) return;
+            const ancienne = pageActuelle;
             setDirectionAnimation('precedent');
-            setPageEnTransition(pageActuelle);
+            setPageEnTransition(ancienne);
+            setPageActuelle(ancienne - 1);
             setTimeout(function() {
-              setPageActuelle(function(p) { return p - 1; });
               setPageEnTransition(null);
             }, 750);
           }
@@ -1822,7 +1824,7 @@ export default function BibliothequePage() {
                       position: 'absolute', inset: 0, transformStyle: 'preserve-3d', backfaceVisibility: 'hidden',
                       transformOrigin: directionAnimation === 'suivant' ? 'left center' : 'right center',
                     }}>
-                      {contenuPage(directionAnimation === 'suivant' ? pageEnTransition : pageEnTransition, true)}
+                  {contenuPage(pageEnTransition, true)}
                     </div>
                   )}
                 </div>
