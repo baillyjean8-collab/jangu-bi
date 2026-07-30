@@ -525,10 +525,9 @@ export function RegisterPage() {
             </div>
           </div>
 
-          {/* Sexe + Date de naissance */}
+                    {/* Sexe + Date de naissance */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 }}>
             <div>
-                          <div>
               <label style={S.label}>Genre</label>
               <select style={{ ...S.input, minWidth: 0, color: form.sexe ? '#F5EFE4' : 'rgba(245,239,228,.4)' }} value={form.sexe} onChange={set('sexe')} required>
                 <option value="" disabled>Sélectionnez</option>
