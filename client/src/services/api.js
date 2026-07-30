@@ -266,6 +266,15 @@ export const announcementsApi = {
   },
 };
 
+export const demandesApi = {
+  create: function(data) {
+    return apiFetch('/demandes', { method: 'POST', body: JSON.stringify(data) });
+  },
+  getMine: function() {
+    return apiFetch('/demandes/mes-demandes');
+  },
+};
+
 export const parishEventsApi = {
   getForParish: function(parishId) { return apiFetch('/parish-events/parish/' + parishId); },
   create: function(data) {
