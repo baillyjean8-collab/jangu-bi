@@ -529,23 +529,21 @@ export function RegisterPage() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 }}>
             <div>
               <label style={S.label}>Genre</label>
-              <select style={{ ...S.input, minWidth: 0, color: form.sexe ? '#F5EFE4' : 'rgba(245,239,228,.4)' }} value={form.sexe} onChange={set('sexe')} required>
+                <select style={{ ...S.input, minWidth: 0, height: 44, boxSizing: 'border-box', color: form.sexe ? '#F5EFE4' : 'rgba(245,239,228,.4)' }} value={form.sexe} onChange={set('sexe')} required>
                 <option value="" disabled>Sélectionnez</option>
                 <option value="homme" style={{ color: '#F5EFE4' }}>Homme</option>
                 <option value="femme" style={{ color: '#F5EFE4' }}>Femme</option>
               </select>
             </div>
-            <div style={{ minWidth: 0 }}>
+                        <div style={{ minWidth: 0 }}>
               <label style={S.label}>Date de naissance</label>
-              <div style={{ width: '100%', overflow: 'hidden', borderRadius: 10 }}>
-                <input
-                  type="date"
-                  value={form.dateNaissance}
-                  onChange={set('dateNaissance')}
-                  required
-                  style={{ ...S.input, width: '100%', minWidth: 0, maxWidth: '100%', boxSizing: 'border-box', display: 'block' }}
-                />
-              </div>
+              <input
+                type="date"
+                value={form.dateNaissance}
+                onChange={set('dateNaissance')}
+                required
+                style={{ ...S.input, width: '100%', minWidth: 0, maxWidth: '100%', height: 44, boxSizing: 'border-box', display: 'block', appearance: 'none', WebkitAppearance: 'none' }}
+              />
             </div>
           </div>
 
