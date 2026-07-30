@@ -430,7 +430,7 @@ export function RegisterPage() {
     firstName: '', lastName: '', email: '',
     phone: '', password: '', confirmPassword: '',
     paroisse: '', ville: '', pays: '',
-    sexe: 'homme', dateNaissance: '',
+    sexe: '', dateNaissance: '',
   });
 
   useEffect(() => {
@@ -515,28 +515,30 @@ export function RegisterPage() {
 
                     {/* Prénom + Nom */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 }}>
-            <div>
+                        <div>
               <label style={S.label}>Prénom</label>
-              <input style={S.input} placeholder="Amadou" value={form.firstName} onChange={set('firstName')} required/>
+              <input style={S.input} placeholder="Votre prénom" value={form.firstName} onChange={set('firstName')} required/>
             </div>
             <div>
               <label style={S.label}>Nom</label>
-              <input style={S.input} placeholder="Diallo" value={form.lastName} onChange={set('lastName')} required/>
+              <input style={S.input} placeholder="Votre nom" value={form.lastName} onChange={set('lastName')} required/>
             </div>
           </div>
 
           {/* Sexe + Date de naissance */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 }}>
             <div>
-              <label style={S.label}>Sexe</label>
-              <select style={{ ...S.input, color: '#F5EFE4' }} value={form.sexe} onChange={set('sexe')}>
-                <option value="homme">Homme</option>
-                <option value="femme">Femme</option>
+                          <div>
+              <label style={S.label}>Genre</label>
+              <select style={{ ...S.input, minWidth: 0, color: form.sexe ? '#F5EFE4' : 'rgba(245,239,228,.4)' }} value={form.sexe} onChange={set('sexe')} required>
+                <option value="" disabled>Sélectionnez</option>
+                <option value="homme" style={{ color: '#F5EFE4' }}>Homme</option>
+                <option value="femme" style={{ color: '#F5EFE4' }}>Femme</option>
               </select>
             </div>
             <div>
               <label style={S.label}>Date de naissance</label>
-              <input style={S.input} type="date" value={form.dateNaissance} onChange={set('dateNaissance')} required/>
+              <input style={{ ...S.input, minWidth: 0 }} type="date" value={form.dateNaissance} onChange={set('dateNaissance')} required/>
             </div>
           </div>
 
