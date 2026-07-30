@@ -2,9 +2,15 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppShell from '../../components/AppShell';
 import { useAuth } from '../../context/AuthContext';
-import { postsApi } from '../../services/api';
+import { postsApi, demandesApi } from '../../services/api';
 
 const BOGOLAN = 'repeating-linear-gradient(0deg,transparent,transparent 8px,rgba(200,168,75,0.025) 8px,rgba(200,168,75,0.025) 9px),repeating-linear-gradient(90deg,transparent,transparent 8px,rgba(200,168,75,0.025) 8px,rgba(200,168,75,0.025) 9px)';
+
+const STATUTS_DEMANDE = {
+  en_attente: { label: 'En attente', color: '#8B6020', bg: 'rgba(200,168,75,0.15)' },
+  validee:    { label: 'Validée',    color: '#065F46', bg: 'rgba(16,185,129,0.12)' },
+  rejetee:    { label: 'Rejetée',    color: '#b71c1c', bg: 'rgba(198,40,40,0.1)' },
+};
 const BOGOLAN_DARK = 'repeating-linear-gradient(0deg,transparent,transparent 8px,rgba(200,168,75,0.05) 8px,rgba(200,168,75,0.05) 9px),repeating-linear-gradient(90deg,transparent,transparent 8px,rgba(200,168,75,0.05) 8px,rgba(200,168,75,0.05) 9px)';
 const FAITH_STEPS = ['Disciple', 'Apotre', 'Pelerin', 'Temoin', 'Lumiere'];
 const TABS = ['Profil', 'Dons', 'Mes demandes', 'Inscription', 'Parametres'];
@@ -139,9 +145,11 @@ export default function ProfilePage() {
   const { user, updateUser } = useAuth();
   const fileRef = useRef(null);
   const [activeTab, setActiveTab] = useState(0);
-    const [mesInscriptions, setMesInscriptions] = useState([]);
+  const [mesInscriptions, setMesInscriptions] = useState([]);
   const [chargementInscriptions, setChargementInscriptions] = useState(false);
   const [annulationEnCours, setAnnulationEnCours] = useState(null);
+  const [mesDemandes, setMesDemandes] = useState([]);
+  const [chargementDemandes, setChargementDemandes] = useState(false);
 
   async function annulerUneInscription(registrationId) {
     setAnnulationEnCours(registrationId);
@@ -155,7 +163,7 @@ export default function ProfilePage() {
     }
   }
 
-  useEffect(function() {
+    useEffect(function() {
     if (activeTab !== 3) return;
     setChargementInscriptions(true);
     postsApi.getMesInscriptions().then(function(res) {
@@ -164,6 +172,18 @@ export default function ProfilePage() {
       console.log('Mes inscriptions:', e.message);
     }).finally(function() {
       setChargementInscriptions(false);
+    });
+  }, [activeTab]);
+
+  useEffect(function() {
+    if (activeTab !== 2) return;
+    setChargementDemandes(true);
+    demandesApi.getMine().then(function(res) {
+      setMesDemandes((res && res.data && res.data.demandes) || []);
+    }).catch(function(e) {
+      console.log('Mes demandes:', e.message);
+    }).finally(function() {
+      setChargementDemandes(false);
     });
   }, [activeTab]);
 
@@ -438,11 +458,40 @@ export default function ProfilePage() {
             </div>
           )}
 
-          {activeTab === 2 && (
-            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 12 }}>
-              <div style={{ fontSize: 36 }}>📄</div>
-              <div style={{ fontFamily: 'Georgia,serif', fontSize: 14, color: '#7A6E5E', textAlign: 'center' }}>Aucune demande pour l'instant</div>
-            </div>
+                    {activeTab === 2 && (
+            <>
+              {chargementDemandes && (
+                <div style={{ textAlign: 'center', padding: 30, fontSize: 13, color: '#7A6E5E' }}>Chargement...</div>
+              )}
+              {!chargementDemandes && mesDemandes.length === 0 && (
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 12, padding: '30px 0' }}>
+                  <div style={{ fontSize: 36 }}>📄</div>
+                  <div style={{ fontFamily: 'Georgia,serif', fontSize: 14, color: '#7A6E5E', textAlign: 'center' }}>Aucune demande pour l'instant</div>
+                </div>
+              )}
+              {!chargementDemandes && mesDemandes.map(function(d) {
+                const s = STATUTS_DEMANDE[d.statut] || STATUTS_DEMANDE.en_attente;
+                return (
+                  <div key={d._id} style={{ background: 'white', borderRadius: 14, padding: '12px 14px', boxShadow: '0 2px 10px rgba(13,59,46,.06)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
+                      <div style={{ fontSize: 12.5, fontWeight: 700, color: '#0D2B1F', fontFamily: 'Georgia,serif' }}>{d.titre}</div>
+                      <span style={{ fontSize: 9, fontWeight: 700, padding: '3px 10px', borderRadius: 20, background: s.bg, color: s.color, whiteSpace: 'nowrap', flexShrink: 0 }}>{s.label}</span>
+                    </div>
+                    <div style={{ fontSize: 9.5, color: '#9A8E7E', marginBottom: 2 }}>
+                      Référence : {d.reference}
+                    </div>
+                    <div style={{ fontSize: 9.5, color: '#9A8E7E', marginBottom: 2 }}>
+                      Demande envoyée le {d.createdAt ? new Date(d.createdAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'Africa/Dakar' }) : ''}
+                    </div>
+                    {d.dateTraitement && (
+                      <div style={{ fontSize: 9.5, color: '#9A8E7E' }}>
+                        Traitée le {new Date(d.dateTraitement).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'Africa/Dakar' })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </>
           )}
 
           {activeTab === 3 && (
