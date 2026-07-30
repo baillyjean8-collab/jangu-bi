@@ -6,7 +6,7 @@ const { authenticate, requireVerified } = require('../../middlewares/authenticat
 const { authorize } = require('../../middlewares/authorize');
 const { asyncHandler } = require('../../middlewares/errorHandler');
 const { sendSuccess, sendCreated } = require('../../shared/utils/response');
-const { NotFoundError, ValidationError } = require('../../shared/errors');
+const { NotFoundError, AuthorizationError, ValidationError } = require('../../shared/errors');
 
 function genererReference() {
   return 'DEM-' + Date.now().toString().slice(-8) + '-' + Math.random().toString(36).slice(2, 6).toUpperCase();
@@ -18,6 +18,12 @@ const demandeRepo = {
   },
   async listMine(userId) {
     return Demande.find({ userId }).sort({ createdAt: -1 }).lean();
+  },
+  async listForParish(parishId) {
+    return Demande.find({ parishId }).populate('userId', 'firstName lastName phone').sort({ createdAt: -1 }).lean();
+  },
+  async listAll() {
+    return Demande.find({}).populate('userId', 'firstName lastName phone').sort({ createdAt: -1 }).lean();
   },
   async findById(id) {
     return Demande.findById(id);
@@ -35,9 +41,13 @@ const demandeController = {
     if (!type || !titre) {
       throw new ValidationError('Type et titre de la demande requis');
     }
+    if (!req.user.parishId) {
+      throw new ValidationError('Vous devez être rattaché à une paroisse pour faire une demande');
+    }
 
     const demande = await demandeRepo.create({
       userId: req.user.userId,
+      parishId: req.user.parishId,
       type, titre,
       montant: montant != null ? Number(montant) : 0,
       pourQui: pourQui || 'moi',
@@ -61,9 +71,19 @@ const demandeController = {
     return sendSuccess(res, { demandes });
   },
 
-    async updateStatut(req, res) {
+  async listForAdmin(req, res) {
+    const demandes = req.user.role === 'super_admin'
+      ? await demandeRepo.listAll()
+      : await demandeRepo.listForParish(req.user.parishId);
+    return sendSuccess(res, { demandes });
+  },
+
+  async updateStatut(req, res) {
     const demande = await demandeRepo.findById(req.params.id);
     if (!demande) throw new NotFoundError('Demande');
+    if (req.user.role !== 'super_admin' && String(demande.parishId) !== String(req.user.parishId)) {
+      throw new AuthorizationError('Not your parish request');
+    }
     const statutsValides = ['en_attente', 'validee', 'rejetee'];
     if (!statutsValides.includes(req.body.statut)) {
       throw new ValidationError('Statut invalide');
@@ -87,6 +107,12 @@ router.post('/',
 router.get('/mes-demandes',
   authenticate, requireVerified,
   asyncHandler(demandeController.listMine)
+);
+
+router.get('/',
+  authenticate, requireVerified,
+  authorize('parish_admin', 'super_admin'),
+  asyncHandler(demandeController.listForAdmin)
 );
 
 router.patch('/:id/statut',
