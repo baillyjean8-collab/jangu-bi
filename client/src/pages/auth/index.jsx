@@ -536,8 +536,17 @@ export function RegisterPage() {
               </select>
             </div>
             <div>
+                          <div style={{ minWidth: 0 }}>
               <label style={S.label}>Date de naissance</label>
-              <input style={{ ...S.input, minWidth: 0 }} type="date" value={form.dateNaissance} onChange={set('dateNaissance')} required/>
+              <div style={{ width: '100%', overflow: 'hidden', borderRadius: 10 }}>
+                <input
+                  type="date"
+                  value={form.dateNaissance}
+                  onChange={set('dateNaissance')}
+                  required
+                  style={{ ...S.input, width: '100%', minWidth: 0, maxWidth: '100%', boxSizing: 'border-box', display: 'block' }}
+                />
+              </div>
             </div>
           </div>
 
