@@ -548,7 +548,6 @@ export function RegisterPage() {
                 />
               </div>
             </div>
-          </div>
 
           {/* Email */}
           <div style={S.mb}>
