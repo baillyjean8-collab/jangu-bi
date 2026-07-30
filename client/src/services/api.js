@@ -273,6 +273,11 @@ export const demandesApi = {
   getMine: function() {
     return apiFetch('/demandes/mes-demandes');
   },
+  updateStatut: function(id, statut, noteAdmin) {
+    return apiFetch('/demandes/' + id + '/statut', {
+      method: 'PATCH', body: JSON.stringify({ statut: statut, noteAdmin: noteAdmin })
+    });
+  },
 };
 
 export const parishEventsApi = {
