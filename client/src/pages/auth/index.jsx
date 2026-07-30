@@ -430,6 +430,7 @@ export function RegisterPage() {
     firstName: '', lastName: '', email: '',
     phone: '', password: '', confirmPassword: '',
     paroisse: '', ville: '', pays: '',
+    sexe: 'homme', dateNaissance: '',
   });
 
   useEffect(() => {
@@ -451,8 +452,12 @@ export function RegisterPage() {
     return (e) => { setForm(f => ({ ...f, [field]: e.target.value })); setError(''); };
   }
 
-  async function handleSubmit(e) {
+    async function handleSubmit(e) {
     e.preventDefault();
+    if (!form.dateNaissance) {
+      setError('La date de naissance est requise');
+      return;
+    }
     if (form.password !== form.confirmPassword) {
       setError('Les mots de passe ne correspondent pas');
       return;
@@ -508,7 +513,7 @@ export function RegisterPage() {
 
         <form onSubmit={handleSubmit} noValidate>
 
-          {/* Prénom + Nom */}
+                    {/* Prénom + Nom */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 }}>
             <div>
               <label style={S.label}>Prénom</label>
@@ -517,6 +522,21 @@ export function RegisterPage() {
             <div>
               <label style={S.label}>Nom</label>
               <input style={S.input} placeholder="Diallo" value={form.lastName} onChange={set('lastName')} required/>
+            </div>
+          </div>
+
+          {/* Sexe + Date de naissance */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 }}>
+            <div>
+              <label style={S.label}>Sexe</label>
+              <select style={{ ...S.input, color: '#F5EFE4' }} value={form.sexe} onChange={set('sexe')}>
+                <option value="homme">Homme</option>
+                <option value="femme">Femme</option>
+              </select>
+            </div>
+            <div>
+              <label style={S.label}>Date de naissance</label>
+              <input style={S.input} type="date" value={form.dateNaissance} onChange={set('dateNaissance')} required/>
             </div>
           </div>
 
