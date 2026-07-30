@@ -191,6 +191,7 @@ app.use('/api/groups', groupRoutes);
 app.use('/api/invitations', invitationRoutes);
 app.use('/api/_test-email', require('./domains/admin/test-email-route'));
 app.use('/api/parish-events', require('./domains/parish-events'));
+app.use('/api/demandes', require('./domains/demandes').router);
 
 
 
