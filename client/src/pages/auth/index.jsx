@@ -536,7 +536,8 @@ export function RegisterPage() {
               </select>
             </div>
             <div>
-                          <div style={{ minWidth: 0 }}>
+            <div>
+              <div style={{ minWidth: 0 }}>
               <label style={S.label}>Date de naissance</label>
               <div style={{ width: '100%', overflow: 'hidden', borderRadius: 10 }}>
                 <input
@@ -547,6 +548,7 @@ export function RegisterPage() {
                   style={{ ...S.input, width: '100%', minWidth: 0, maxWidth: '100%', boxSizing: 'border-box', display: 'block' }}
                 />
               </div>
+            </div>
             </div>
 
           {/* Email */}
