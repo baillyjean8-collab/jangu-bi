@@ -20,6 +20,7 @@ const Invitation   = require('./Invitation');
 const ParishApplication = require('./ParishApplication');
 const ParishEvent = require('./ParishEvent');
 const EventRegistration = require('./EventRegistration');
+const Demande = require('./Demande');
 
 module.exports = {
   User,
@@ -40,4 +41,5 @@ module.exports = {
   ParishApplication,
   ParishEvent,
   EventRegistration,
+  Demande,
 };
