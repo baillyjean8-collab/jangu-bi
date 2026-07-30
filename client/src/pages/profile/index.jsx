@@ -150,6 +150,7 @@ export default function ProfilePage() {
   const [annulationEnCours, setAnnulationEnCours] = useState(null);
   const [mesDemandes, setMesDemandes] = useState([]);
   const [chargementDemandes, setChargementDemandes] = useState(false);
+  const [demandeRejeteeOuverte, setDemandeRejeteeOuverte] = useState(null);
 
   async function annulerUneInscription(registrationId) {
     setAnnulationEnCours(registrationId);
@@ -469,10 +470,15 @@ export default function ProfilePage() {
                   <div style={{ fontFamily: 'Georgia,serif', fontSize: 14, color: '#7A6E5E', textAlign: 'center' }}>Aucune demande pour l'instant</div>
                 </div>
               )}
-              {!chargementDemandes && mesDemandes.map(function(d) {
+                            {!chargementDemandes && mesDemandes.map(function(d) {
                 const s = STATUTS_DEMANDE[d.statut] || STATUTS_DEMANDE.en_attente;
+                const estRejetee = d.statut === 'rejetee';
                 return (
-                  <div key={d._id} style={{ background: 'white', borderRadius: 14, padding: '12px 14px', boxShadow: '0 2px 10px rgba(13,59,46,.06)' }}>
+                  <div
+                    key={d._id}
+                    onClick={function() { if (estRejetee) setDemandeRejeteeOuverte(d); }}
+                    style={{ background: 'white', borderRadius: 14, padding: '12px 14px', boxShadow: '0 2px 10px rgba(13,59,46,.06)', cursor: estRejetee ? 'pointer' : 'default' }}
+                  >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
                       <div style={{ fontSize: 12.5, fontWeight: 700, color: '#0D2B1F', fontFamily: 'Georgia,serif' }}>{d.titre}</div>
                       <span style={{ fontSize: 9, fontWeight: 700, padding: '3px 10px', borderRadius: 20, background: s.bg, color: s.color, whiteSpace: 'nowrap', flexShrink: 0 }}>{s.label}</span>
@@ -486,6 +492,11 @@ export default function ProfilePage() {
                     {d.dateTraitement && (
                       <div style={{ fontSize: 9.5, color: '#9A8E7E' }}>
                         Traitée le {new Date(d.dateTraitement).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'Africa/Dakar' })}
+                      </div>
+                    )}
+                    {estRejetee && (
+                      <div style={{ fontSize: 9.5, color: '#b71c1c', fontWeight: 700, marginTop: 6 }}>
+                        Voir le motif du rejet →
                       </div>
                     )}
                   </div>
@@ -529,8 +540,24 @@ export default function ProfilePage() {
               })}
             </>
           )}
-        </div>
+                </div>
       </div>
+
+      {demandeRejeteeOuverte && (
+        <div onClick={function() { setDemandeRejeteeOuverte(null); }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1200, padding: 24 }}>
+          <div onClick={function(e) { e.stopPropagation(); }} style={{ background: '#fff', borderRadius: 16, padding: '20px 18px', width: '100%', maxWidth: 340 }}>
+            <div style={{ fontSize: 30, textAlign: 'center', marginBottom: 8 }}>❌</div>
+            <div style={{ fontFamily: 'Georgia,serif', fontSize: 15, fontWeight: 700, color: '#b71c1c', marginBottom: 10, textAlign: 'center' }}>Demande rejetée</div>
+            <div style={{ fontSize: 12, color: '#0D2B1F', fontWeight: 700, marginBottom: 4 }}>{demandeRejeteeOuverte.titre}</div>
+            <div style={{ fontSize: 12, color: '#7A6E5E', lineHeight: 1.6, marginBottom: 18, background: '#F5F0E8', borderRadius: 10, padding: '10px 12px' }}>
+              {demandeRejeteeOuverte.noteAdmin || "Aucun motif n'a été précisé par la paroisse."}
+            </div>
+            <button onClick={function() { setDemandeRejeteeOuverte(null); }} style={{ width: '100%', padding: 11, background: 'linear-gradient(135deg,#C8A84B,#8B7030)', border: 'none', borderRadius: 10, color: '#0D2B1F', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>
+              Fermer
+            </button>
+          </div>
+        </div>
+      )}
     </AppShell>
   );
 }
