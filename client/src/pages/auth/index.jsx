@@ -525,7 +525,7 @@ export function RegisterPage() {
             </div>
           </div>
 
-                    {/* Sexe + Date de naissance */}
+                              {/* Sexe + Date de naissance */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 }}>
             <div>
               <label style={S.label}>Genre</label>
@@ -535,9 +535,7 @@ export function RegisterPage() {
                 <option value="femme" style={{ color: '#F5EFE4' }}>Femme</option>
               </select>
             </div>
-            <div>
-            <div>
-              <div style={{ minWidth: 0 }}>
+            <div style={{ minWidth: 0 }}>
               <label style={S.label}>Date de naissance</label>
               <div style={{ width: '100%', overflow: 'hidden', borderRadius: 10 }}>
                 <input
@@ -549,7 +547,7 @@ export function RegisterPage() {
                 />
               </div>
             </div>
-            </div>
+          </div>
 
           {/* Email */}
           <div style={S.mb}>
