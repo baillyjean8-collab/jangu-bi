@@ -70,7 +70,7 @@ export default function ParishDetail() {
 
   const [photoCouverture, setPhotoCouverture] = useState(null);
   const [photoProfil, setPhotoProfil] = useState(null);
-  const [notifCount, setNotifCount] = useState({ nouveauxFideles: 0, messagesNonRepondus: 0 });
+  const [notifCount, setNotifCount] = useState({ nouveauxFideles: 0, messagesNonRepondus: 0, demandesEnAttente: 0 });
   const [estEnDirect, setEstEnDirect] = useState(false);
   const [liveSessionId, setLiveSessionId] = useState(null);
 
@@ -592,9 +592,14 @@ setEditZoom(1.15);
 
       {isOwner && (
         <>
-          <div onClick={function() { navigate('/parish-admin/demandes'); }} style={{ textAlign: "center", cursor: "pointer" }}>
-            <div style={{ width: 46, height: 46, borderRadius: "50%", background: "linear-gradient(135deg,#e53935,#b71c1c)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 5px", boxShadow: "0 3px 8px rgba(229,57,53,0.3)" }}>
-              <i className="ti ti-file-description" style={{ fontSize: 19, color: "#fff" }} />
+                    <div onClick={function() { navigate('/parish-admin/demandes'); }} style={{ textAlign: "center", cursor: "pointer" }}>
+            <div style={{ position: "relative", width: 46, height: 46, margin: "0 auto 5px" }}>
+              {notifCount.demandesEnAttente > 0 && (
+                <span style={{ position: "absolute", top: -3, right: -3, background: "#E24B4A", color: "#fff", fontSize: 9, fontWeight: 700, minWidth: 16, height: 16, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 4px", border: "2px solid " + VERT, zIndex: 2 }}>{notifCount.demandesEnAttente}</span>
+              )}
+              <div style={{ width: 46, height: 46, borderRadius: "50%", background: "linear-gradient(135deg,#e53935,#b71c1c)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 3px 8px rgba(229,57,53,0.3)" }}>
+                <i className="ti ti-file-description" style={{ fontSize: 19, color: "#fff" }} />
+              </div>
             </div>
             <div style={{ fontSize: 9, color: "rgba(255,255,255,0.75)", fontWeight: 600 }}>Demandes</div>
           </div>
