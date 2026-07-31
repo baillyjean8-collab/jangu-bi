@@ -2,6 +2,17 @@ import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
+const GLOBAL_INPUT_FIX = `
+  input, select, textarea {
+    box-sizing: border-box !important;
+    max-width: 100% !important;
+  }
+  input[type="date"] {
+    -webkit-appearance: none;
+    appearance: none;
+  }
+`;
+
 const BOGOLAN_DARK = 'repeating-linear-gradient(0deg,transparent,transparent 8px,rgba(200,168,75,0.05) 8px,rgba(200,168,75,0.05) 9px),repeating-linear-gradient(90deg,transparent,transparent 8px,rgba(200,168,75,0.05) 8px,rgba(200,168,75,0.05) 9px)';
 
 const menuItems = [
@@ -30,10 +41,15 @@ function AppShell({ children, hideNav }) {
     location.pathname === '/parishes/' + user.parishId
   );
 
-  return (
-    <div style={{ background: '#f5f5f0', minHeight: '100vh', display: 'flex', justifyContent: 'center' }}>
-      <div style={{ width: '100%', maxWidth: '430px', background: '#F5F0E8', minHeight: '100vh', boxShadow: '0 10px 25px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', paddingBottom: hideNav ? 0 : '72px', boxSizing: 'border-box' }}>
-        <main style={{ flex: 1, width: '100%', boxSizing: 'border-box' }}>
+      return (
+
+<div style={{ background: '#f5f5f0', minHeight: '100vh', display: 'flex', justifyContent: 'center' }}>
+
+<style>{GLOBAL_INPUT_FIX}</style>
+
+<div style={{ width: '100%', maxWidth: '430px', background: '#F5F0E8', minHeight: '100vh', boxShadow: '0 10px 25px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', paddingBottom: hideNav ? 0 : '72px', boxSizing: 'border-box', overflowX: 'hidden' }}>
+
+<main style={{ flex: 1, width: '100%', boxSizing: 'border-box', overflowX: 'hidden' }}>
           {children}
         </main>
 
