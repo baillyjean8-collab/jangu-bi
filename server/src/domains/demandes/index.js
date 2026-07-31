@@ -57,7 +57,7 @@ const demandeController = {
       if (paroisseTrouvee) parishIdCible = paroisseTrouvee._id;
     }
 
-    const demande = await demandeRepo.create({
+        const demande = await demandeRepo.create({
       userId: req.user.userId,
       parishId: parishIdCible,
       type, titre,
@@ -74,6 +74,18 @@ const demandeController = {
       rdvMotif: rdvMotif || '',
       rdvMessage: rdvMessage || '',
     });
+
+    try {
+      const io = req.app.get('io');
+      if (io && io.broadcastAdminNotif) {
+        io.broadcastAdminNotif(String(parishIdCible), {
+          type: 'demande',
+          titre: 'Nouvelle demande reçue',
+          message: titre,
+          demandeId: demande._id,
+        });
+      }
+    } catch (e) { /* une notification ratee ne doit jamais bloquer la demande */ }
 
     return sendCreated(res, { demande }, 'Demande envoyee');
   },
