@@ -31,7 +31,7 @@ export function useNotifications() {
       auth: { token: tokenStore.get() },
     });
 
-    socket.on('connect', () => {
+        socket.on('connect', () => {
       // Rejoindre la room de la paroisse de l'utilisateur pour les notifs globales
       if (user.parishId) {
         socket.emit('room:join', {
@@ -39,6 +39,19 @@ export function useNotifications() {
           liveId: 'notifications', // magic value — le serveur ne compte pas les viewers ici
         });
       }
+      // Rejoindre la salle de notifications admin (demandes, inscriptions, etc.)
+      if ((user.role === 'parish_admin' || user.role === 'super_admin') && user.parishId) {
+        socket.emit('admin:notif:join', { parishId: user.parishId });
+      }
+    });
+
+    // 📄 Nouvelle demande / inscription / interaction a traiter
+    socket.on('admin:notif:new', (data) => {
+      toast({
+        message: `📄 ${data.titre || 'Nouvelle notification'}${data.message ? ' — ' + data.message : ''}`,
+        type: 'info',
+        duration: 7000,
+      });
     });
 
     // 🔴 Service démarré dans ma paroisse
