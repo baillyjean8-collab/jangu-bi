@@ -221,7 +221,54 @@ export default function DemandesPage() {
   const [formAutre, setFormAutre] = useState({ nom:'', lien:'', tel:'', info:'' });
   const [intention, setIntention] = useState('');
   const [rdvMotif, setRdvMotif] = useState('Confession');
-  const [rdvMessage, setRdvMessage] = useState('');
+    const [rdvMessage, setRdvMessage] = useState('');
+  const [dateRdv, setDateRdv] = useState('');
+  const [erreurs, setErreurs] = useState({});
+
+  // ⚠️ Remplacer par la vraie récupération du profil connecté (services/api.js)
+  const UTILISATEUR_ACTUEL = { nom: 'Marie Agnès Diallo', paroisse: 'Paroisse Saint-Pierre – Dakar' };
+
+  const refNom = React.useRef(null);
+  const refDateEvt = React.useRef(null);
+  const refParoisse = React.useRef(null);
+  const refDateRdv = React.useRef(null);
+  const refParoisseRdv = React.useRef(null);
+
+  React.useEffect(() => {
+    if (pourQui === 'moi') {
+      setNomPrenom(UTILISATEUR_ACTUEL.nom);
+      setParoisse(UTILISATEUR_ACTUEL.paroisse);
+    } else {
+      setNomPrenom('');
+      setParoisse('');
+    }
+  }, [pourQui]);
+
+  function scrollVersErreur(ref) {
+    ref.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  function validerFormulaireActe() {
+    const e = {};
+    if (!nomPrenom.trim()) e.nom = true;
+    if (!dateEvt) e.date = true;
+    if (!paroisse.trim()) e.paroisse = true;
+    setErreurs(e);
+    if (e.nom) { scrollVersErreur(refNom); return false; }
+    if (e.date) { scrollVersErreur(refDateEvt); return false; }
+    if (e.paroisse) { scrollVersErreur(refParoisse); return false; }
+    return true;
+  }
+
+  function validerFormulaireRdv() {
+    const e = {};
+    if (!dateRdv) e.dateRdv = true;
+    if (!paroisseRdv.trim()) e.paroisseRdv = true;
+    setErreurs(e);
+    if (e.dateRdv) { scrollVersErreur(refDateRdv); return false; }
+    if (e.paroisseRdv) { scrollVersErreur(refParoisseRdv); return false; }
+    return true;
+  }
 
     async function creerDemandeActe() {
     const payload = {
@@ -270,18 +317,21 @@ export default function DemandesPage() {
     return true;
   });
 
-  const hdr = (titre, retour, sous) => (
-    <div style={{ background:'#0C0A06', backgroundImage:BOGOLAN_DARK, padding:'44px 16px 18px', borderRadius:'0 0 24px 24px', marginBottom:14 }}>
-      <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-        <button onClick={()=>setEtape(retour)} style={{ background:'none', border:'none', cursor:'pointer', padding:0 }}>
-          <i className="ti ti-arrow-left" style={{ fontSize:20, color:OR }} />
-        </button>
-        <div style={{ fontFamily:'Georgia,serif', fontSize:16, fontWeight:900, color:IVOIRE }}>{titre}</div>
+    const hdr = (titre, retour, sous) => (
+    <>
+      <style>{`input, select, textarea { box-sizing: border-box !important; max-width: 100%; }`}</style>
+      <div style={{ background:'#0C0A06', backgroundImage:BOGOLAN_DARK, padding:'44px 16px 18px', borderRadius:'0 0 24px 24px', marginBottom:14 }}>
+        <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+          <button onClick={()=>setEtape(retour)} style={{ background:'none', border:'none', cursor:'pointer', padding:0 }}>
+            <i className="ti ti-arrow-left" style={{ fontSize:20, color:OR }} />
+          </button>
+          <div style={{ fontFamily:'Georgia,serif', fontSize:16, fontWeight:900, color:IVOIRE }}>{titre}</div>
+        </div>
+        {sous && <div style={{ fontSize:10, color:'rgba(245,240,232,0.4)', marginTop:6 }}>{sous}</div>}
       </div>
-      {sous && <div style={{ fontSize:10, color:'rgba(245,240,232,0.4)', marginTop:6 }}>{sous}</div>}
-    </div>
+    </>
   );
-
+    
   // ── LISTE ──────────────────────────────────────────────────────────────────
   if (etape==='liste') return (
     <AppShell>
@@ -353,10 +403,16 @@ export default function DemandesPage() {
                 </div>
               ))}
             </div>
-            <div style={{ fontSize:11, fontWeight:700, color:'#7A6E5E', marginBottom:7 }}>Date souhaitée</div>
-            <input type="date" style={{ width:'100%', border:'1.5px solid #e5e0d5', borderRadius:12, padding:'11px 14px', fontFamily:'Georgia,serif', fontSize:12, color:VERT, background:'#faf8f4', outline:'none', marginBottom:12 }} />
-            <div style={{ fontSize:11, fontWeight:700, color:'#7A6E5E', marginBottom:6 }}>Paroisse souhaitée</div>
-            <AutoCompleteParoisse value={paroisseRdv} onChange={setParoisseRdv} />
+                        <div ref={refDateRdv} style={{ fontSize:11, fontWeight:700, marginBottom:7, color: erreurs.dateRdv ? '#C0392B' : '#7A6E5E' }}>
+              Date souhaitée <span style={{ color:'#C0392B' }}>*</span>
+            </div>
+            <input type="date" value={dateRdv} onChange={e=>{ setDateRdv(e.target.value); setErreurs(er=>({...er,dateRdv:false})); }} style={{ width:'100%', boxSizing:'border-box', border:'1.5px solid '+(erreurs.dateRdv?'#C0392B':'#e5e0d5'), borderRadius:12, padding:'11px 14px', fontFamily:'Georgia,serif', fontSize:12, color:VERT, background:'#faf8f4', outline:'none', marginBottom:erreurs.dateRdv?4:12 }} />
+            {erreurs.dateRdv && <div style={{ fontSize:9, color:'#C0392B', marginBottom:10 }}>Merci de remplir ce champ</div>}
+            <div ref={refParoisseRdv} style={{ fontSize:11, fontWeight:700, marginBottom:6, color: erreurs.paroisseRdv ? '#C0392B' : '#7A6E5E' }}>
+              Paroisse souhaitée <span style={{ color:'#C0392B' }}>*</span>
+            </div>
+            <AutoCompleteParoisse value={paroisseRdv} onChange={v=>{ setParoisseRdv(v); setErreurs(er=>({...er,paroisseRdv:false})); }} />
+            {erreurs.paroisseRdv && <div style={{ fontSize:9, color:'#C0392B', marginTop:-4, marginBottom:8 }}>Merci de remplir ce champ</div>}
             <div style={{ fontSize:11, fontWeight:700, color:'#7A6E5E', marginBottom:7, marginTop:4 }}>Créneau préféré</div>
             <select style={{ width:'100%', border:'1.5px solid #e5e0d5', borderRadius:12, padding:'11px 14px', fontFamily:'Georgia,serif', fontSize:12, color:VERT, background:'#faf8f4', outline:'none', marginBottom:12 }}>
               <option>Matin (8h – 12h)</option><option>Après-midi (14h – 18h)</option><option>Soir (18h – 20h)</option>
@@ -364,7 +420,7 @@ export default function DemandesPage() {
             <div style={{ fontSize:11, fontWeight:700, color:'#7A6E5E', marginBottom:7 }}>Message (optionnel)</div>
             <textarea value={rdvMessage} onChange={e=>setRdvMessage(e.target.value)} placeholder="Décrivez brièvement le sujet si vous le souhaitez..." rows={3} style={{ width:'100%', border:'1.5px solid #e5e0d5', borderRadius:12, padding:'11px 14px', fontFamily:'Georgia,serif', fontSize:12, color:VERT, background:'#faf8f4', outline:'none', resize:'none' }} />
           </div>
-            <button onClick={async ()=>{ await creerDemandeRdv(); setEtape('succes-rdv'); }} style={{ width:'100%', padding:14, background:'linear-gradient(135deg,#C8A84B,#8B6020)', border:'none', borderRadius:14, color:VERT, fontWeight:700, fontSize:14, fontFamily:'Georgia,serif', cursor:'pointer' }}>
+          <button onClick={async ()=>{ if(!validerFormulaireRdv()) return; await creerDemandeRdv(); setEtape('succes-rdv'); }} style={{ width:'100%', padding:14, background:'linear-gradient(135deg,#C8A84B,#8B6020)', border:'none', borderRadius:14, color:VERT, fontWeight:700, fontSize:14, fontFamily:'Georgia,serif', cursor:'pointer' }}>
             Envoyer la demande ✦
           </button>
           <div style={{ textAlign:'center', fontSize:9, color:'#9A8E7E', marginTop:8 }}>La paroisse vous confirmera par SMS ou appel</div>
@@ -468,16 +524,49 @@ export default function DemandesPage() {
                   <i className="ti ti-info-circle" style={{ color:'#C8A84B', marginRight:6 }} />
                   Ces informations permettront à la paroisse concernée de retrouver votre acte dans ses registres.
                 </div>
-                <div style={{ fontSize:11, fontWeight:700, color:'#7A6E5E', marginBottom:6 }}>Nom et prénom complet</div>
-                <input placeholder="Ex: Marie Agnès Diallo" value={nomPrenom} onChange={e=>setNomPrenom(e.target.value)} style={{ width:'100%', border:'1.5px solid #e5e0d5', borderRadius:12, padding:'11px 14px', fontFamily:'Georgia,serif', fontSize:12, color:VERT, background:'#faf8f4', outline:'none', marginBottom:12 }} />
-                <div style={{ fontSize:11, fontWeight:700, color:'#7A6E5E', marginBottom:6 }}>
-                  {CHAMPS_ACTE[serviceActif.id]?.dateLabel || "Date de l evenement"}
+                                {pourQui === 'moi' ? (
+                  <div style={{ display:'flex', alignItems:'center', gap:10, padding:10, background:'#F5F0E8', borderRadius:10, marginBottom:12 }}>
+                    <div style={{ width:34, height:34, borderRadius:'50%', background:VERT, display:'flex', alignItems:'center', justifyContent:'center', fontSize:10, fontWeight:700, color:OR, flexShrink:0 }}>
+                      {UTILISATEUR_ACTUEL.nom.split(' ').map(n=>n[0]).slice(0,2).join('')}
+                    </div>
+                    <div style={{ flex:1 }}>
+                      <div style={{ fontSize:11, fontWeight:700, color:VERT }}>{UTILISATEUR_ACTUEL.nom}</div>
+                      <div style={{ fontSize:9, color:'#7A6E5E' }}>{UTILISATEUR_ACTUEL.paroisse}</div>
+                    </div>
+                    <span style={{ padding:'2px 10px', borderRadius:20, fontSize:9, fontWeight:700, background:'rgba(200,168,75,0.15)', color:'#8B6020' }}>Auto-rempli</span>
+                  </div>
+                ) : (
+                  <>
+                    <div ref={refNom} style={{ fontSize:11, fontWeight:700, marginBottom:6, color: erreurs.nom ? '#C0392B' : '#7A6E5E' }}>
+                      Nom et prénom complet <span style={{ color:'#C0392B' }}>*</span>
+                    </div>
+                    <input
+                      placeholder="Ex: Marie Agnès Diallo"
+                      value={nomPrenom}
+                      onChange={e=>{ setNomPrenom(e.target.value); setErreurs(er=>({...er,nom:false})); }}
+                      style={{ width:'100%', boxSizing:'border-box', border:'1.5px solid '+(erreurs.nom?'#C0392B':'#e5e0d5'), borderRadius:12, padding:'11px 14px', fontFamily:'Georgia,serif', fontSize:12, color:VERT, background:'#faf8f4', outline:'none', marginBottom:erreurs.nom?4:12 }}
+                    />
+                    {erreurs.nom && <div style={{ fontSize:9, color:'#C0392B', marginBottom:10 }}>Merci de remplir ce champ</div>}
+                  </>
+                )}
+
+                <div ref={refDateEvt} style={{ fontSize:11, fontWeight:700, marginBottom:6, color: erreurs.date ? '#C0392B' : '#7A6E5E' }}>
+                  {CHAMPS_ACTE[serviceActif.id]?.dateLabel || "Date de l'événement"} <span style={{ color:'#C0392B' }}>*</span>
                 </div>
-                <input type="date" value={dateEvt} onChange={e=>setDateEvt(e.target.value)} style={{ width:'100%', border:'1.5px solid #e5e0d5', borderRadius:12, padding:'11px 14px', fontFamily:'Georgia,serif', fontSize:12, color:VERT, background:'#faf8f4', outline:'none', marginBottom:12 }} />
-                <div style={{ fontSize:11, fontWeight:700, color:'#7A6E5E', marginBottom:6 }}>
-                  {CHAMPS_ACTE[serviceActif.id]?.lieuLabel || "Paroisse concernee"}
+                <input
+                  type="date"
+                  value={dateEvt}
+                  onChange={e=>{ setDateEvt(e.target.value); setErreurs(er=>({...er,date:false})); }}
+                  style={{ width:'100%', boxSizing:'border-box', border:'1.5px solid '+(erreurs.date?'#C0392B':'#e5e0d5'), borderRadius:12, padding:'11px 14px', fontFamily:'Georgia,serif', fontSize:12, color:VERT, background:'#faf8f4', outline:'none', marginBottom:erreurs.date?4:12 }}
+                />
+                {erreurs.date && <div style={{ fontSize:9, color:'#C0392B', marginBottom:10 }}>Merci de remplir ce champ</div>}
+
+                <div ref={refParoisse} style={{ fontSize:11, fontWeight:700, marginBottom:6, color: erreurs.paroisse ? '#C0392B' : '#7A6E5E' }}>
+                  {CHAMPS_ACTE[serviceActif.id]?.lieuLabel || "Paroisse concernée"} <span style={{ color:'#C0392B' }}>*</span>
                 </div>
-                <AutoCompleteParoisse value={paroisse} onChange={setParoisse} />
+                <AutoCompleteParoisse value={paroisse} onChange={v=>{ setParoisse(v); setErreurs(er=>({...er,paroisse:false})); }} />
+                {erreurs.paroisse && <div style={{ fontSize:9, color:'#C0392B', marginTop:-4, marginBottom:8 }}>Merci de remplir ce champ</div>}
+
                 <div style={{ fontSize:11, fontWeight:700, color:'#7A6E5E', marginBottom:6, marginTop:4 }}>
                   Prêtre officiant (optionnel)
                 </div>
@@ -500,7 +589,7 @@ export default function DemandesPage() {
               </>
             )}
           </div>
-          <button onClick={()=>setEtape('paiement')} style={{ width:'100%', padding:14, background:'linear-gradient(135deg,#C8A84B,#8B6020)', border:'none', borderRadius:14, color:VERT, fontWeight:700, fontSize:14, fontFamily:'Georgia,serif', cursor:'pointer' }}>
+          <button onClick={()=>{ if (serviceActif.id !== 'messe' && !validerFormulaireActe()) return; setEtape('paiement'); }} style={{ width:'100%', padding:14, background:'linear-gradient(135deg,#C8A84B,#8B6020)', border:'none', borderRadius:14, color:VERT, fontWeight:700, fontSize:14, fontFamily:'Georgia,serif', cursor:'pointer' }}>
             Continuer vers le paiement ✦
           </button>
         </div>
