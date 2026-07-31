@@ -148,9 +148,23 @@ export default function ProfilePage() {
   const [mesInscriptions, setMesInscriptions] = useState([]);
   const [chargementInscriptions, setChargementInscriptions] = useState(false);
   const [annulationEnCours, setAnnulationEnCours] = useState(null);
-  const [mesDemandes, setMesDemandes] = useState([]);
+    const [mesDemandes, setMesDemandes] = useState([]);
   const [chargementDemandes, setChargementDemandes] = useState(false);
   const [demandeRejeteeOuverte, setDemandeRejeteeOuverte] = useState(null);
+  const [suppressionEnCours, setSuppressionEnCours] = useState(null);
+
+  async function supprimerMaDemande(id) {
+    if (!window.confirm('Supprimer definitivement cette demande ?')) return;
+    setSuppressionEnCours(id);
+    try {
+      await demandesApi.remove(id);
+      setMesDemandes(function(prev) { return prev.filter(function(d) { return d._id !== id; }); });
+    } catch (e) {
+      console.log('Suppression demande:', e.message);
+    } finally {
+      setSuppressionEnCours(null);
+    }
+  }
 
   async function annulerUneInscription(registrationId) {
     setAnnulationEnCours(registrationId);
@@ -494,9 +508,17 @@ export default function ProfilePage() {
                         Traitée le {new Date(d.dateTraitement).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'Africa/Dakar' })}
                       </div>
                     )}
-                    {estRejetee && (
+                                        {estRejetee && (
                       <div style={{ fontSize: 9.5, color: '#b71c1c', fontWeight: 700, marginTop: 6 }}>
                         Voir le motif du rejet →
+                      </div>
+                    )}
+                    {d.statut !== 'validee' && (
+                      <div
+                        onClick={function(e) { e.stopPropagation(); if (suppressionEnCours !== d._id) supprimerMaDemande(d._id); }}
+                        style={{ fontSize: 9.5, color: '#9A8E7E', fontWeight: 700, marginTop: 8, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
+                      >
+                        🗑 {suppressionEnCours === d._id ? 'Suppression...' : 'Supprimer'}
                       </div>
                     )}
                   </div>
