@@ -110,12 +110,22 @@ const demandeController = {
     return sendSuccess(res, { demande }, 'Statut mis a jour');
   },
 
-  async remove(req, res) {
+    async remove(req, res) {
     const demande = await demandeRepo.findById(req.params.id);
     if (!demande) throw new NotFoundError('Demande');
-    if (req.user.role !== 'super_admin' && String(demande.parishId) !== String(req.user.parishId)) {
+
+    const estProprietaire = String(demande.userId) === String(req.user.userId);
+    const estAdminDeSaParoisse = req.user.role !== 'super_admin' && String(demande.parishId) === String(req.user.parishId);
+    const estSuperAdmin = req.user.role === 'super_admin';
+
+    if (estProprietaire) {
+      if (demande.statut === 'validee') {
+        throw new AuthorizationError('Impossible de supprimer une demande deja validee');
+      }
+    } else if (!estAdminDeSaParoisse && !estSuperAdmin) {
       throw new AuthorizationError('Not your parish request');
     }
+
     await demande.deleteOne();
     return sendSuccess(res, {}, 'Demande supprimee');
   },
