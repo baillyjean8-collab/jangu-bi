@@ -38,7 +38,7 @@ export default function AdminDemandes() {
 
   useEffect(() => { loadDemandes(); }, []);
 
-  async function changerStatut(id, statut, noteAdmin) {
+    async function changerStatut(id, statut, noteAdmin) {
     setEnTraitement(id);
     setErreur('');
     try {
@@ -49,6 +49,20 @@ export default function AdminDemandes() {
       setMotifRejet('');
     } catch(e) {
       setErreur(e.message || 'Impossible de mettre a jour le statut.');
+    } finally {
+      setEnTraitement(null);
+    }
+  }
+
+  async function supprimerDemande(id) {
+    if (!window.confirm('Supprimer definitivement cette demande ? Cette action est irreversible.')) return;
+    setEnTraitement(id);
+    setErreur('');
+    try {
+      await demandesApi.remove(id);
+      setDemandes(prev => prev.filter(d => d._id !== id));
+    } catch(e) {
+      setErreur(e.message || 'Impossible de supprimer la demande.');
     } finally {
       setEnTraitement(null);
     }
@@ -113,9 +127,16 @@ export default function AdminDemandes() {
                   >✕ Rejeter</button>
                 </div>
               )}
-              {d.statut === 'rejetee' && d.noteAdmin && (
+                            {d.statut === 'rejetee' && d.noteAdmin && (
                 <div style={{ fontSize: 10, color: '#9A8E7E', marginTop: 4, fontStyle: 'italic' }}>Motif : {d.noteAdmin}</div>
               )}
+              <div style={{ textAlign: 'right', marginTop: 6 }}>
+                <button
+                  onClick={() => supprimerDemande(d._id)}
+                  disabled={enTraitement === d._id}
+                  style={{ background: 'none', border: 'none', color: '#9A8E7E', fontSize: 9, textDecoration: 'underline', cursor: enTraitement === d._id ? 'default' : 'pointer', fontFamily: 'Georgia,serif' }}
+                >🗑 Supprimer</button>
+              </div>
             </div>
           );
         })}
