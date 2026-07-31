@@ -6,6 +6,7 @@ import freeLogo    from '../../assets/free-money.png';
 import visaLogo    from '../../assets/visa-mastercard.webp';
 import { demandesApi } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
+import { parishesApi } from '../../services/api';
 
 
 // ── Liste des paroisses enregistrées ────────────────────────────────────────
@@ -226,10 +227,29 @@ export default function DemandesPage() {
   const [dateRdv, setDateRdv] = useState('');
   const [erreurs, setErreurs] = useState({});
 
-      const { user } = useAuth();
+        const { user } = useAuth();
+  const [nomParoisse, setNomParoisse] = useState('');
+
+  React.useEffect(() => {
+    // Si le backend renvoie déjà un nom de paroisse "à plat" ou peuplé, on l'utilise directement.
+    const nomDirect = user && (user.parishName || (user.parish && user.parish.name) || (user.parish && user.parish.nom));
+    if (nomDirect) { setNomParoisse(nomDirect); return; }
+    // Sinon, on va chercher le nom via l'identifiant de paroisse.
+    if (user && user.parishId) {
+      parishesApi.getOne(user.parishId)
+        .then(res => {
+          const p = (res && res.data && res.data.parish) || (res && res.parish) || res || {};
+          setNomParoisse(p.name || p.nom || '');
+        })
+        .catch(e => console.log('Chargement paroisse:', e.message));
+    } else {
+      setNomParoisse('');
+    }
+  }, [user]);
+
   const profil = user ? {
     nom: [user.firstName, user.lastName].filter(Boolean).join(' '),
-    paroisse: user.parishName || (user.parish && user.parish.nom) || '',
+    paroisse: nomParoisse,
     photo: user.profilePhoto || '',
   } : null;
 
@@ -249,7 +269,7 @@ export default function DemandesPage() {
       setNomPrenom('');
       setParoisse('');
     }
-    }, [pourQui, user]);
+        }, [pourQui, user, nomParoisse]);
 
   function scrollVersErreur(ref) {
     ref.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
