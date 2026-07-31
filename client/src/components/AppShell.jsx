@@ -30,9 +30,25 @@ function AppShell({ children, hideNav }) {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const initiales = ((user?.firstName?.[0] || '') + (user?.lastName?.[0] || '')).toUpperCase() || 'MD';
+    const initiales = ((user?.firstName?.[0] || '') + (user?.lastName?.[0] || '')).toUpperCase() || 'MD';
   const photo = user?.profilePhoto || user?.avatarUrl || null;
   const isProfile = location.pathname === '/profile';
+
+  const [totalNotifsAdmin, setTotalNotifsAdmin] = React.useState(0);
+  React.useEffect(function() {
+    if (!user || user.role !== 'parish_admin') { setTotalNotifsAdmin(0); return; }
+    const token = localStorage.getItem('jb_admin_token');
+    if (!token) return;
+    const BASE = import.meta.env.VITE_API_URL || '/api';
+    fetch(BASE + '/parish-admin/notifications-count', { headers: { Authorization: 'Bearer ' + token } })
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        const c = (d && d.data) || {};
+        const total = (c.nouveauxFideles || 0) + (c.messagesNonRepondus || 0) + (c.demandesEnAttente || 0) + (c.nouvellesInscriptions || 0);
+        setTotalNotifsAdmin(total);
+      })
+      .catch(function() {});
+  }, [user, location.pathname]);
 
   // Cas particulier : un admin dont /profile redirige vers /parishes/:id (sa propre
   // paroisse) doit voir l'icone Profil active, pas l'icone Paroisses.
@@ -88,7 +104,7 @@ function AppShell({ children, hideNav }) {
 
             const isLast = idx === menuItems.length - 1;
             return (
-              <Link key={idx} to={item.path} style={{
+                            <Link key={idx} to={item.path} style={{
                 textDecoration: 'none',
                 display: 'flex',
                 alignItems: 'center',
@@ -98,6 +114,7 @@ function AppShell({ children, hideNav }) {
                 height: 44,
               }}>
                 <div style={{
+                  position: 'relative',
                   width: 42,
                   height: 42,
                   borderRadius: '50%',
@@ -109,6 +126,11 @@ function AppShell({ children, hideNav }) {
                   justifyContent: 'center',
                   flexShrink: 0,
                 }}>
+                  {item.path === '/profile' && totalNotifsAdmin > 0 && (
+                    <span style={{ position: 'absolute', top: -2, right: -2, background: '#E24B4A', color: '#fff', fontSize: 9, fontWeight: 700, minWidth: 16, height: 16, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px', border: '2px solid rgba(12,10,6,0.97)', zIndex: 2 }}>
+                      {totalNotifsAdmin > 9 ? '9+' : totalNotifsAdmin}
+                    </span>
+                  )}
                   <i className={`ti ${item.icon}`} style={{
                     fontSize: '23px',
                     color: isActive ? '#C8A84B' : 'rgba(200,168,75,0.45)',
