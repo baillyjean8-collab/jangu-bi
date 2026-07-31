@@ -4,7 +4,7 @@ import waveLogo    from '../../assets/wave.webp';
 import orangeLogo  from '../../assets/orange-money.png';
 import freeLogo    from '../../assets/free-money.png';
 import visaLogo    from '../../assets/visa-mastercard.webp';
-import { demandesApi } from '../../services/api';
+import { demandesApi, userApi } from '../../services/api';
 
 
 // ── Liste des paroisses enregistrées ────────────────────────────────────────
@@ -225,8 +225,20 @@ export default function DemandesPage() {
   const [dateRdv, setDateRdv] = useState('');
   const [erreurs, setErreurs] = useState({});
 
-  // ⚠️ Remplacer par la vraie récupération du profil connecté (services/api.js)
-  const UTILISATEUR_ACTUEL = { nom: 'Marie Agnès Diallo', paroisse: 'Paroisse Saint-Pierre – Dakar' };
+    const [profil, setProfil] = useState(null);
+
+  React.useEffect(() => {
+    userApi.getMe()
+      .then(res => {
+        const u = (res && res.data && res.data.user) || (res && res.user) || res || {};
+        const nom = u.nomComplet || [u.prenom, u.nom].filter(Boolean).join(' ') || u.nom || u.name || '';
+        const paroisse = u.paroisseNom || (u.paroisse && u.paroisse.nom) || u.paroisse || '';
+        setProfil({ nom, paroisse });
+      })
+      .catch(e => console.log('Chargement profil:', e.message));
+  }, []);
+
+  const UTILISATEUR_ACTUEL = profil || { nom: '', paroisse: '' };
 
   const refNom = React.useRef(null);
   const refDateEvt = React.useRef(null);
@@ -234,7 +246,7 @@ export default function DemandesPage() {
   const refDateRdv = React.useRef(null);
   const refParoisseRdv = React.useRef(null);
 
-  React.useEffect(() => {
+    React.useEffect(() => {
     if (pourQui === 'moi') {
       setNomPrenom(UTILISATEUR_ACTUEL.nom);
       setParoisse(UTILISATEUR_ACTUEL.paroisse);
@@ -242,7 +254,7 @@ export default function DemandesPage() {
       setNomPrenom('');
       setParoisse('');
     }
-  }, [pourQui]);
+  }, [pourQui, profil]);
 
   function scrollVersErreur(ref) {
     ref.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
