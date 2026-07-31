@@ -38,7 +38,7 @@ const CATEGORIES_PRIERES = [
 ]
 },
 {
-id: 'litanies', titre: 'Litanies', icon: '📜', count: 1,
+id: 'litanies', titre: 'Litanies', icon: '📜', count: 3,
 prieres: [
 {
   id: 'litanies-lorette',
@@ -117,122 +117,6 @@ Agneau de Dieu, qui effacez les péchés du monde, ayez pitié de nous.
 
 Prions : Accordez-nous, Seigneur notre Dieu, nous vous en supplions, de jouir constamment de la santé de l'âme et du corps, et, par la glorieuse intercession de la bienheureuse Marie toujours Vierge, d'être délivrés des tristesses de cette vie et de parvenir à l'éternelle joie. Par le Christ notre Seigneur.
 Amen.`,
-  {
-  id: 'litanies-sacre-coeur',
-  titre: 'Litanies du Sacré-Cœur de Jésus',
-  duree: '5 min',
-  contenu: `Seigneur, ayez pitié de nous.
-Jésus-Christ, ayez pitié de nous.
-Seigneur, ayez pitié de nous.
-Jésus-Christ, écoutez-nous.
-Jésus-Christ, exaucez-nous.
-
-Père céleste, qui êtes Dieu, ayez pitié de nous.
-Fils, Rédempteur du monde, qui êtes Dieu, ayez pitié de nous.
-Esprit-Saint, qui êtes Dieu, ayez pitié de nous.
-Trinité Sainte, qui êtes un seul Dieu, ayez pitié de nous.
-
-Cœur de Jésus, Fils du Père éternel, ayez pitié de nous.
-Cœur de Jésus, formé par le Saint-Esprit dans le sein de la Vierge Mère, ayez pitié de nous.
-Cœur de Jésus, uni substantiellement au Verbe de Dieu, ayez pitié de nous.
-Cœur de Jésus, d'une majesté infinie, ayez pitié de nous.
-Cœur de Jésus, temple saint de Dieu, ayez pitié de nous.
-Cœur de Jésus, tabernacle du Très-Haut, ayez pitié de nous.
-Cœur de Jésus, maison de Dieu et porte du ciel, ayez pitié de nous.
-Cœur de Jésus, fournaise ardente de charité, ayez pitié de nous.
-Cœur de Jésus, sanctuaire de la justice et de l'amour, ayez pitié de nous.
-Cœur de Jésus, plein de bonté et d'amour, ayez pitié de nous.
-Cœur de Jésus, abîme de toutes les vertus, ayez pitié de nous.
-Cœur de Jésus, digne de toute louange, ayez pitié de nous.
-Cœur de Jésus, roi et centre de tous les cœurs, ayez pitié de nous.
-Cœur de Jésus, en qui se trouvent toutes les richesses de la sagesse et de la science, ayez pitié de nous.
-Cœur de Jésus, en qui habite toute la plénitude de la divinité, ayez pitié de nous.
-Cœur de Jésus, dans lequel le Père s'est complu, ayez pitié de nous.
-Cœur de Jésus, de la plénitude duquel nous avons tous reçu, ayez pitié de nous.
-Cœur de Jésus, désir des collines éternelles, ayez pitié de nous.
-Cœur de Jésus, patient et riche en miséricorde, ayez pitié de nous.
-Cœur de Jésus, riche envers tous ceux qui vous invoquent, ayez pitié de nous.
-Cœur de Jésus, source de vie et de sainteté, ayez pitié de nous.
-Cœur de Jésus, propitiation pour nos péchés, ayez pitié de nous.
-Cœur de Jésus, chargé d'opprobres, ayez pitié de nous.
-Cœur de Jésus, brisé à cause de nos crimes, ayez pitié de nous.
-Cœur de Jésus, fait obéissant jusqu'à la mort, ayez pitié de nous.
-Cœur de Jésus, percé par la lance, ayez pitié de nous.
-Cœur de Jésus, source de toute consolation, ayez pitié de nous.
-Cœur de Jésus, notre vie et notre résurrection, ayez pitié de nous.
-Cœur de Jésus, notre paix et notre réconciliation, ayez pitié de nous.
-Cœur de Jésus, victime pour les pécheurs, ayez pitié de nous.
-Cœur de Jésus, salut de ceux qui espèrent en vous, ayez pitié de nous.
-Cœur de Jésus, espérance de ceux qui meurent en vous, ayez pitié de nous.
-Cœur de Jésus, délices de tous les saints, ayez pitié de nous.
-
-Agneau de Dieu, qui effacez les péchés du monde, pardonnez-nous, Seigneur.
-Agneau de Dieu, qui effacez les péchés du monde, exaucez-nous, Seigneur.
-Agneau de Dieu, qui effacez les péchés du monde, ayez pitié de nous.
-
-V/. Jésus, doux et humble de cœur.
-R/. Rendez notre cœur semblable au vôtre.
-
-Prions : Dieu tout-puissant et éternel, jetez les yeux sur le Cœur de votre Fils bien-aimé et sur les louanges et satisfactions qu'il vous offre au nom des pécheurs ; apaisé par elles, accordez le pardon à ceux qui implorent votre miséricorde, au nom de ce même Fils, Jésus-Christ, qui vit et règne avec vous dans les siècles des siècles.
-Amen.`,
-  histoire: `Cette litanie est le fruit d'une lente maturation. Les toutes premières remontent au père jésuite polonais Gaspar Druzbicki (1590-1662) et à saint Jean Eudes, qui en publia une version dès 1668. Ces textes portent la marque profonde de sainte Marguerite-Marie Alacoque, à qui le Christ était apparu à Paray-le-Monial en révélant son Sacré-Cœur. En 1686, six invocations furent composées par une religieuse de Dijon, sœur Madeleine Joly. En 1718, la vénérable Anne-Madeleine Rémuzat, visitandine de Marseille, publia à son tour une litanie de vingt-sept invocations, reprenant dix-sept d'entre elles d'un texte antérieur du père Croiset datant de 1691 : ce sont ces « Litanies de Marseille » qui devinrent la base du texte définitif.
-
-Le pape Léon XIII les approuva d'abord pour les diocèses de Marseille et d'Autun ainsi que pour l'ordre de la Visitation et la Compagnie de Jésus en 1898, avant de les reconnaître comme prière officielle et liturgique pour l'Église universelle tout entière le 2 avril 1899, en y ajoutant les six invocations de sœur Madeleine Joly. Le total de trente-trois invocations au Cœur de Jésus, volontairement choisi, symbolise les trente-trois années de la vie terrestre du Christ. Cette litanie est aujourd'hui l'une des six seules litanies officiellement reconnues par l'Église pour un usage public et liturgique, traditionnellement récitée chaque premier vendredi du mois, jour consacré au Sacré-Cœur.`,
-},
-{
-  id: 'litanies-saint-joseph',
-  titre: 'Litanies de Saint Joseph',
-  duree: '4 min',
-  contenu: `Seigneur, ayez pitié de nous.
-Jésus-Christ, ayez pitié de nous.
-Seigneur, ayez pitié de nous.
-Jésus-Christ, écoutez-nous.
-Jésus-Christ, exaucez-nous.
-
-Père céleste, qui êtes Dieu, ayez pitié de nous.
-Fils, Rédempteur du monde, qui êtes Dieu, ayez pitié de nous.
-Esprit Saint, qui êtes Dieu, ayez pitié de nous.
-Trinité Sainte, qui êtes un seul Dieu, ayez pitié de nous.
-
-Sainte Marie, priez pour nous.
-Saint Joseph, priez pour nous.
-Illustre descendant de David, priez pour nous.
-Lumière des Patriarches, priez pour nous.
-Époux de la Mère de Dieu, priez pour nous.
-Chaste gardien de la Vierge, priez pour nous.
-Nourricier du Fils de Dieu, priez pour nous.
-Zélé défenseur de Jésus-Christ, priez pour nous.
-Chef de la Sainte Famille, priez pour nous.
-Joseph très juste, priez pour nous.
-Joseph très chaste, priez pour nous.
-Joseph très prudent, priez pour nous.
-Joseph très fort, priez pour nous.
-Joseph très fidèle, priez pour nous.
-Miroir de patience, priez pour nous.
-Ami de la pauvreté, priez pour nous.
-Modèle des travailleurs, priez pour nous.
-Gloire de la vie de famille, priez pour nous.
-Gardien des vierges, priez pour nous.
-Soutien des familles, priez pour nous.
-Consolation des malheureux, priez pour nous.
-Espérance des malades, priez pour nous.
-Patron des mourants, priez pour nous.
-Terreur des démons, priez pour nous.
-Protecteur de la Sainte Église, priez pour nous.
-
-Agneau de Dieu, qui effacez les péchés du monde, pardonnez-nous, Seigneur.
-Agneau de Dieu, qui effacez les péchés du monde, exaucez-nous, Seigneur.
-Agneau de Dieu, qui effacez les péchés du monde, ayez pitié de nous.
-
-V/. Il l'a établi le chef de sa maison.
-R/. Et l'intendant de tous ses biens.
-
-Prions : Ô Dieu, qui par une providence ineffable avez daigné choisir le bienheureux Joseph pour être l'époux de votre sainte Mère, faites, nous vous en prions, qu'honorant ici-bas en lui notre protecteur, nous méritions de l'avoir pour intercesseur dans le ciel. Vous qui vivez et régnez dans les siècles des siècles.
-Amen.`,
-  histoire: `La dévotion publique à saint Joseph a mis longtemps à s'épanouir pleinement dans l'Église. Dès le début du XVIIe siècle, les papes Grégoire XV puis Urbain VIII rendirent obligatoire, dans toute la chrétienté, la célébration de sa fête le 19 mars. Le pape Léon XIII lui consacra ensuite une encyclique entière, Quamquam Pluries, l'associant à l'intercession de la Vierge Marie ; puis, le 8 décembre 1870, Pie IX le proclama solennellement patron de l'Église universelle tout entière.
-
-C'est finalement le 18 mars 1909, veille de sa fête, que le pape saint Pie X, lui-même prénommé Joseph de baptême, approuva par décret apostolique cette litanie pour un usage public dans toute l'Église, quelques décennies après la proclamation de son patronage universel par Pie IX. Comme celle du Sacré-Cœur déjà présentée dans cette bibliothèque, elle fait partie des six seules litanies officiellement reconnues pour un usage liturgique et public par l'Église catholique. Plus récemment encore, à l'occasion de l'Année Saint-Joseph proclamée en 2020 par la lettre apostolique Patris Corde, le pape François a approuvé l'ajout de sept nouvelles invocations à cette même litanie, tirées des réflexions de plusieurs de ses prédécesseurs sur la figure de ce père silencieux et fidèle.`,
-},
   histoire: `L'origine exacte de cette litanie reste incertaine, mais son nom vient du sanctuaire de la Santa Casa de Lorette, en Italie, où sa récitation publique est attestée dès 1531. Devant la multiplication de litanies mariales locales très diverses à travers l'Europe, le pape Sixte Quint en fixa officiellement le texte pour toute l'Église par la bulle Reddituri en 1587 — elle demeure aujourd'hui encore la seule litanie à la Vierge Marie approuvée pour un usage public universel.
 
 Depuis, seuls les papes ont le pouvoir d'y ajouter de nouvelles invocations, à des moments choisis avec soin. « Reine conçue sans le péché originel » fut ajoutée à l'approche de la proclamation du dogme de l'Immaculée Conception (1854) ; « Reine élevée au ciel » après la définition du dogme de l'Assomption par Pie XII en 1950 ; « Reine de la paix » en 1917, en pleine Première Guerre mondiale, par Benoît XV ; « Mère de l'Église », titre proclamé par Paul VI à la clôture du Concile Vatican II, fut insérée dans la litanie par Jean-Paul II en 1980, qui ajouta aussi « Reine de la famille » en 1995. Les trois dernières invocations en date, « Mère de miséricorde », « Mère de l'espérance » et « Réconfort des migrants », ont été ajoutées par le pape François le 20 juin 2020, en pleine pandémie mondiale.`,
