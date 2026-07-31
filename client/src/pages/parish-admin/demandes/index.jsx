@@ -145,7 +145,7 @@ export default function AdminDemandes() {
       {/* Modal rejet avec motif */}
       {showRejet && detail && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'flex-end' }}>
-          <div style={{ width: '100%', maxWidth: 430, margin: '0 auto', background: IVOIRE, backgroundImage: BOGOLAN, borderRadius: '20px 20px 0 0', padding: '20px 16px 40px' }}>
+          <div style={{ width: '100%', maxWidth: 430, margin: '0 auto', background: IVOIRE, backgroundImage: BOGOLAN, borderRadius: '20px 20px 0 0', padding: '20px 16px calc(24px + env(safe-area-inset-bottom))', maxHeight: '80vh', overflowY: 'auto', boxSizing: 'border-box' }}>
             <div style={{ fontFamily: 'Georgia,serif', fontSize: 15, fontWeight: 700, color: VERT, marginBottom: 12 }}>Rejeter la demande</div>
             <div style={{ fontSize: 12, color: '#7A6E5E', marginBottom: 12 }}>Motif du rejet (envoyé au fidèle) :</div>
             <textarea value={motifRejet} onChange={e => setMotifRejet(e.target.value)} placeholder="Ex: Documents manquants, veuillez nous contacter..." style={{ width: '100%', border: '1.5px solid rgba(200,168,75,0.2)', borderRadius: 12, padding: '10px 14px', fontSize: 12, color: VERT, fontFamily: 'Georgia,serif', resize: 'none', height: 80, background: 'white', outline: 'none', marginBottom: 12, boxSizing: 'border-box' }} />
