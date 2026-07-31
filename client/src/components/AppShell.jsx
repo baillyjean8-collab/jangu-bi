@@ -31,7 +31,7 @@ function AppShell({ children, hideNav }) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const initiales = ((user?.firstName?.[0] || '') + (user?.lastName?.[0] || '')).toUpperCase() || 'MD';
-  const photo = user?.profilePhoto || null;
+  const photo = user?.profilePhoto || user?.avatarUrl || null;
   const isProfile = location.pathname === '/profile';
 
   // Cas particulier : un admin dont /profile redirige vers /parishes/:id (sa propre
