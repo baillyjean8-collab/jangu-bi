@@ -1,7 +1,7 @@
 'use strict';
 const router = require('express').Router();
 const mongoose = require('mongoose');
-const { User, Post, Donation, Conversation, Message, Group } = require('../../models');
+const { User, Post, Donation, Conversation, Message, Group, Demande } = require('../../models');
 const { authenticate, requireVerified } = require('../../middlewares/authenticate');
 const { authorize } = require('../../middlewares/authorize');
 const { asyncHandler } = require('../../middlewares/errorHandler');
@@ -127,8 +127,9 @@ router.get('/notifications-count', ...guard, asyncHandler(async (req, res) => {
     ]),
   ]);
 
-  const messagesNonRepondus = (conversationsAgg[0] && conversationsAgg[0].total) || 0;
-  return sendSuccess(res, { nouveauxFideles, messagesNonRepondus });
+    const messagesNonRepondus = (conversationsAgg[0] && conversationsAgg[0].total) || 0;
+  const demandesEnAttente = await Demande.countDocuments({ parishId: oid, statut: 'en_attente' });
+  return sendSuccess(res, { nouveauxFideles, messagesNonRepondus, demandesEnAttente });
 }));
 
 router.post('/fideles/vu', ...guard, asyncHandler(async (req, res) => {
