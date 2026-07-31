@@ -318,13 +318,15 @@ export default function DemandesPage() {
     }
   }
 
-  async function creerDemandeRdv() {
+    async function creerDemandeRdv() {
     const payload = {
       type: 'rdv',
       titre: 'Rendez-vous avec un pretre',
       montant: 0,
       rdvMotif: rdvMotif,
       rdvMessage: rdvMessage,
+      paroisseConcernee: paroisseRdv,
+      dateEvenement: dateRdv || null,
     };
     try {
       const res = await demandesApi.create(payload);
