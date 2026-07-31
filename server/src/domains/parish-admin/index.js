@@ -1,7 +1,7 @@
 'use strict';
 const router = require('express').Router();
 const mongoose = require('mongoose');
-const { User, Post, Donation, Conversation, Message, Group, Demande } = require('../../models');
+const { User, Post, Donation, Conversation, Message, Group, Demande, EventRegistration } = require('../../models');
 const { authenticate, requireVerified } = require('../../middlewares/authenticate');
 const { authorize } = require('../../middlewares/authorize');
 const { asyncHandler } = require('../../middlewares/errorHandler');
@@ -109,7 +109,7 @@ router.patch('/demandes/:id/rejeter', ...guard, asyncHandler(async (req, res) =>
 // ── Fidèles ───────────────────────────────────────────────────
 router.get('/notifications-count', ...guard, asyncHandler(async (req, res) => {
   const parishId = await getParishId(req);
-  if (!parishId) return sendSuccess(res, { nouveauxFideles: 0, messagesNonRepondus: 0 });
+    if (!parishId) return sendSuccess(res, { nouveauxFideles: 0, messagesNonRepondus: 0, demandesEnAttente: 0, nouvellesInscriptions: 0 });
 
   const oid = new mongoose.Types.ObjectId(parishId);
   const adminUser = await User.findById(req.user.userId).select('lastFidelesViewAt').lean();
@@ -127,9 +127,14 @@ router.get('/notifications-count', ...guard, asyncHandler(async (req, res) => {
     ]),
   ]);
 
-    const messagesNonRepondus = (conversationsAgg[0] && conversationsAgg[0].total) || 0;
+  const messagesNonRepondus = (conversationsAgg[0] && conversationsAgg[0].total) || 0;
   const demandesEnAttente = await Demande.countDocuments({ parishId: oid, statut: 'en_attente' });
-  return sendSuccess(res, { nouveauxFideles, messagesNonRepondus, demandesEnAttente });
+  const mesPostIds = await Post.find({ parishId: oid }).distinct('_id');
+  const nouvellesInscriptions = await EventRegistration.countDocuments({
+    postId: { $in: mesPostIds },
+    createdAt: { $gt: depuis },
+  });
+  return sendSuccess(res, { nouveauxFideles, messagesNonRepondus, demandesEnAttente, nouvellesInscriptions });
 }));
 
 router.post('/fideles/vu', ...guard, asyncHandler(async (req, res) => {
