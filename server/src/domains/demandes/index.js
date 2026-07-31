@@ -1,7 +1,7 @@
 'use strict';
 
 const router = require('express').Router();
-const { Demande } = require('../../models');
+const { Demande, Parish } = require('../../models');
 const { authenticate, requireVerified } = require('../../middlewares/authenticate');
 const { authorize } = require('../../middlewares/authorize');
 const { asyncHandler } = require('../../middlewares/errorHandler');
@@ -31,7 +31,7 @@ const demandeRepo = {
 };
 
 const demandeController = {
-  async create(req, res) {
+    async create(req, res) {
     const {
       type, titre, montant, pourQui, nomBeneficiaire, lienParente, telephoneContact,
       paroisseConcernee, pretreOfficiant, dateEvenement, intentionMesse, momentMesse,
@@ -45,9 +45,21 @@ const demandeController = {
       throw new ValidationError('Vous devez être rattaché à une paroisse pour faire une demande');
     }
 
+    // La demande doit etre visible par la paroisse SELECTIONNEE dans le
+    // formulaire (ex : la paroisse de son bapteme), pas forcement par la
+    // paroisse d'appartenance actuelle du fidele. On resout donc d'abord
+    // le nom saisi/choisi vers la vraie paroisse en base ; si aucune
+    // correspondance exacte n'est trouvee (texte libre, faute de frappe),
+    // on retombe sur la paroisse d'appartenance du fidele par securite.
+    let parishIdCible = req.user.parishId;
+    if (paroisseConcernee && String(paroisseConcernee).trim()) {
+      const paroisseTrouvee = await Parish.findOne({ name: String(paroisseConcernee).trim() }).select('_id').lean();
+      if (paroisseTrouvee) parishIdCible = paroisseTrouvee._id;
+    }
+
     const demande = await demandeRepo.create({
       userId: req.user.userId,
-      parishId: req.user.parishId,
+      parishId: parishIdCible,
       type, titre,
       montant: montant != null ? Number(montant) : 0,
       pourQui: pourQui || 'moi',
