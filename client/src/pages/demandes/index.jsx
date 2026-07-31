@@ -233,7 +233,8 @@ export default function DemandesPage() {
         const u = (res && res.data && res.data.user) || (res && res.user) || res || {};
         const nom = u.nomComplet || [u.prenom, u.nom].filter(Boolean).join(' ') || u.nom || u.name || '';
         const paroisse = u.paroisseNom || (u.paroisse && u.paroisse.nom) || u.paroisse || '';
-        setProfil({ nom, paroisse });
+        const photo = u.photoUrl || u.photo || u.avatarUrl || u.avatar || u.profilePicture || '';
+        setProfil({ nom, paroisse, photo });
       })
       .catch(e => console.log('Chargement profil:', e.message));
   }, []);
@@ -471,11 +472,15 @@ export default function DemandesPage() {
             {serviceActif.id === 'messe' ? (
               /* ── MESSE : intention uniquement ── */
               <>
-                {pourQui === 'moi' && (
+                                {pourQui === 'moi' && (
                   <div style={{ display:'flex', alignItems:'center', gap:10, padding:10, background:'#F5F0E8', borderRadius:10, marginBottom:12 }}>
-                    <div style={{ width:34, height:34, borderRadius:'50%', background:VERT, display:'flex', alignItems:'center', justifyContent:'center', fontSize:10, fontWeight:700, color:OR, flexShrink:0 }}>
-                      {UTILISATEUR_ACTUEL.nom.split(' ').map(n=>n[0]).slice(0,2).join('')}
-                    </div>
+                    {UTILISATEUR_ACTUEL.photo ? (
+                      <img src={UTILISATEUR_ACTUEL.photo} alt="" style={{ width:34, height:34, borderRadius:'50%', objectFit:'cover', flexShrink:0, border:'1px solid rgba(0,0,0,0.08)' }} />
+                    ) : (
+                      <div style={{ width:34, height:34, borderRadius:'50%', background:VERT, display:'flex', alignItems:'center', justifyContent:'center', fontSize:10, fontWeight:700, color:OR, flexShrink:0 }}>
+                        {UTILISATEUR_ACTUEL.nom.split(' ').map(n=>n[0]).slice(0,2).join('')}
+                      </div>
+                    )}
                     <div style={{ flex:1 }}>
                       <div style={{ fontSize:11, fontWeight:700, color:VERT }}>{UTILISATEUR_ACTUEL.nom}</div>
                       <div style={{ fontSize:9, color:'#7A6E5E' }}>{UTILISATEUR_ACTUEL.paroisse}</div>
@@ -541,11 +546,15 @@ export default function DemandesPage() {
                   <i className="ti ti-info-circle" style={{ color:'#C8A84B', marginRight:6 }} />
                   Ces informations permettront à la paroisse concernée de retrouver votre acte dans ses registres.
                 </div>
-                                {pourQui === 'moi' ? (
+                                                                {pourQui === 'moi' ? (
                   <div style={{ display:'flex', alignItems:'center', gap:10, padding:10, background:'#F5F0E8', borderRadius:10, marginBottom:12 }}>
-                    <div style={{ width:34, height:34, borderRadius:'50%', background:VERT, display:'flex', alignItems:'center', justifyContent:'center', fontSize:10, fontWeight:700, color:OR, flexShrink:0 }}>
-                      {UTILISATEUR_ACTUEL.nom.split(' ').map(n=>n[0]).slice(0,2).join('')}
-                    </div>
+                    {UTILISATEUR_ACTUEL.photo ? (
+                      <img src={UTILISATEUR_ACTUEL.photo} alt="" style={{ width:34, height:34, borderRadius:'50%', objectFit:'cover', flexShrink:0, border:'1px solid rgba(0,0,0,0.08)' }} />
+                    ) : (
+                      <div style={{ width:34, height:34, borderRadius:'50%', background:VERT, display:'flex', alignItems:'center', justifyContent:'center', fontSize:10, fontWeight:700, color:OR, flexShrink:0 }}>
+                        {UTILISATEUR_ACTUEL.nom.split(' ').map(n=>n[0]).slice(0,2).join('')}
+                      </div>
+                    )}
                     <div style={{ flex:1 }}>
                       <div style={{ fontSize:11, fontWeight:700, color:VERT }}>{UTILISATEUR_ACTUEL.nom}</div>
                       <div style={{ fontSize:9, color:'#7A6E5E' }}>{UTILISATEUR_ACTUEL.paroisse}</div>
