@@ -8,24 +8,8 @@ import { demandesApi, parishesApi } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 
 
-// ── Liste des paroisses enregistrées ────────────────────────────────────────
-const PAROISSES_LISTE = [
-  'Paroisse Saint-Pierre – Dakar',
-  'Paroisse Sacré-Cœur – Dakar Plateau',
-  'Paroisse Notre-Dame de Lourdes – Dakar',
-  'Paroisse Sainte-Anne – Ziguinchor',
-  'Paroisse Saint-Joseph – Thiès',
-  'Paroisse Immaculée Conception – Kaolack',
-  'Paroisse Saint-Paul – Saint-Louis',
-  'Paroisse Sainte-Thérèse – Mbour',
-  'Paroisse Saint-François – Louga',
-  'Paroisse Notre-Dame de Fatima – Touba',
-  'Paroisse Saint-Jean – Rufisque',
-  'Paroisse Sainte-Marie – Ziguinchor',
-  'Paroisse Saint-Michel – Diourbel',
-  'Paroisse Christ-Roi – Tambacounda',
-  'Paroisse Saint-Luc – Kolda',
-];
+// ── Liste de secours si le chargement des vraies paroisses échoue ───────────
+const PAROISSES_SECOURS = ['Paroisse Saint-Pierre – Dakar'];
 
 // Libellés des champs selon le type d'acte
 const CHAMPS_ACTE = {
@@ -39,25 +23,29 @@ const CHAMPS_ACTE = {
 };
 
 // ── Composant AutoComplete Paroisse ──────────────────────────────────────────
-function AutoCompleteParoisse({ value, onChange }) {
+function AutoCompleteParoisse({ value, onChange, listeParoisses }) {
   const [query, setQuery]       = React.useState(value || '');
   const [suggestions, setSugg]  = React.useState([]);
   const [open, setOpen]         = React.useState(false);
   const [focused, setFocused]   = React.useState(false);
+  const liste = listeParoisses && listeParoisses.length ? listeParoisses : PAROISSES_SECOURS;
+
+  // Garde le champ synchronisé si la valeur vient d'être préremplie depuis l'extérieur
+  React.useEffect(() => { setQuery(value || ''); }, [value]);
 
   React.useEffect(() => {
     if (query.length === 0) {
       // Afficher toutes les paroisses si champ vide et en focus
-      setSugg(focused ? PAROISSES_LISTE : []);
+      setSugg(focused ? liste : []);
     } else {
       const q = query.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-      const results = PAROISSES_LISTE.filter(p =>
+      const results = liste.filter(p =>
         p.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').includes(q)
       );
       setSugg(results);
     }
     setOpen(true);
-  }, [query, focused]);
+  }, [query, focused, liste]);
 
   function selectionner(p) {
     setQuery(p);
@@ -90,7 +78,7 @@ function AutoCompleteParoisse({ value, onChange }) {
               {p}
             </div>
           ))}
-          {query.length > 0 && !PAROISSES_LISTE.includes(query) && (
+          {query.length > 0 && !liste.includes(query) && (
             <div onMouseDown={() => selectionner(query)} style={{ padding:'10px 14px', fontSize:11, color:'#7A6E5E', cursor:'pointer', fontFamily:'Georgia,serif', background:'#faf8f4', borderTop:'1px solid rgba(0,0,0,0.05)' }}>
               <i className="ti ti-plus" style={{ fontSize:11, color:'#C8A84B', marginRight:8 }} />
               Utiliser "{query}"
@@ -222,9 +210,20 @@ export default function DemandesPage() {
   const [formAutre, setFormAutre] = useState({ nom:'', lien:'', tel:'', info:'' });
   const [intention, setIntention] = useState('');
   const [rdvMotif, setRdvMotif] = useState('Confession');
-    const [rdvMessage, setRdvMessage] = useState('');
+  const [rdvMessage, setRdvMessage] = useState('');
   const [dateRdv, setDateRdv] = useState('');
   const [erreurs, setErreurs] = useState({});
+  const [listeParoisses, setListeParoisses] = useState([]);
+
+  React.useEffect(() => {
+    parishesApi.getAll()
+      .then(res => {
+        const arr = (res && res.data && res.data.parishes) || (res && res.parishes) || (Array.isArray(res && res.data) ? res.data : null) || (Array.isArray(res) ? res : []) || [];
+        const noms = arr.map(p => p.name || p.nom || '').filter(Boolean);
+        setListeParoisses(noms);
+      })
+      .catch(e => console.log('Chargement paroisses:', e.message));
+  }, []);
 
         const { user } = useAuth();
   const [nomParoisse, setNomParoisse] = useState('');
