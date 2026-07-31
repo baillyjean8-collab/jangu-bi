@@ -93,9 +93,19 @@ const demandeController = {
     }
     demande.statut = req.body.statut;
     demande.dateTraitement = req.body.statut !== 'en_attente' ? new Date() : null;
-    if (req.body.noteAdmin !== undefined) demande.noteAdmin = req.body.noteAdmin;
+        if (req.body.noteAdmin !== undefined) demande.noteAdmin = req.body.noteAdmin;
     await demande.save();
     return sendSuccess(res, { demande }, 'Statut mis a jour');
+  },
+
+  async remove(req, res) {
+    const demande = await demandeRepo.findById(req.params.id);
+    if (!demande) throw new NotFoundError('Demande');
+    if (req.user.role !== 'super_admin' && String(demande.parishId) !== String(req.user.parishId)) {
+      throw new AuthorizationError('Not your parish request');
+    }
+    await demande.deleteOne();
+    return sendSuccess(res, {}, 'Demande supprimee');
   },
 };
 
@@ -121,4 +131,11 @@ router.patch('/:id/statut',
   asyncHandler(demandeController.updateStatut)
 );
 
+router.delete('/:id',
+  authenticate, requireVerified,
+  authorize('parish_admin', 'super_admin'),
+  asyncHandler(demandeController.remove)
+);
+
 module.exports = { router, demandeRepo };
+
