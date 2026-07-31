@@ -15,7 +15,7 @@ const STATUTS = {
 };
 
 export default function AdminDemandes() {
-  const [filtre, setFiltre] = useState('tous');
+  const [filtre, setFiltre] = useState('en_attente');
   const [demandes, setDemandes] = useState([]);
   const [chargement, setChargement] = useState(true);
   const [selected, setSelected] = useState(null);
