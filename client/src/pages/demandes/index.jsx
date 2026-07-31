@@ -4,7 +4,8 @@ import waveLogo    from '../../assets/wave.webp';
 import orangeLogo  from '../../assets/orange-money.png';
 import freeLogo    from '../../assets/free-money.png';
 import visaLogo    from '../../assets/visa-mastercard.webp';
-import { demandesApi, userApi } from '../../services/api';
+import { demandesApi } from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
 
 
 // ── Liste des paroisses enregistrées ────────────────────────────────────────
@@ -225,21 +226,14 @@ export default function DemandesPage() {
   const [dateRdv, setDateRdv] = useState('');
   const [erreurs, setErreurs] = useState({});
 
-    const [profil, setProfil] = useState(null);
+      const { user } = useAuth();
+  const profil = user ? {
+    nom: [user.firstName, user.lastName].filter(Boolean).join(' '),
+    paroisse: user.parishName || (user.parish && user.parish.nom) || '',
+    photo: user.profilePhoto || '',
+  } : null;
 
-  React.useEffect(() => {
-    userApi.getMe()
-      .then(res => {
-        const u = (res && res.data && res.data.user) || (res && res.user) || res || {};
-        const nom = u.nomComplet || [u.prenom, u.nom].filter(Boolean).join(' ') || u.nom || u.name || '';
-        const paroisse = u.paroisseNom || (u.paroisse && u.paroisse.nom) || u.paroisse || '';
-        const photo = u.photoUrl || u.photo || u.avatarUrl || u.avatar || u.profilePicture || '';
-        setProfil({ nom, paroisse, photo });
-      })
-      .catch(e => console.log('Chargement profil:', e.message));
-  }, []);
-
-  const UTILISATEUR_ACTUEL = profil || { nom: '', paroisse: '' };
+  const UTILISATEUR_ACTUEL = profil || { nom: '', paroisse: '', photo: '' };
 
   const refNom = React.useRef(null);
   const refDateEvt = React.useRef(null);
@@ -255,7 +249,7 @@ export default function DemandesPage() {
       setNomPrenom('');
       setParoisse('');
     }
-  }, [pourQui, profil]);
+    }, [pourQui, user]);
 
   function scrollVersErreur(ref) {
     ref.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
