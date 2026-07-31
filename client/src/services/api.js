@@ -281,6 +281,9 @@ export const demandesApi = {
       method: 'PATCH', body: JSON.stringify({ statut: statut, noteAdmin: noteAdmin })
     });
   },
+  remove: function(id) {
+    return apiFetch('/demandes/' + id, { method: 'DELETE' });
+  },
 };
 
 export const parishEventsApi = {
