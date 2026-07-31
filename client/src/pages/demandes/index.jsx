@@ -249,7 +249,7 @@ export default function DemandesPage() {
   const profil = user ? {
     nom: [user.firstName, user.lastName].filter(Boolean).join(' '),
     paroisse: nomParoisse,
-    photo: user.profilePhoto || '',
+    photo: user.profilePhoto || user.avatarUrl || '',
   } : null;
 
   const UTILISATEUR_ACTUEL = profil || { nom: '', paroisse: '', photo: '' };
