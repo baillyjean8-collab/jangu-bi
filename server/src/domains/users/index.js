@@ -282,6 +282,16 @@ router.post('/me/follow/:parishId', asyncHandler(async (req, res) => {
     { $addToSet: { followedParishes: parishId } },
     { new: true }
   ).lean();
+  try {
+    const io = req.app.get('io');
+    if (io && io.broadcastAdminNotif) {
+      io.broadcastAdminNotif(String(parishId), {
+        type: 'fidele',
+        titre: 'Nouveau fidèle',
+        message: ((req.user.firstName || '') + ' ' + (req.user.lastName || '')).trim() || 'Un fidèle vient de suivre votre paroisse',
+      });
+    }
+  } catch (e) { /* ne bloque jamais le suivi */ }
   return sendSuccess(res, { followedParishes: user.followedParishes }, 'Paroisse suivie');
 }));
 
