@@ -433,10 +433,10 @@ export default function DemandesPage() {
             </div>
             <input type="date" value={dateRdv} onChange={e=>{ setDateRdv(e.target.value); setErreurs(er=>({...er,dateRdv:false})); }} style={{ width:'100%', boxSizing:'border-box', border:'1.5px solid '+(erreurs.dateRdv?'#C0392B':'#e5e0d5'), borderRadius:12, padding:'11px 14px', fontFamily:'Georgia,serif', fontSize:12, color:VERT, background:'#faf8f4', outline:'none', marginBottom:erreurs.dateRdv?4:12 }} />
             {erreurs.dateRdv && <div style={{ fontSize:9, color:'#C0392B', marginBottom:10 }}>Merci de remplir ce champ</div>}
-            <div ref={refParoisseRdv} style={{ fontSize:11, fontWeight:700, marginBottom:6, color: erreurs.paroisseRdv ? '#C0392B' : '#7A6E5E' }}>
+                        <div ref={refParoisseRdv} style={{ fontSize:11, fontWeight:700, marginBottom:6, color: erreurs.paroisseRdv ? '#C0392B' : '#7A6E5E' }}>
               Paroisse souhaitée <span style={{ color:'#C0392B' }}>*</span>
             </div>
-            <AutoCompleteParoisse value={paroisseRdv} onChange={v=>{ setParoisseRdv(v); setErreurs(er=>({...er,paroisseRdv:false})); }} />
+            <AutoCompleteParoisse value={paroisseRdv} onChange={v=>{ setParoisseRdv(v); setErreurs(er=>({...er,paroisseRdv:false})); }} listeParoisses={listeParoisses} />
             {erreurs.paroisseRdv && <div style={{ fontSize:9, color:'#C0392B', marginTop:-4, marginBottom:8 }}>Merci de remplir ce champ</div>}
             <div style={{ fontSize:11, fontWeight:700, color:'#7A6E5E', marginBottom:7, marginTop:4 }}>Créneau préféré</div>
             <select style={{ width:'100%', border:'1.5px solid #e5e0d5', borderRadius:12, padding:'11px 14px', fontFamily:'Georgia,serif', fontSize:12, color:VERT, background:'#faf8f4', outline:'none', marginBottom:12 }}>
@@ -544,8 +544,8 @@ export default function DemandesPage() {
                   ))}
                 </div>
 
-                <div style={{ fontSize:11, fontWeight:700, color:'#7A6E5E', marginBottom:6 }}>Paroisse pour la célébration</div>
-                <AutoCompleteParoisse value={paroisseMesse} onChange={setParoisseMesse} />
+                                <div style={{ fontSize:11, fontWeight:700, color:'#7A6E5E', marginBottom:6 }}>Paroisse pour la célébration</div>
+                <AutoCompleteParoisse value={paroisseMesse} onChange={setParoisseMesse} listeParoisses={listeParoisses} />
                 <div style={{ fontSize:11, fontWeight:700, color:'#7A6E5E', marginBottom:7, marginTop:4 }}>Intention de messe</div>
                 <textarea value={intention} onChange={e=>setIntention(e.target.value)}
                   placeholder="Pour le repos de l'âme de... / Pour la guérison de..."
@@ -599,10 +599,10 @@ export default function DemandesPage() {
                 />
                 {erreurs.date && <div style={{ fontSize:9, color:'#C0392B', marginBottom:10 }}>Merci de remplir ce champ</div>}
 
-                <div ref={refParoisse} style={{ fontSize:11, fontWeight:700, marginBottom:6, color: erreurs.paroisse ? '#C0392B' : '#7A6E5E' }}>
+                                <div ref={refParoisse} style={{ fontSize:11, fontWeight:700, marginBottom:6, color: erreurs.paroisse ? '#C0392B' : '#7A6E5E' }}>
                   {CHAMPS_ACTE[serviceActif.id]?.lieuLabel || "Paroisse concernée"} <span style={{ color:'#C0392B' }}>*</span>
                 </div>
-                <AutoCompleteParoisse value={paroisse} onChange={v=>{ setParoisse(v); setErreurs(er=>({...er,paroisse:false})); }} />
+                <AutoCompleteParoisse value={paroisse} onChange={v=>{ setParoisse(v); setErreurs(er=>({...er,paroisse:false})); }} listeParoisses={listeParoisses} />
                 {erreurs.paroisse && <div style={{ fontSize:9, color:'#C0392B', marginTop:-4, marginBottom:8 }}>Merci de remplir ce champ</div>}
 
                 <div style={{ fontSize:11, fontWeight:700, color:'#7A6E5E', marginBottom:6, marginTop:4 }}>
