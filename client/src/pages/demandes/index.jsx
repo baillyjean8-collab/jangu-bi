@@ -4,9 +4,8 @@ import waveLogo    from '../../assets/wave.webp';
 import orangeLogo  from '../../assets/orange-money.png';
 import freeLogo    from '../../assets/free-money.png';
 import visaLogo    from '../../assets/visa-mastercard.webp';
-import { demandesApi } from '../../services/api';
+import { demandesApi, parishesApi } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
-import { parishesApi } from '../../services/api';
 
 
 // ── Liste des paroisses enregistrées ────────────────────────────────────────
