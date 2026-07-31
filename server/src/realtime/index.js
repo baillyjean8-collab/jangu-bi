@@ -59,9 +59,13 @@ const EVENTS = Object.freeze({
   GUEST_REMOVED:          'live:guest:removed',
   GUEST_CAMERA_RESPONSE_SEND:     'live:guest:camera:response:send',
   GUEST_CAMERA_RESPONSE_RECEIVED: 'live:guest:camera:response:received',
-  INVITE_FULL: 'live:invite:full',
+    INVITE_FULL: 'live:invite:full',
   SEND_SHARE:  'share:send',
   SHARE_COUNT: 'live:shareCount',
+
+  // Notifications admin (demandes, inscriptions, etc.) — canal totalement
+  // separe du live streaming, pour ne jamais interferer avec cette logique.
+  ADMIN_NOTIF_NEW: 'admin:notif:new',
 });
 
 const MAX_GUESTS_SIMULTANES = 4;
@@ -195,6 +199,19 @@ function handleConnection(io, socket) {
   const joinedSessions = new Map(); // parishId → liveId
 
   // ── Join Parish Room ─────────────────────────────────────────────────────────
+    // ── Rejoindre la salle de notifications admin (independant du live) ────────
+  socket.on('admin:notif:join', ({ parishId }) => {
+    try {
+      if (!parishId || !/^[a-f0-9]{24}$/i.test(String(parishId))) return;
+      if (!socket.isAuthenticated || !socket.user) return;
+      if (socket.user.role !== 'parish_admin' && socket.user.role !== 'super_admin') return;
+      if (socket.user.role === 'parish_admin' && String(socket.user.parishId) !== String(parishId)) return;
+      socket.join('admin-notifs:' + parishId);
+    } catch (err) {
+      console.error('[Socket] admin notif join error:', err.message);
+    }
+  });
+
   socket.on(EVENTS.JOIN_ROOM, async ({ parishId, liveId }) => {
     try {
       // Input validation
@@ -570,12 +587,20 @@ function initRealtime(httpServer, clientUrl) {
   /**
    * Broadcast that a live session ended.
    */
-  io.broadcastLiveEnded = (parishId, liveId) => {
+    io.broadcastLiveEnded = (parishId, liveId) => {
     try {
       const room = parishRoom(parishId);
       io.to(room).emit(EVENTS.LIVE_ENDED, { liveId, parishId });
     } catch (err) {
       console.error('[Socket] broadcastLiveEnded error:', err.message);
+    }
+  };
+
+  io.broadcastAdminNotif = (parishId, payload) => {
+    try {
+      io.to('admin-notifs:' + parishId).emit(EVENTS.ADMIN_NOTIF_NEW, payload);
+    } catch (err) {
+      console.error('[Socket] broadcastAdminNotif error:', err.message);
     }
   };
 
