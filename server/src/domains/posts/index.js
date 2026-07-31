@@ -409,11 +409,22 @@ async resolveReported(req, res) {
 
     const estPayant = post.eventFeeAmount != null && post.eventFeeAmount > 0;
 
-    if (!estPayant) {
+        if (!estPayant) {
       const inscription = await postRepo.createRegistration(
         req.params.id, req.user.userId, String(telephone).trim(), participantsPropres,
         { statutPaiement: 'non_requis' }
       );
+      try {
+        const io = req.app.get('io');
+        if (io && io.broadcastAdminNotif && post.parishId) {
+          io.broadcastAdminNotif(String(post.parishId), {
+            type: 'inscription',
+            titre: 'Nouvelle inscription',
+            message: (post.content || 'Événement').slice(0, 80),
+            postId: post._id,
+          });
+        }
+      } catch (e) { /* ne bloque jamais l'inscription */ }
       return sendCreated(res, { inscription }, 'Inscription confirmee');
     }
 
