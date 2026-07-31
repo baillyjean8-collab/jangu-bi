@@ -461,8 +461,13 @@ export default function DemandesPage() {
               <>
                 {pourQui === 'moi' && (
                   <div style={{ display:'flex', alignItems:'center', gap:10, padding:10, background:'#F5F0E8', borderRadius:10, marginBottom:12 }}>
-                    <div style={{ width:34, height:34, borderRadius:'50%', background:VERT, display:'flex', alignItems:'center', justifyContent:'center', fontSize:10, fontWeight:700, color:OR, flexShrink:0 }}>MD</div>
-                    <div style={{ flex:1 }}><div style={{ fontSize:11, fontWeight:700, color:VERT }}>Marie Diallo</div><div style={{ fontSize:9, color:'#7A6E5E' }}>+221 77 XXX XX XX</div></div>
+                    <div style={{ width:34, height:34, borderRadius:'50%', background:VERT, display:'flex', alignItems:'center', justifyContent:'center', fontSize:10, fontWeight:700, color:OR, flexShrink:0 }}>
+                      {UTILISATEUR_ACTUEL.nom.split(' ').map(n=>n[0]).slice(0,2).join('')}
+                    </div>
+                    <div style={{ flex:1 }}>
+                      <div style={{ fontSize:11, fontWeight:700, color:VERT }}>{UTILISATEUR_ACTUEL.nom}</div>
+                      <div style={{ fontSize:9, color:'#7A6E5E' }}>{UTILISATEUR_ACTUEL.paroisse}</div>
+                    </div>
                     <span style={{ padding:'2px 10px', borderRadius:20, fontSize:9, fontWeight:700, background:'rgba(200,168,75,0.15)', color:'#8B6020' }}>Auto-rempli</span>
                   </div>
                 )}
