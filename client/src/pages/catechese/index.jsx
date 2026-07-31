@@ -35,8 +35,121 @@ const CATEGORIES_PRIERES = [
       { id: 'matin', titre: 'Prière du matin', duree: '45s', contenu: `Mon Dieu, je vous offre cette journée.\nQue tout ce que je ferai, dirai ou penserai\nsoit pour votre gloire.\nBénissez mes proches et tous ceux que je rencontrerai.\nGuidez mes pas et éclairez mon cœur.\nAmen.` },
       { id: 'soir', titre: 'Prière du soir', duree: '45s', contenu: `Seigneur, je vous remercie pour cette journée.\nPardonnez-moi mes fautes et mes manquements.\nProtégez-moi cette nuit et accordez-moi le repos.\nAmen.` },
       { id: 'magnificat', titre: 'Magnificat', duree: '1min30', contenu: `Mon âme exalte le Seigneur,\nmon esprit exulte en Dieu mon Sauveur.\nIl s'est penché sur son humble servante ;\ndésormais tous les âges me diront bienheureuse.\nLe Tout-Puissant fit pour moi des merveilles ;\nSaint est son nom !\nAmen.` },
-    ]
-  }
+]
+},
+{
+id: 'litanies', titre: 'Litanies', icon: '📜', count: 1,
+prieres: [
+{
+  id: 'litanies-lorette',
+  titre: 'Litanies de la Vierge Marie (Lorette)',
+  duree: '6 min',
+  contenu: `Seigneur, ayez pitié de nous.
+Christ, ayez pitié de nous.
+Seigneur, ayez pitié de nous.
+Christ, écoutez-nous.
+Christ, exaucez-nous.
+
+Père céleste, qui êtes Dieu, ayez pitié de nous.
+Fils, Rédempteur du monde, qui êtes Dieu, ayez pitié de nous.
+Esprit-Saint, qui êtes Dieu, ayez pitié de nous.
+Trinité Sainte, qui êtes un seul Dieu, ayez pitié de nous.
+
+Sainte Marie, priez pour nous.
+Sainte Mère de Dieu, priez pour nous.
+Sainte Vierge des vierges, priez pour nous.
+Mère du Christ, priez pour nous.
+Mère de l'Église, priez pour nous.
+Mère de miséricorde, priez pour nous.
+Mère de la divine grâce, priez pour nous.
+Mère de l'espérance, priez pour nous.
+Mère très pure, priez pour nous.
+Mère très chaste, priez pour nous.
+Mère toujours vierge, priez pour nous.
+Mère sans tache, priez pour nous.
+Mère aimable, priez pour nous.
+Mère admirable, priez pour nous.
+Mère du bon conseil, priez pour nous.
+Mère du Créateur, priez pour nous.
+Mère du Sauveur, priez pour nous.
+Vierge très prudente, priez pour nous.
+Vierge digne de vénération, priez pour nous.
+Vierge digne de louange, priez pour nous.
+Vierge puissante, priez pour nous.
+Vierge clémente, priez pour nous.
+Vierge fidèle, priez pour nous.
+Miroir de justice, priez pour nous.
+Siège de la sagesse, priez pour nous.
+Cause de notre joie, priez pour nous.
+Vase spirituel, priez pour nous.
+Vase d'honneur, priez pour nous.
+Vase insigne de dévotion, priez pour nous.
+Rose mystique, priez pour nous.
+Tour de David, priez pour nous.
+Tour d'ivoire, priez pour nous.
+Maison d'or, priez pour nous.
+Arche d'alliance, priez pour nous.
+Porte du ciel, priez pour nous.
+Étoile du matin, priez pour nous.
+Salut des infirmes, priez pour nous.
+Refuge des pécheurs, priez pour nous.
+Réconfort des migrants, priez pour nous.
+Consolatrice des affligés, priez pour nous.
+Secours des chrétiens, priez pour nous.
+
+Reine des Anges, priez pour nous.
+Reine des Patriarches, priez pour nous.
+Reine des Prophètes, priez pour nous.
+Reine des Apôtres, priez pour nous.
+Reine des Martyrs, priez pour nous.
+Reine des Confesseurs, priez pour nous.
+Reine des Vierges, priez pour nous.
+Reine de tous les Saints, priez pour nous.
+Reine conçue sans le péché originel, priez pour nous.
+Reine élevée au ciel, priez pour nous.
+Reine du très saint Rosaire, priez pour nous.
+Reine de la famille, priez pour nous.
+Reine de la paix, priez pour nous.
+
+Agneau de Dieu, qui effacez les péchés du monde, pardonnez-nous, Seigneur.
+Agneau de Dieu, qui effacez les péchés du monde, exaucez-nous, Seigneur.
+Agneau de Dieu, qui effacez les péchés du monde, ayez pitié de nous.
+
+Prions : Accordez-nous, Seigneur notre Dieu, nous vous en supplions, de jouir constamment de la santé de l'âme et du corps, et, par la glorieuse intercession de la bienheureuse Marie toujours Vierge, d'être délivrés des tristesses de cette vie et de parvenir à l'éternelle joie. Par le Christ notre Seigneur.
+Amen.`,
+  histoire: `L'origine exacte de cette litanie reste incertaine, mais son nom vient du sanctuaire de la Santa Casa de Lorette, en Italie, où sa récitation publique est attestée dès 1531. Devant la multiplication de litanies mariales locales très diverses à travers l'Europe, le pape Sixte Quint en fixa officiellement le texte pour toute l'Église par la bulle Reddituri en 1587 — elle demeure aujourd'hui encore la seule litanie à la Vierge Marie approuvée pour un usage public universel.
+
+Depuis, seuls les papes ont le pouvoir d'y ajouter de nouvelles invocations, à des moments choisis avec soin. « Reine conçue sans le péché originel » fut ajoutée à l'approche de la proclamation du dogme de l'Immaculée Conception (1854) ; « Reine élevée au ciel » après la définition du dogme de l'Assomption par Pie XII en 1950 ; « Reine de la paix » en 1917, en pleine Première Guerre mondiale, par Benoît XV ; « Mère de l'Église », titre proclamé par Paul VI à la clôture du Concile Vatican II, fut insérée dans la litanie par Jean-Paul II en 1980, qui ajouta aussi « Reine de la famille » en 1995. Les trois dernières invocations en date, « Mère de miséricorde », « Mère de l'espérance » et « Réconfort des migrants », ont été ajoutées par le pape François le 20 juin 2020, en pleine pandémie mondiale.`,
+},
+]
+},
+{
+id: 'neuvaines', titre: 'Neuvaines', icon: '🕯️', count: 1,
+prieres: [
+{
+  id: 'neuvaine-esprit-saint',
+  titre: "Neuvaine à l'Esprit Saint",
+  duree: '9 jours',
+  contenu: `PRIÈRE QUOTIDIENNE (à répéter chaque jour) :
+Esprit Saint, envoyé par le Père au nom de Jésus, vous qui êtes appelé le Consolateur, donnez-moi l'intelligence spirituelle par laquelle je puisse connaître les choses de Dieu. Enseignez-moi la vérité tout entière et faites qu'avec vous j'aime toujours ce qui est bon et juste. Consolez-moi dans mes peines et assistez-moi dans mes épreuves. Éloignez de moi les mauvais esprits, guidez-moi dans le chemin de la justice et de la vertu, afin que je sois trouvé digne d'entrer dans la vie éternelle. Amen.
+
+Jour 1 — Le don de Sagesse : Esprit Saint, donnez-moi de goûter les choses de Dieu par-dessus toute chose créée.
+Jour 2 — Le don d'Intelligence : Esprit Saint, éclairez mon esprit pour que je comprenne plus profondément les vérités de la foi.
+Jour 3 — Le don de Conseil : Esprit Saint, guidez mes choix et mes décisions selon la volonté de Dieu.
+Jour 4 — Le don de Force : Esprit Saint, donnez-moi le courage de vivre ma foi sans crainte, même dans l'épreuve.
+Jour 5 — Le don de Science : Esprit Saint, apprenez-moi à voir la trace de Dieu dans toute chose créée.
+Jour 6 — Le don de Piété : Esprit Saint, faites grandir en moi un amour filial et confiant envers Dieu.
+Jour 7 — Le don de Crainte de Dieu : Esprit Saint, donnez-moi un profond respect devant la sainteté de Dieu, qui éloigne du péché.
+Jour 8 — Pour l'Église : Esprit Saint, renouvelez la face de l'Église et de notre paroisse par votre souffle.
+Jour 9 — Pour ma propre conversion : Esprit Saint, achevez en moi l'œuvre commencée à mon baptême et ma confirmation.
+
+(Le neuvième jour, veille de Pentecôte selon la tradition, on conclut par un Notre Père, un Je vous salue Marie et un Gloire au Père.)`,
+  histoire: `Cette neuvaine est, selon la tradition de l'Église, la toute première de l'histoire chrétienne — celle qui a donné son nom et sa durée de neuf jours à toutes les neuvaines qui suivront. Après l'Ascension, Jésus avait demandé à ses disciples de ne pas quitter Jérusalem mais d'y attendre l'accomplissement de la promesse du Père. Les Actes des Apôtres rapportent qu'ils se retirèrent alors dans la chambre haute du Cénacle, unanimes et assidus à la prière, avec Marie mère de Jésus (Ac 1, 12-14), pendant les neuf jours qui séparèrent l'Ascension de la Pentecôte, jour où l'Esprit Saint descendit sur eux sous forme de langues de feu.
+
+C'est le pape Léon XIII qui, par son encyclique Divinum Illud Munus en 1897, exhorta solennellement toute l'Église catholique à renouveler chaque année, entre l'Ascension et la Pentecôte, cette neuvaine primitive vécue par les Apôtres et la Vierge Marie, lui donnant ainsi un caractère universel et officiel qu'elle conserve aujourd'hui encore.`,
+},
+]
+},
 ];
 
 const CATEGORIES_CATECHISME = [
