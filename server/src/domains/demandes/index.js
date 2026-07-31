@@ -155,7 +155,6 @@ router.patch('/:id/statut',
 
 router.delete('/:id',
   authenticate, requireVerified,
-  authorize('parish_admin', 'super_admin'),
   asyncHandler(demandeController.remove)
 );
 
