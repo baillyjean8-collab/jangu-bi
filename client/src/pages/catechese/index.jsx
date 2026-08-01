@@ -233,14 +233,89 @@ R/. Et l'intendant de tous ses biens.
 
 Prions : Ô Dieu, qui par une providence ineffable avez daigné choisir le bienheureux Joseph pour être l'époux de votre sainte Mère, faites, nous vous en prions, qu'honorant ici-bas en lui notre protecteur, nous méritions de l'avoir pour intercesseur dans le ciel. Vous qui vivez et régnez dans les siècles des siècles.
 Amen.`,
-  histoire: `La dévotion publique à saint Joseph a mis longtemps à s'épanouir pleinement dans l'Église. Dès le début du XVIIe siècle, les papes Grégoire XV puis Urbain VIII rendirent obligatoire, dans toute la chrétienté, la célébration de sa fête le 19 mars. Le pape Léon XIII lui consacra ensuite une encyclique entière, Quamquam Pluries, l'associant à l'intercession de la Vierge Marie ; puis, le 8 décembre 1870, Pie IX le proclama solennellement patron de l'Église universelle tout entière.
+  {
+  id: 'litanies-saints',
+  titre: 'Litanies des Saints',
+  duree: '5 min',
+  contenu: `Seigneur, prends pitié. Seigneur, prends pitié.
+Ô Christ, prends pitié. Ô Christ, prends pitié.
+Seigneur, prends pitié. Seigneur, prends pitié.
 
-C'est finalement le 18 mars 1909, veille de sa fête, que le pape saint Pie X, lui-même prénommé Joseph de baptême, approuva par décret apostolique cette litanie pour un usage public dans toute l'Église, quelques décennies après la proclamation de son patronage universel par Pie IX. Comme celle du Sacré-Cœur déjà présentée dans cette bibliothèque, elle fait partie des six seules litanies officiellement reconnues pour un usage liturgique et public par l'Église catholique. Plus récemment encore, à l'occasion de l'Année Saint-Joseph proclamée en 2020 par la lettre apostolique Patris Corde, le pape François a approuvé l'ajout de sept nouvelles invocations à cette même litanie, tirées des réflexions de plusieurs de ses prédécesseurs sur la figure de ce père silencieux et fidèle.`,
+Sainte Marie, priez pour nous.
+Sainte Mère de Dieu, priez pour nous.
+Sainte Vierge des vierges, priez pour nous.
+
+Saint Michel, priez pour nous.
+Saint Gabriel, priez pour nous.
+Saint Raphaël, priez pour nous.
+Saints Anges de Dieu, priez pour nous.
+
+Saint Jean-Baptiste, priez pour nous.
+Saint Joseph, priez pour nous.
+Saint Abraham et saint Moïse, priez pour nous.
+
+Saint Pierre et saint Paul, priez pour nous.
+Saint André, priez pour nous.
+Saint Jacques et saint Jean, priez pour nous.
+Saint Thomas, priez pour nous.
+Saint Matthieu, priez pour nous.
+Tous les saints Apôtres, priez pour nous.
+Saint Luc, priez pour nous.
+Saint Marc, priez pour nous.
+Sainte Marie-Madeleine, priez pour nous.
+
+Saint Étienne, priez pour nous.
+Saint Ignace d'Antioche, priez pour nous.
+Saint Polycarpe, priez pour nous.
+Saint Laurent, priez pour nous.
+Sainte Perpétue et sainte Félicité, priez pour nous.
+Sainte Agnès, priez pour nous.
+Tous les saints Martyrs, priez pour nous.
+
+Saint Léon et saint Grégoire, priez pour nous.
+Saint Ambroise, priez pour nous.
+Saint Jérôme, priez pour nous.
+Saint Augustin, priez pour nous.
+Saint Athanase, priez pour nous.
+Saint Basile et saint Grégoire de Nazianze, priez pour nous.
+Saint Jean Chrysostome, priez pour nous.
+Saint Martin de Tours, priez pour nous.
+Saint Patrick, priez pour nous.
+Saint Cyrille et saint Méthode, priez pour nous.
+
+Saint Antoine, priez pour nous.
+Saint Benoît, priez pour nous.
+Saint Bernard, priez pour nous.
+Saint François et saint Dominique, priez pour nous.
+Saint Thomas d'Aquin, priez pour nous.
+Saint Ignace de Loyola et saint François Xavier, priez pour nous.
+Saint Jean-Marie Vianney, priez pour nous.
+Sainte Catherine de Sienne, priez pour nous.
+Sainte Thérèse d'Avila, priez pour nous.
+Sainte Thérèse de l'Enfant-Jésus, priez pour nous.
+
+Tous les saints et toutes les saintes de Dieu, priez pour nous.
+
+Toi qui es miséricordieux, pardonne-nous, Seigneur.
+Toi qui es miséricordieux, exauce-nous, Seigneur.
+De tout mal, délivre-nous, Seigneur.
+Par ton incarnation, délivre-nous, Seigneur.
+Par ta mort et ta résurrection, délivre-nous, Seigneur.
+Par le don de l'Esprit Saint, délivre-nous, Seigneur.
+
+Nous qui sommes pécheurs, nous te supplions, écoute-nous.
+Toi qui es venu dans le monde, nous te supplions, écoute-nous.
+Toi qui as vaincu la mort, nous te supplions, écoute-nous.
+
+Jésus, Fils du Dieu vivant, nous te supplions, écoute-nous.
+Ô Christ, écoute-nous. Ô Christ, exauce-nous.
+
+Prions : Ô Dieu, qui te réjouis de voir se multiplier les membres de ta famille, dans ta bonté, écoute nos prières et accorde à tous ceux qui t'invoquent d'être fortifiés par l'intercession de tous tes saints. Par le Christ notre Seigneur.
+Amen.`,
+  histoire: `La litanie des saints est l'une des plus anciennes prières encore utilisées aujourd'hui par l'Église. Ses éléments les plus anciens remonteraient au IVᵉ siècle, dans la ville d'Antioche. Elle fut récitée pour la première fois, dans la forme que nous lui connaissons, en l'an 590, sur l'ordre exprès du pape saint Grégoire le Grand, lors d'une grande procession d'action de grâce organisée à Rome. L'ordre précis dans lequel les Apôtres y sont nommés correspond d'ailleurs à celui du Canon romain de la messe, preuve supplémentaire de son ancienneté remarquable.
+
+Cette litanie occupe une place unique dans la liturgie catholique : elle est chantée lors de la veillée pascale avant la bénédiction de l'eau baptismale, pendant la célébration du baptême lui-même, lors des ordinations d'évêques, de prêtres et de diacres, ainsi qu'à la fête de la Toussaint. Elle accompagne aussi la dédicace d'une église, la profession religieuse, et peut être récitée en temps de grande épreuve collective : famine, guerre ou catastrophe. Elle fut notamment chantée lors des obsèques du pape Jean-Paul II en 2005, puis à celles du pape François en 2025, et retentit en latin à chaque conclave, pendant la procession qui conduit les cardinaux électeurs jusqu'à la chapelle Sixtine. Une règle précise encadre son usage : on ne peut y invoquer que des saints officiellement inscrits aux calendriers liturgiques de l'Église, jamais des personnes dont le culte n'a pas été formellement reconnu par elle.`,
 },
-]
-},
-{
-id: 'neuvaines', titre: 'Neuvaines', icon: '🕯️', count: 1,
 prieres: [
 {
   id: 'neuvaine-esprit-saint',
@@ -260,9 +335,66 @@ Jour 8 — Pour l'Église : Esprit Saint, renouvelez la face de l'Église et de 
 Jour 9 — Pour ma propre conversion : Esprit Saint, achevez en moi l'œuvre commencée à mon baptême et ma confirmation.
 
 (Le neuvième jour, veille de Pentecôte selon la tradition, on conclut par un Notre Père, un Je vous salue Marie et un Gloire au Père.)`,
-  histoire: `Cette neuvaine est, selon la tradition de l'Église, la toute première de l'histoire chrétienne — celle qui a donné son nom et sa durée de neuf jours à toutes les neuvaines qui suivront. Après l'Ascension, Jésus avait demandé à ses disciples de ne pas quitter Jérusalem mais d'y attendre l'accomplissement de la promesse du Père. Les Actes des Apôtres rapportent qu'ils se retirèrent alors dans la chambre haute du Cénacle, unanimes et assidus à la prière, avec Marie mère de Jésus (Ac 1, 12-14), pendant les neuf jours qui séparèrent l'Ascension de la Pentecôte, jour où l'Esprit Saint descendit sur eux sous forme de langues de feu.
+    histoire: `Cette neuvaine est, selon la tradition de l'Église, la toute première de l'histoire chrétienne — celle qui a donné son nom et sa durée de neuf jours à toutes les neuvaines qui suivront. Après l'Ascension, Jésus avait demandé à ses disciples de ne pas quitter Jérusalem mais d'y attendre l'accomplissement de la promesse du Père. Les Actes des Apôtres rapportent qu'ils se retirèrent alors dans la chambre haute du Cénacle, unanimes et assidus à la prière, avec Marie mère de Jésus (Ac 1, 12-14), pendant les neuf jours qui séparèrent l'Ascension de la Pentecôte, jour où l'Esprit Saint descendit sur eux sous forme de langues de feu.
 
 C'est le pape Léon XIII qui, par son encyclique Divinum Illud Munus en 1897, exhorta solennellement toute l'Église catholique à renouveler chaque année, entre l'Ascension et la Pentecôte, cette neuvaine primitive vécue par les Apôtres et la Vierge Marie, lui donnant ainsi un caractère universel et officiel qu'elle conserve aujourd'hui encore.`,
+},
+{
+  id: 'neuvaine-sainte-therese-rose',
+  titre: "Neuvaine à la Rose — Sainte Thérèse de l'Enfant-Jésus",
+  duree: '9 jours',
+  contenu: `PRIÈRE D'OUVERTURE (à dire chaque jour avant de formuler sa demande) :
+Très Sainte Trinité, Père, Fils et Saint-Esprit, je vous remercie pour toutes les grâces et faveurs dont vous avez enrichi votre servante sainte Thérèse de l'Enfant-Jésus pendant les vingt-quatre années qu'elle passa sur cette terre. Par les mérites de cette sainte, je vous demande de m'accorder la grâce que je désire ardemment (formuler ici sa demande), si elle est conforme à votre sainte volonté et pour le bien de mon âme.
+
+Récitez ensuite, chaque jour de la neuvaine, vingt-quatre fois de suite (une pour chacune des vingt-quatre années de sa vie) :
+Gloire au Père, et au Fils, et au Saint-Esprit, comme il était au commencement, maintenant et toujours, dans les siècles des siècles. Amen.
+— Sainte Thérèse de l'Enfant-Jésus, priez pour nous.
+
+PRIÈRE DE CLÔTURE (à dire chaque jour après les vingt-quatre Gloire au Père) :
+Ô sainte Thérèse, réalisez une fois encore votre promesse de passer votre Ciel à faire du bien sur la terre. Faites-moi connaître, si cela est possible et selon la volonté de Dieu, par le signe d'une rose, que vous intercédez pour moi auprès de lui.`,
+  histoire: `Cette neuvaine, la plus connue de toutes celles adressées à sainte Thérèse, est née d'un geste de reconnaissance personnelle. Le 3 décembre 1925, le père Anton Puntigam, jésuite autrichien, entreprit une neuvaine en récitant chaque jour vingt-quatre « Gloire au Père », un pour chacune des vingt-quatre années de la vie de la petite carmélite, morte de la tuberculose au Carmel de Lisieux le 30 septembre 1897. Elle venait tout juste d'être canonisée par le pape Pie XI, le 17 mai de cette même année 1925. Cette pratique se répandit rapidement à travers le monde entier sous le nom de neuvaine miraculeuse ou neuvaine à la rose.
+
+Le nom de rose renvoie directement à une confidence que Thérèse fit, quelques mois avant sa mort, à sa sœur aînée devenue religieuse au même Carmel sous le nom de sœur Marie du Sacré-Cœur. Comme celle-ci s'inquiétait de la peine que sa mort proche allait causer à la communauté, Thérèse lui répondit avec simplicité : « Oh non, vous verrez, ce sera comme une pluie de roses. » Cette promesse rejoint sa conviction la plus célèbre, exprimée dans ses tout derniers entretiens : « Je veux passer mon Ciel à faire du bien sur la terre. » Sainte Thérèse de l'Enfant-Jésus et de la Sainte-Face fut déclarée docteur de l'Église par Jean-Paul II en 1997, l'une des quatre seules femmes à recevoir ce titre, et demeure, avec saint François Xavier, patronne principale des missions.`,
+},
+{
+  id: 'neuvaine-notre-dame-perpetuel-secours',
+  titre: 'Neuvaine à Notre-Dame du Perpétuel Secours',
+  duree: '9 jours',
+  contenu: `PRIÈRE QUOTIDIENNE (à répéter chaque jour) :
+Ô Très Sainte Vierge Marie, qui, pour nous inspirer une confiance sans bornes, avez voulu prendre le très doux nom de Mère du Perpétuel Secours, je vous supplie de me secourir en tout temps et en tout lieu, dans mes tentations, après mes chutes, dans mes difficultés et dans toutes les misères de la vie, et surtout à l'heure de ma mort. Accordez-moi, ô Mère aimante, la pensée et l'habitude de recourir toujours à vous, avec la confiance d'un enfant, afin que par ma prière constante j'obtienne votre perpétuel secours et la persévérance finale. Amen.
+
+Jour 1 — La confiance : Mère du Perpétuel Secours, apprenez-moi à tout vous confier, comme un enfant remet sa main dans celle de sa mère.
+Jour 2 — La Croix et l'épreuve : Sur votre icône, les Anges Gabriel et Michel présentent à Jésus les instruments de sa Passion ; aidez-moi à ne jamais fuir ma propre croix.
+Jour 3 — La protection maternelle : Vous qui tenez fermement la main de l'Enfant Jésus, ne cessez de tenir la mienne dans les incertitudes de ma vie.
+Jour 4 — Les tentations : Mère du Perpétuel Secours, secourez-moi particulièrement aux heures où je suis le plus exposé à céder au mal.
+Jour 5 — Les malades et les souffrants : Souvenez-vous aujourd'hui de tous ceux qui portent une maladie du corps ou de l'âme, et obtenez-leur soulagement.
+Jour 6 — Les familles : Veillez sur nos foyers comme vous avez veillé sur la Sainte Famille de Nazareth.
+Jour 7 — Les défunts : Accueillez auprès de vous ceux qui nous ont quittés, et consolez ceux qui pleurent leur absence.
+Jour 8 — L'Église et les prêtres : Soutenez le Pape, les évêques et tous les prêtres qui servent votre Fils au milieu du monde.
+Jour 9 — L'heure de la mort : Ô Mère du Perpétuel Secours, qu'en sera-t-il de moi lorsque je serai sur le point de remettre mon âme à Dieu ? Obtenez-moi la grâce de vous invoquer alors plus souvent que jamais, afin que je meure en aimant Dieu et en vous aimant, pour aller ensuite vous aimer éternellement dans le Paradis.`,
+    histoire: `L'icône elle-même, de type byzantin, daterait du XIIIᵉ ou XIVᵉ siècle. Selon la tradition, elle aurait été rapportée à Rome vers la fin du XVᵉ siècle par un marchand crétois, avant d'être finalement déposée, à la demande de la Vierge elle-même selon le récit transmis, dans l'église Saint-Matthieu de Rome, confiée aux pères Augustins. Elle y fut vénérée durant plus de trois siècles, jusqu'à la destruction de cette église en 1798 par les troupes révolutionnaires françaises occupant alors Rome. Juste avant cette destruction, les Augustins parvinrent à sauver l'icône en la plaçant dans la chapelle d'un couvent voisin, où elle tomba peu à peu dans l'oubli.
+
+Redécouverte en 1863, elle fut confiée en 1866 par le pape Pie IX aux pères Rédemptoristes, avec la mission explicite de « la faire connaître au monde entier », précisément parce que leur nouvelle église Sant'Alfonso all'Esquilino se trouvait bâtie sur le site même de l'ancienne église Saint-Matthieu — signe, pour beaucoup, que Marie elle-même avait choisi ce lieu et cette famille religieuse, fondée par saint Alphonse de Liguori, pour répandre sa dévotion. Les Rédemptoristes tinrent cette mission avec un tel succès que Notre-Dame du Perpétuel Secours est aujourd'hui l'une des images mariales les plus reproduites et les plus vénérées de toute l'Église catholique, particulièrement répandue en Asie, notamment aux Philippines, où des foules considérables se rassemblent chaque mercredi pour cette même neuvaine, introduite dans le pays au début du XXᵉ siècle par des missionnaires rédemptoristes irlandais.`,
+},
+{
+  id: 'neuvaine-saint-michel',
+  titre: 'Neuvaine à Saint Michel Archange',
+  duree: '9 jours',
+  contenu: `PRIÈRE QUOTIDIENNE (à répéter chaque jour) :
+Saint Michel Archange, défendez-nous dans le combat ; soyez notre protecteur contre la perfidie et les embûches du démon. Que Dieu lui commande, nous le supplions humblement ; et vous, prince de la milice céleste, refoulez en enfer par la puissance divine Satan et les autres esprits mauvais qui rôdent dans le monde pour la perte des âmes. Amen.
+
+Jour 1 — Michel, chef de la milice céleste : Aidez-moi à demeurer ferme et loyal au service de Dieu, quelles que soient les épreuves.
+Jour 2 — Michel, vainqueur du dragon : Donnez-moi la force de résister au mal partout où je le rencontre.
+Jour 3 — Michel, protecteur du peuple de Dieu : Veillez sur mon foyer, ma famille et tous ceux que j'aime.
+Jour 4 — Michel, gardien de l'Église : Défendez l'Église tout entière contre toutes les attaques qui la menacent.
+Jour 5 — Michel, ange de la justice : Apprenez-moi à agir toujours selon la vérité et la droiture.
+Jour 6 — Michel, consolateur des affligés : Intercédez pour tous ceux qui traversent aujourd'hui une épreuve.
+Jour 7 — Michel, ange de la prière d'Israël : Accompagnez ma prière et présentez-la devant le trône de Dieu.
+Jour 8 — Michel, patron des mourants : Assistez tous ceux qui, aujourd'hui, quittent ce monde, et conduisez leur âme vers Dieu.
+Jour 9 — Michel, prince de la milice céleste : Obtenez-moi la grâce particulière que je demande en cette neuvaine, si elle est conforme à la volonté de Dieu.`,
+  histoire: `Le nom de Michel, qui signifie en hébreu « Qui est comme Dieu ? », apparaît dans le livre de Daniel puis dans l'Apocalypse, où il combat le dragon à la tête des armées célestes. La tradition chrétienne en a fait le chef de la milice angélique, protecteur du peuple de Dieu et gardien de l'Église.
+
+La prière quotidienne de cette neuvaine, aujourd'hui la plus répandue au monde parmi celles adressées à saint Michel, fut composée par le pape Léon XIII en 1886, à la suite d'une expérience personnelle restée célèbre : selon le récit transmis par son entourage, le pape, après avoir célébré la messe le 13 octobre 1884, serait resté immobile un long moment, comme plongé dans une vision effrayante, avant de se rendre directement dans son bureau pour rédiger cette prière, qu'il ordonna aussitôt de réciter à la fin de chaque messe basse dans toute l'Église catholique, une pratique observée jusqu'à la réforme liturgique de 1964. Retirée un temps de l'usage courant, cette prière connaît depuis plusieurs décennies un regain de popularité considérable, à tel point que le pape Jean-Paul II lui-même encouragea publiquement les fidèles, en 1994, à la reprendre largement dans leur prière personnelle face aux défis de l'époque contemporaine. Saint Michel est aujourd'hui le saint patron des policiers, des militaires et de tous ceux dont la mission est de protéger autrui.`,
 },
 ]
 },
@@ -1083,13 +1215,19 @@ export default function CatechesePage() {
                             </div>
                             {loadingTradId===priere.id && <div style={{ fontSize:11,color:OR,marginTop:6 }}>Traduction en cours...</div>}
                             {tradPrieres[priere.id] && <div style={{ marginTop:10,borderTop:`1px solid ${OR}33`,paddingTop:10,whiteSpace:'pre-line' }}>{tradPrieres[priere.id]}</div>}
-                            <div style={{ display:'flex',gap:8,marginTop:12 }}>
+                                                        <div style={{ display:'flex',gap:8,marginTop:12 }}>
                               <button onClick={() => parlerPriere(priere.contenu,priere.id)} style={{ flex:1,padding:'8px 0',borderRadius:10,border:'none',background:lectureId===priere.id?OR:VERT,color:lectureId===priere.id?VERT:OR,fontWeight:700,fontSize:12,cursor:'pointer' }}>
                                 {lectureId===priere.id?'⏹ Stop':'▶ Écouter'}
                               </button>
                               <button onClick={() => navigator.clipboard?.writeText(priere.contenu)} style={{ flex:1,padding:'8px 0',borderRadius:10,border:`1px solid ${OR}40`,background:'#fff',color:VERT,fontWeight:700,fontSize:12,cursor:'pointer' }}>📋 Copier</button>
                               <button onClick={() => navigator.share?.({title:priere.titre,text:priere.contenu})} style={{ flex:1,padding:'8px 0',borderRadius:10,border:'none',background:VERT,color:OR,fontWeight:700,fontSize:12,cursor:'pointer' }}>↗ Partager</button>
                             </div>
+                            {priere.histoire && (
+                              <div style={{ marginTop:14,paddingTop:12,borderTop:`1px dashed ${OR}55` }}>
+                                <div style={{ fontSize:10,color:OR,fontWeight:700,letterSpacing:'0.06em',textTransform:'uppercase',marginBottom:6,fontStyle:'normal' }}>📜 Histoire de cette prière</div>
+                                <p style={{ whiteSpace:'pre-line',fontSize:'0.82rem',lineHeight:'1.7',color:'#3a3a3a',margin:0,fontStyle:'normal' }}>{priere.histoire}</p>
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
