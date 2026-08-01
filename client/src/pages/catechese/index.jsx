@@ -320,10 +320,97 @@ Amen.`,
 
 Cette litanie occupe une place unique dans la liturgie catholique : elle est chantée lors de la veillée pascale avant la bénédiction de l'eau baptismale, pendant la célébration du baptême lui-même, lors des ordinations d'évêques, de prêtres et de diacres, ainsi qu'à la fête de la Toussaint. Elle accompagne aussi la dédicace d'une église, la profession religieuse, et peut être récitée en temps de grande épreuve collective : famine, guerre ou catastrophe. Elle fut notamment chantée lors des obsèques du pape Jean-Paul II en 2005, puis à celles du pape François en 2025, et retentit en latin à chaque conclave, pendant la procession qui conduit les cardinaux électeurs jusqu'à la chapelle Sixtine. Une règle précise encadre son usage : on ne peut y invoquer que des saints officiellement inscrits aux calendriers liturgiques de l'Église, jamais des personnes dont le culte n'a pas été formellement reconnu par elle.`,
 },
+{
+  id: 'litanies-saint-nom-jesus',
+  titre: 'Litanies du Saint Nom de Jésus',
+  duree: '4 min',
+  contenu: `Seigneur, ayez pitié de nous.
+Ô Christ, ayez pitié de nous.
+Seigneur, ayez pitié de nous.
+Jésus, écoutez-nous. Jésus, écoutez-nous.
+Jésus, exaucez-nous. Jésus, exaucez-nous.
+
+Père céleste, qui êtes Dieu, ayez pitié de nous.
+Fils, Rédempteur du monde, qui êtes Dieu, ayez pitié de nous.
+Esprit-Saint, qui êtes Dieu, ayez pitié de nous.
+Trinité Sainte, qui êtes un seul Dieu, ayez pitié de nous.
+
+Jésus, Fils du Dieu vivant, ayez pitié de nous.
+Jésus, splendeur du Père, ayez pitié de nous.
+Jésus, splendeur de la lumière éternelle, ayez pitié de nous.
+Jésus, Roi de gloire, ayez pitié de nous.
+Jésus, Soleil de justice, ayez pitié de nous.
+Jésus, Fils de la Vierge Marie, ayez pitié de nous.
+Jésus aimable, ayez pitié de nous.
+Jésus admirable, ayez pitié de nous.
+Jésus, Dieu fort, ayez pitié de nous.
+Jésus, Père des siècles à venir, ayez pitié de nous.
+Jésus, Ange du grand conseil, ayez pitié de nous.
+Jésus très puissant, ayez pitié de nous.
+Jésus très patient, ayez pitié de nous.
+Jésus très obéissant, ayez pitié de nous.
+Jésus, doux et humble de cœur, ayez pitié de nous.
+Jésus, qui aimez la chasteté, ayez pitié de nous.
+Jésus, qui nous aimez, ayez pitié de nous.
+Jésus, Dieu de paix, ayez pitié de nous.
+Jésus, auteur de la vie, ayez pitié de nous.
+Jésus, modèle des vertus, ayez pitié de nous.
+Jésus, zélateur des âmes, ayez pitié de nous.
+Jésus, notre Dieu, ayez pitié de nous.
+
+Agneau de Dieu, qui effacez les péchés du monde, pardonnez-nous, Jésus.
+Agneau de Dieu, qui effacez les péchés du monde, exaucez-nous, Jésus.
+Agneau de Dieu, qui effacez les péchés du monde, ayez pitié de nous, Jésus.
+
+Jésus, écoutez-nous. Jésus, écoutez-nous.
+Jésus, exaucez-nous. Jésus, exaucez-nous.
+
+Prions : Seigneur Jésus-Christ, qui avez dit : « Demandez et vous recevrez, cherchez et vous trouverez, frappez et l'on vous ouvrira », donnez-nous, nous vous en supplions, un tel attrait de votre amour tout divin, que nous vous aimions de tout cœur, de bouche et d'action, et que nous ne cessions jamais de vous louer. Vous qui vivez et régnez dans les siècles des siècles.
+Amen.`,
+  histoire: `Ce serait saint Bernardin de Sienne et saint Jean de Capistran, deux grands prédicateurs franciscains du XVᵉ siècle, qui rédigèrent la toute première ébauche de cette litanie, dans le prolongement direct de leur prédication inlassable en faveur de la dévotion au saint Nom de Jésus, qu'ils contribuèrent à répandre dans toute l'Europe à une époque où ce nom était parfois invoqué avec une piété presque superstitieuse. Une tradition rapporte qu'en 1432, lors d'une terrible épidémie de peste à Lisbonne, l'invocation confiante du seul nom de Jésus par la population aurait permis d'enrayer le fléau, popularisant encore davantage cette dévotion dans toute la péninsule ibérique.
+
+Approuvée pour un usage privé par le pape Sixte Quint en 1585, cette litanie ne fut autorisée pour la récitation publique dans toute l'Église que trois siècles plus tard, par le pape Léon XIII en 1886. Le pape Pie XI, en 1933, y attacha une indulgence plénière pour les fidèles qui la réciteraient chaque jour durant un mois complet. Chaque invocation de cette litanie est directement tirée des Saintes Écritures elles-mêmes, en particulier des titres messianiques annoncés par les prophètes de l'Ancien Testament et repris par les évangélistes, ce qui en fait une prière de louange biblique avant d'être une simple prière de demande.`,
+},
+{
+  id: 'litanies-precieux-sang',
+  titre: 'Litanies du Précieux Sang',
+  duree: '3 min',
+  contenu: `Seigneur, ayez pitié de nous.
+Ô Christ, ayez pitié de nous.
+Seigneur, ayez pitié de nous.
+
+Père céleste, qui êtes Dieu, ayez pitié de nous.
+Fils, Rédempteur du monde, qui êtes Dieu, ayez pitié de nous.
+Esprit Saint, qui êtes Dieu, ayez pitié de nous.
+Trinité Sainte, qui êtes un seul Dieu, ayez pitié de nous.
+
+Sang du Christ, Fils unique du Père éternel, sauvez-nous.
+Sang du Christ, Verbe de Dieu incarné, sauvez-nous.
+Sang du Christ, de la Nouvelle et Éternelle Alliance, sauvez-nous.
+Sang du Christ, ruisselant à terre lors de l'agonie, sauvez-nous.
+Sang du Christ, jailli sous la flagellation, sauvez-nous.
+Sang du Christ, jailli sous le couronnement d'épines, sauvez-nous.
+Sang du Christ, répandu sur la Croix, sauvez-nous.
+Sang du Christ, prix de notre salut, sauvez-nous.
+Sang du Christ, sans lequel il n'est pas de rémission, sauvez-nous.
+Sang du Christ, breuvage et purification des âmes dans l'Eucharistie, sauvez-nous.
+
+Agneau de Dieu, qui effacez les péchés du monde, exaucez-nous, Seigneur.
+Agneau de Dieu, qui effacez les péchés du monde, ayez pitié de nous.
+
+V/. Vous nous avez rachetés, Seigneur, par votre sang.
+R/. Et vous avez fait de nous, pour notre Dieu, un royaume.
+
+Prions : Dieu tout-puissant et éternel, vous qui avez établi votre Fils unique comme Rédempteur du monde et avez voulu être apaisé par son sang, accordez-nous, nous vous en supplions, de vénérer ainsi le prix de notre salut et d'être défendus par sa vertu contre les maux de la vie présente sur cette terre, afin que nous nous réjouissions éternellement de son fruit dans les cieux. Par le même Christ notre Seigneur.
+Amen.`,
+  histoire: `La dévotion au Précieux Sang du Christ remonte aux tout premiers temps de l'Église elle-même : saint Pierre rappelle déjà aux premiers chrétiens qu'ils n'ont pas été rachetés par des biens périssables, mais par le sang précieux du Christ, l'Agneau sans défaut ni tache (1 P 1, 19). En 1849, le pape Pie IX institua une fête liturgique dédiée au Précieux Sang, célébrée chaque premier dimanche de juillet.
+
+C'est le pape saint Jean XXIII qui donna à cette dévotion sa forme la plus aboutie : le 24 février 1960, il promulgua officiellement le texte définitif de ces litanies, puis publia, le 30 juin de la même année, une lettre apostolique consacrée tout entière à la dévotion au Précieux Sang, demandant que tout le mois de juillet lui soit spécialement dédié dans l'Église universelle. Le pape voyait dans cette dévotion un moyen particulièrement efficace de conjurer les dangers qui menaçaient alors l'Église et les nations, en plein cœur de la guerre froide.`,
+},
 ]
 },
 {
-id: 'neuvaines', titre: 'Neuvaines', icon: '🕯️', count: 4,
+id: 'neuvaines', titre: 'Neuvaines', icon: '🕯️', count: 5,
 prieres: [
 {
   id: 'neuvaine-esprit-saint',
@@ -400,9 +487,30 @@ Jour 6 — Michel, consolateur des affligés : Intercédez pour tous ceux qui tr
 Jour 7 — Michel, ange de la prière d'Israël : Accompagnez ma prière et présentez-la devant le trône de Dieu.
 Jour 8 — Michel, patron des mourants : Assistez tous ceux qui, aujourd'hui, quittent ce monde, et conduisez leur âme vers Dieu.
 Jour 9 — Michel, prince de la milice céleste : Obtenez-moi la grâce particulière que je demande en cette neuvaine, si elle est conforme à la volonté de Dieu.`,
-  histoire: `Le nom de Michel, qui signifie en hébreu « Qui est comme Dieu ? », apparaît dans le livre de Daniel puis dans l'Apocalypse, où il combat le dragon à la tête des armées célestes. La tradition chrétienne en a fait le chef de la milice angélique, protecteur du peuple de Dieu et gardien de l'Église.
+    histoire: `Le nom de Michel, qui signifie en hébreu « Qui est comme Dieu ? », apparaît dans le livre de Daniel puis dans l'Apocalypse, où il combat le dragon à la tête des armées célestes. La tradition chrétienne en a fait le chef de la milice angélique, protecteur du peuple de Dieu et gardien de l'Église.
 
 La prière quotidienne de cette neuvaine, aujourd'hui la plus répandue au monde parmi celles adressées à saint Michel, fut composée par le pape Léon XIII en 1886, à la suite d'une expérience personnelle restée célèbre : selon le récit transmis par son entourage, le pape, après avoir célébré la messe le 13 octobre 1884, serait resté immobile un long moment, comme plongé dans une vision effrayante, avant de se rendre directement dans son bureau pour rédiger cette prière, qu'il ordonna aussitôt de réciter à la fin de chaque messe basse dans toute l'Église catholique, une pratique observée jusqu'à la réforme liturgique de 1964. Retirée un temps de l'usage courant, cette prière connaît depuis plusieurs décennies un regain de popularité considérable, à tel point que le pape Jean-Paul II lui-même encouragea publiquement les fidèles, en 1994, à la reprendre largement dans leur prière personnelle face aux défis de l'époque contemporaine. Saint Michel est aujourd'hui le saint patron des policiers, des militaires et de tous ceux dont la mission est de protéger autrui.`,
+},
+{
+  id: 'neuvaine-saint-antoine-padoue',
+  titre: 'Neuvaine à Saint Antoine de Padoue',
+  duree: '9 jours',
+  contenu: `PRIÈRE QUOTIDIENNE (à répéter chaque jour) :
+Ô glorieux saint Antoine, lumière de la sainte Écriture et secours des désespérés, je vous prie, exaucez mes humbles prières, en m'obtenant de Dieu sa divine miséricorde et son assistance. Accordez-moi la grâce que je vous demande avec confiance en cette neuvaine, si elle est conforme à sa sainte volonté.
+(Ajouter : 3 Notre Père, 3 Je vous salue Marie, 3 Gloire au Père.)
+
+Jour 1 — Le prédicateur inspiré : Saint Antoine, docteur de l'Église, obtenez-moi de mieux comprendre et d'aimer la Parole de Dieu.
+Jour 2 — Le pauvre volontaire : Vous qui avez tout quitté pour suivre le Christ dans la pauvreté franciscaine, détachez mon cœur des biens de ce monde.
+Jour 3 — Le protecteur des objets et des causes perdues : Aidez-moi à retrouver ce que j'ai perdu, et surtout à ne jamais perdre espoir dans les situations les plus difficiles.
+Jour 4 — L'ami des pauvres : Rendez-moi attentif aux besoins de ceux qui manquent du nécessaire autour de moi.
+Jour 5 — Le gardien des familles : Veillez sur mon foyer et sur l'unité de ceux que j'aime.
+Jour 6 — Le consolateur des malades : Intercédez pour tous ceux qui souffrent aujourd'hui dans leur corps ou leur âme.
+Jour 7 — L'ami des enfants : Vous qui avez tenu l'Enfant Jésus dans vos bras, protégez tous les enfants du monde.
+Jour 8 — Le patron des marins et des voyageurs : Gardez tous ceux qui sont en chemin, sur terre comme sur mer.
+Jour 9 — Le thaumaturge de Padoue : Obtenez-moi, par votre intercession si puissante auprès de Dieu, la grâce particulière que je demande en cette neuvaine.`,
+  histoire: `Né en 1195 à Lisbonne sous le nom de Fernando Martins de Bulhões, il entra d'abord chez les chanoines réguliers de Saint-Augustin avant de rejoindre l'ordre franciscain naissant, bouleversé par le témoignage de frères franciscains martyrisés au Maroc dont les reliques venaient d'être rapportées au Portugal. Devenu l'un des plus grands prédicateurs de son temps, il fut chargé par l'évêque de Padoue de prêcher chaque jour du Carême 1231 devant la ville entière. Sa maîtrise exceptionnelle des Écritures lui valut d'être déclaré docteur de l'Église en 1946 par le pape Pie XII, l'un des rares saints de l'histoire à recevoir ce titre.
+
+Sa réputation de faiseur de miracles se répandit très vite après sa mort, survenue le 13 juin 1231 près de Padoue à l'âge d'environ trente-six ans seulement : il fut canonisé moins d'un an plus tard, le 30 mai 1232, par le pape Grégoire IX, l'une des canonisations les plus rapides de toute l'histoire de l'Église. Sa dévotion comme protecteur des objets perdus, aujourd'hui la plus populaire, remonterait au XVIIᵉ siècle et à l'anecdote d'un novice qui, après avoir dérobé son livre de psaumes annoté, se serait senti contraint de le lui rendre après une prière insistante. Le mardi, jour de sa mort, reste traditionnellement considéré comme son jour privilégié, donnant lieu à une dévotion particulière appelée la Treizaine, priée durant les treize mardis précédant sa fête du 13 juin.`,
 },
 ]
 },
