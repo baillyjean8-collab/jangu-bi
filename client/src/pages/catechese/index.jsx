@@ -233,7 +233,11 @@ R/. Et l'intendant de tous ses biens.
 
 Prions : Ô Dieu, qui par une providence ineffable avez daigné choisir le bienheureux Joseph pour être l'époux de votre sainte Mère, faites, nous vous en prions, qu'honorant ici-bas en lui notre protecteur, nous méritions de l'avoir pour intercesseur dans le ciel. Vous qui vivez et régnez dans les siècles des siècles.
 Amen.`,
-  {
+  histoire: `La dévotion publique à saint Joseph a mis longtemps à s'épanouir pleinement dans l'Église. Dès le début du XVIIe siècle, les papes Grégoire XV puis Urbain VIII rendirent obligatoire, dans toute la chrétienté, la célébration de sa fête le 19 mars. Le pape Léon XIII lui consacra ensuite une encyclique entière, Quamquam Pluries, l'associant à l'intercession de la Vierge Marie ; puis, le 8 décembre 1870, Pie IX le proclama solennellement patron de l'Église universelle tout entière.
+
+C'est finalement le 18 mars 1909, veille de sa fête, que le pape saint Pie X, lui-même prénommé Joseph de baptême, approuva par décret apostolique cette litanie pour un usage public dans toute l'Église, quelques décennies après la proclamation de son patronage universel par Pie IX. Comme celle du Sacré-Cœur déjà présentée dans cette bibliothèque, elle fait partie des six seules litanies officiellement reconnues pour un usage liturgique et public par l'Église catholique. Plus récemment encore, à l'occasion de l'Année Saint-Joseph proclamée en 2020 par la lettre apostolique Patris Corde, le pape François a approuvé l'ajout de sept nouvelles invocations à cette même litanie, tirées des réflexions de plusieurs de ses prédécesseurs sur la figure de ce père silencieux et fidèle.`,
+},
+{
   id: 'litanies-saints',
   titre: 'Litanies des Saints',
   duree: '5 min',
@@ -316,6 +320,10 @@ Amen.`,
 
 Cette litanie occupe une place unique dans la liturgie catholique : elle est chantée lors de la veillée pascale avant la bénédiction de l'eau baptismale, pendant la célébration du baptême lui-même, lors des ordinations d'évêques, de prêtres et de diacres, ainsi qu'à la fête de la Toussaint. Elle accompagne aussi la dédicace d'une église, la profession religieuse, et peut être récitée en temps de grande épreuve collective : famine, guerre ou catastrophe. Elle fut notamment chantée lors des obsèques du pape Jean-Paul II en 2005, puis à celles du pape François en 2025, et retentit en latin à chaque conclave, pendant la procession qui conduit les cardinaux électeurs jusqu'à la chapelle Sixtine. Une règle précise encadre son usage : on ne peut y invoquer que des saints officiellement inscrits aux calendriers liturgiques de l'Église, jamais des personnes dont le culte n'a pas été formellement reconnu par elle.`,
 },
+]
+},
+{
+id: 'neuvaines', titre: 'Neuvaines', icon: '🕯️', count: 4,
 prieres: [
 {
   id: 'neuvaine-esprit-saint',
