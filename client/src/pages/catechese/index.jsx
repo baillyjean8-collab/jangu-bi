@@ -1294,4 +1294,287 @@ function ContentReader({ open, onClose, variant, title, subtitle, badge, bodyTex
     </div>
   );
 }
+// ══════════════════════════════════════════════════════════════
+// NOUVEAU — ONGLET DÉVOTIONS (accueil médaillons → catégorie → lecteur)
+// ══════════════════════════════════════════════════════════════
+function OngletDevotions({ recherche, onOpenReader }) {
+  const [categorieOuverte, setCategorieOuverte] = useState(null);
+
+  const categoriesFiltrees = CATEGORIES_PRIERES.map(cat => ({
+    ...cat,
+    prieres: cat.prieres.filter(p => p.titre.toLowerCase().includes(recherche.toLowerCase()) || p.contenu.toLowerCase().includes(recherche.toLowerCase()))
+  })).filter(cat => cat.prieres.length > 0);
+
+  if (categorieOuverte) {
+    const cat = categoriesFiltrees.find(c => c.id === categorieOuverte) || CATEGORIES_PRIERES.find(c => c.id === categorieOuverte);
+    return (
+      <div>
+        <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:16 }}>
+          <div onClick={() => setCategorieOuverte(null)} style={{ width:32,height:32,borderRadius:'50%',background:'rgba(200,168,75,0.12)',border:'1px solid rgba(200,168,75,0.3)',display:'flex',alignItems:'center',justifyContent:'center',color:OR,cursor:'pointer',flexShrink:0 }}>←</div>
+          <div style={{ fontFamily:'Georgia,serif', fontSize:'1.05rem', fontWeight:700, color:VERT }}>{cat.titre}</div>
+        </div>
+        {cat.prieres.map(p => (
+          <div key={p.id} onClick={() => onOpenReader({
+              variant:'priere', title:p.titre, subtitle: cat.titre + ' · ' + p.duree,
+              bodyText:p.contenu, boxLabel: p.histoire ? '📜 Histoire de cette prière' : null, boxText: p.histoire
+            })}
+            style={{ display:'flex', alignItems:'center', justifyContent:'space-between', background:'#fff', borderRadius:13, padding:'0.9rem 1rem', marginBottom:'0.55rem', border:'1px solid rgba(200,168,75,0.22)', cursor:'pointer' }}>
+            <div style={{ display:'flex', alignItems:'center', gap:9 }}>
+              <div style={{ width:6, height:6, borderRadius:'50%', background:OR, flexShrink:0 }}/>
+              <span style={{ fontFamily:'Georgia,serif', fontSize:'0.88rem', color:VERT, fontWeight:600 }}>{p.titre}</span>
+            </div>
+            <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+              <span style={{ fontSize:11, color:'rgba(30,45,20,0.4)' }}>{p.duree}</span>
+              <span style={{ color:OR }}>›</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div style={{ background:`linear-gradient(160deg,${DARK} 0%, #1a1408 100%)`, borderRadius:18, padding:'1.3rem 1.1rem', marginBottom:'1.1rem', position:'relative', overflow:'hidden' }}>
+        <div style={{ position:'absolute',top:-30,left:'50%',transform:'translateX(-50%)',width:220,height:120,background:'radial-gradient(ellipse,rgba(200,168,75,0.16),transparent 70%)' }}/>
+        <div style={{ display:'flex', alignItems:'center', gap:12, position:'relative', zIndex:2 }}>
+          <div style={{ width:46, height:46, flexShrink:0 }}><IconDevotions size={46} /></div>
+          <div>
+            <div style={{ fontFamily:'Georgia,serif', fontSize:'1.08rem', color:IVOIRE, fontWeight:700 }}>Dévotions</div>
+            <div style={{ fontSize:11, color:'rgba(200,168,75,0.6)', marginTop:2 }}>21 prières classiques · litanies · neuvaines</div>
+          </div>
+        </div>
+      </div>
+
+      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
+        {categoriesFiltrees.map((cat, i) => (
+          <div key={cat.id} onClick={() => setCategorieOuverte(cat.id)}
+            style={{ gridColumn: (i===categoriesFiltrees.length-1 && categoriesFiltrees.length%2===1) ? 'span 2' : 'auto', background:'#fff', borderRadius:16, padding:'1.1rem 0.85rem', border:'1px solid rgba(200,168,75,0.25)', cursor:'pointer', textAlign:'center' }}>
+            <div style={{ width:52, height:52, margin:'0 auto 8px' }}><IconDevotions size={52} /></div>
+            <div style={{ fontFamily:'Georgia,serif', fontWeight:700, fontSize:'0.86rem', color:VERT, marginBottom:3 }}>{cat.titre}</div>
+            <div style={{ fontSize:11, color:OR, fontWeight:800 }}>{cat.prieres.length} prière{cat.prieres.length>1?'s':''}</div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ marginTop:'1.2rem', background:DARK, borderRadius:13, padding:'0.85rem 1rem', borderLeft:'2px solid '+OR, color:'rgba(245,239,228,0.6)', fontSize:11, lineHeight:1.5 }}>
+        💡 Chaque prière s'ouvre dans un espace dédié, pensé pour la lecture et la récitation.
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════
+// NOUVEAU — ONGLET CATÉCHISME (accueil médaillons → catégorie → lecteur)
+// ══════════════════════════════════════════════════════════════
+function OngletCatechisme({ recherche, onOpenReader, onOpenQuiz }) {
+  const [categorieOuverte, setCategorieOuverte] = useState(null);
+
+  const categoriesFiltrees = CATEGORIES_CATECHISME.map(cat => ({
+    ...cat,
+    articles: cat.articles.filter(a => a.titre.toLowerCase().includes(recherche.toLowerCase()) || a.contenu.toLowerCase().includes(recherche.toLowerCase()))
+  })).filter(cat => cat.articles.length > 0);
+
+  if (categorieOuverte) {
+    const cat = categoriesFiltrees.find(c => c.id === categorieOuverte) || CATEGORIES_CATECHISME.find(c => c.id === categorieOuverte);
+    return (
+      <div>
+        <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:16 }}>
+          <div onClick={() => setCategorieOuverte(null)} style={{ width:32,height:32,borderRadius:'50%',background:'rgba(200,168,75,0.12)',border:'1px solid rgba(200,168,75,0.3)',display:'flex',alignItems:'center',justifyContent:'center',color:OR,cursor:'pointer',flexShrink:0 }}>←</div>
+          <div style={{ fontFamily:'Georgia,serif', fontSize:'1.05rem', fontWeight:700, color:VERT }}>{cat.titre}</div>
+        </div>
+        {cat.articles.map(a => {
+          const citation = extraireCitation(a.contenu);
+          return (
+            <div key={a.id} onClick={() => onOpenReader({
+                variant:'article', title:a.titre, subtitle: cat.titre, badge: a.ref,
+                bodyText:a.contenu,
+                boxLabel: citation ? '📖 Verset associé' : null,
+                boxText: citation ? `« ${citation.texte} » (${citation.ref})` : null
+              })}
+              style={{ display:'flex', alignItems:'center', justifyContent:'space-between', background:'#fff', borderRadius:13, padding:'0.9rem 1rem', marginBottom:'0.55rem', border:'1px solid rgba(200,168,75,0.22)', cursor:'pointer' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:9 }}>
+                <div style={{ width:6, height:6, borderRadius:'50%', background:OR, flexShrink:0 }}/>
+                <span style={{ fontFamily:'Georgia,serif', fontSize:'0.87rem', color:VERT, fontWeight:600 }}>{a.titre}</span>
+              </div>
+              <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                <span style={{ fontSize:10, color:'rgba(30,45,20,0.4)' }}>{a.ref.replace('CEC ','')}</span>
+                <span style={{ color:OR }}>›</span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div style={{ background:`linear-gradient(160deg,#1a1a2e 0%, #10101c 100%)`, borderRadius:18, padding:'1.3rem 1.1rem', marginBottom:'1.1rem', position:'relative', overflow:'hidden' }}>
+        <div style={{ position:'absolute',top:-30,left:'50%',transform:'translateX(-50%)',width:220,height:120,background:'radial-gradient(ellipse,rgba(200,168,75,0.16),transparent 70%)' }}/>
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', position:'relative', zIndex:2 }}>
+          <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+            <div style={{ width:44, height:44, borderRadius:12, background:'rgba(200,168,75,0.15)', border:'1px solid rgba(200,168,75,0.35)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+              <IconCatechisme size={26} />
+            </div>
+            <div>
+              <div style={{ fontFamily:'Georgia,serif', fontSize:'1.05rem', color:OR, fontWeight:700 }}>Catéchisme de l'Église</div>
+              <div style={{ fontSize:11, color:'rgba(255,255,255,0.5)', marginTop:2 }}>Sources : Vatican · CEC · Conciles</div>
+            </div>
+          </div>
+          <button onClick={onOpenQuiz} style={{ background:OR, color:VERT, border:'none', borderRadius:12, padding:'9px 14px', fontWeight:800, fontSize:12, cursor:'pointer', flexShrink:0 }}>🎯 Quiz</button>
+        </div>
+      </div>
+
+      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
+        {categoriesFiltrees.map((cat, i) => (
+          <div key={cat.id} onClick={() => setCategorieOuverte(cat.id)}
+            style={{ gridColumn: (i===categoriesFiltrees.length-1 && categoriesFiltrees.length%2===1) ? 'span 2' : 'auto', background:'#fff', borderRadius:16, padding:'1.1rem 0.85rem', border:'1px solid rgba(200,168,75,0.25)', cursor:'pointer', textAlign:'center' }}>
+            <div style={{ width:52, height:52, margin:'0 auto 8px' }}><IconCatechisme size={52} /></div>
+            <div style={{ fontFamily:'Georgia,serif', fontWeight:700, fontSize:'0.86rem', color:VERT, marginBottom:3 }}>{cat.titre}</div>
+            <div style={{ fontSize:11, color:OR, fontWeight:800 }}>{cat.articles.length} article{cat.articles.length>1?'s':''}</div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ marginTop:'1.2rem', background:DARK, borderRadius:13, padding:'0.85rem 1rem', borderLeft:'2px solid '+OR, color:'rgba(245,239,228,0.6)', fontSize:11, lineHeight:1.5 }}>
+        💡 Chaque article s'ouvre avec sa référence CEC, et son verset associé quand il est présent dans le texte.
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════
+// NOUVEAU — ONGLET BIBLE (hero + testaments + versets → lecteur)
+// ══════════════════════════════════════════════════════════════
+function OngletBible({ recherche, onOpenReader }) {
+  const navigate = useNavigate();
+  const versetsFiltres = VERSETS_CLES.filter(v => v.ref.toLowerCase().includes(recherche.toLowerCase()) || v.texte.toLowerCase().includes(recherche.toLowerCase()));
+
+  return (
+    <div>
+      <div style={{ background:'linear-gradient(160deg,#2c1810 0%, #1a0e08 100%)', borderRadius:18, padding:'1.3rem 1.1rem', marginBottom:'1.1rem', position:'relative', overflow:'hidden', textAlign:'center' }}>
+        <div style={{ position:'absolute',top:-30,left:'50%',transform:'translateX(-50%)',width:220,height:130,background:'radial-gradient(ellipse,rgba(200,168,75,0.14),transparent 70%)' }}/>
+        <div style={{ width:46, height:46, margin:'0 auto 8px', position:'relative', zIndex:2 }}><IconBible size={46} /></div>
+        <div style={{ fontFamily:'Georgia,serif', fontSize:'1.15rem', color:OR, fontWeight:700, position:'relative', zIndex:2 }}>Bible de Jérusalem</div>
+        <div style={{ fontSize:11, color:'rgba(255,255,255,0.55)', margin:'3px 0 12px', position:'relative', zIndex:2 }}>Ancien et Nouveau Testament</div>
+        <div style={{ display:'flex', gap:10, justifyContent:'center', position:'relative', zIndex:2 }}>
+          <div style={{ background:'rgba(255,255,255,0.06)', border:'1px solid rgba(200,168,75,0.25)', borderRadius:12, padding:'7px 15px' }}>
+            <div style={{ fontFamily:'Georgia,serif', fontSize:'1rem', color:IVOIRE, fontWeight:700 }}>73</div>
+            <div style={{ fontSize:9, color:'rgba(200,168,75,0.6)' }}>LIVRES</div>
+          </div>
+          <div style={{ background:'rgba(255,255,255,0.06)', border:'1px solid rgba(200,168,75,0.25)', borderRadius:12, padding:'7px 15px' }}>
+            <div style={{ fontFamily:'Georgia,serif', fontSize:'1rem', color:IVOIRE, fontWeight:700 }}>1189</div>
+            <div style={{ fontSize:9, color:'rgba(200,168,75,0.6)' }}>CHAPITRES</div>
+          </div>
+        </div>
+      </div>
+
+      <div style={{ fontSize:11, color:'rgba(30,45,20,0.4)', fontWeight:700, letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:'0.7rem' }}>Parcourir</div>
+      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:'1.2rem' }}>
+        <div onClick={() => navigate('/bible?testament=ancien')} style={{ background:'#fff', borderRadius:16, padding:'1.2rem 0.9rem', border:'1px solid rgba(200,168,75,0.25)', cursor:'pointer', textAlign:'center' }}>
+          <div style={{ fontSize:'1.4rem', marginBottom:6 }}>📜</div>
+          <div style={{ fontFamily:'Georgia,serif', fontWeight:700, fontSize:'0.86rem', color:VERT }}>Ancien Testament</div>
+          <div style={{ fontSize:11, color:OR, fontWeight:800 }}>46 livres</div>
+        </div>
+        <div onClick={() => navigate('/bible?testament=nouveau')} style={{ background:'#fff', borderRadius:16, padding:'1.2rem 0.9rem', border:'1px solid rgba(200,168,75,0.25)', cursor:'pointer', textAlign:'center' }}>
+          <div style={{ width:28, height:28, margin:'0 auto 6px' }}><IconBible size={28} /></div>
+          <div style={{ fontFamily:'Georgia,serif', fontWeight:700, fontSize:'0.86rem', color:VERT }}>Nouveau Testament</div>
+          <div style={{ fontSize:11, color:OR, fontWeight:800 }}>27 livres</div>
+        </div>
+      </div>
+
+      <div style={{ fontSize:11, color:'rgba(30,45,20,0.4)', fontWeight:700, letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:'0.7rem' }}>Versets clés</div>
+      {versetsFiltres.map((v,i) => (
+        <div key={i} onClick={() => onOpenReader({ variant:'verset', title:v.ref, subtitle:v.livre, verseText:v.texte, verseBook:v.livre, boxLabel:'📜 Contexte', boxText:v.contexte })}
+          style={{ background:'#fff', borderRadius:14, padding:'0.95rem 1.05rem', marginBottom:'0.6rem', border:'1px solid rgba(200,168,75,0.22)', cursor:'pointer', position:'relative', overflow:'hidden' }}>
+          <div style={{ position:'absolute', top:-14, left:8, fontFamily:'Georgia,serif', fontSize:'3.4rem', color:'rgba(200,168,75,0.12)', lineHeight:1 }}>"</div>
+          <span style={{ display:'inline-block', background:'rgba(30,45,20,0.08)', color:VERT, border:'1px solid rgba(30,45,20,0.15)', borderRadius:20, padding:'3px 10px', fontSize:11, fontWeight:800, marginBottom:7, position:'relative', zIndex:2 }}>{v.ref}</span>
+          <div style={{ fontFamily:'Georgia,serif', fontStyle:'italic', fontSize:'0.85rem', lineHeight:1.55, color:'#2a2a2a', position:'relative', zIndex:2 }}>« {v.texte} »</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════
+// PAGE PRINCIPALE
+// ══════════════════════════════════════════════════════════════
+export default function CatechesePage() {
+  const [searchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  const officeParam = searchParams.get('office');
+  const TABS = ['priere', 'devotions', 'catechisme', 'bible'];
+  const initialTab = TABS.includes(tabParam) ? tabParam : 'priere';
+
+  const [onglet, setOnglet] = useState(initialTab);
+  const [recherche, setRecherche] = useState('');
+  const [showQuiz, setShowQuiz] = useState(false);
+  const [reader, setReader] = useState(null); // { variant, title, subtitle, badge, bodyText, verseText, verseBook, boxLabel, boxText }
+
+  const TAB_LABELS = { priere: 'Prières', devotions: 'Dévotions', catechisme: 'Catéchisme', bible: 'Bible' };
+  const activeIndex = TABS.indexOf(onglet);
+
+  return (
+    <AppShell>
+      <IconDefs />
+
+      <div style={{ background:IVOIRE, backgroundImage:BOGOLAN, padding:'2.8rem 1rem 0', borderBottom:'1px solid rgba(200,168,75,0.2)' }}>
+        <div style={{ display:'flex', alignItems:'center', gap:'0.75rem', marginBottom:'0.75rem' }}>
+          <div style={{ width:38, height:38, borderRadius:10, background:DARK, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'1.4rem' }}>📖</div>
+          <div style={{ flex:1 }}>
+            <h1 style={{ margin:0, fontSize:'1.3rem', fontWeight:700, color:VERT, fontFamily:'Georgia,serif' }}>Catéchèse</h1>
+            <p style={{ margin:0, fontSize:'0.75rem', color:'rgba(30,45,20,0.45)' }}>Prières · Dévotions · Catéchisme · Bible</p>
+          </div>
+        </div>
+
+        <div style={{ position:'relative', marginBottom:'0.75rem' }}>
+          <span style={{ position:'absolute', left:'0.75rem', top:'50%', transform:'translateY(-50%)' }}>🔍</span>
+          <input type="text" placeholder="Rechercher…" value={recherche} onChange={e => setRecherche(e.target.value)}
+            style={{ width:'100%', padding:'0.6rem 0.75rem 0.6rem 2.2rem', borderRadius:10, border:'1px solid rgba(200,168,75,0.25)', background:'white', color:VERT, fontSize:'0.85rem', outline:'none', boxSizing:'border-box' }}/>
+        </div>
+
+        <div style={{ position:'relative', display:'flex', background:'rgba(30,45,20,0.06)', borderRadius:999, padding:5, gap:1, marginBottom:0 }}>
+          <div style={{ position:'absolute', top:5, bottom:5, left:5, width:'calc(25% - 2px)', background:VERT, borderRadius:999, boxShadow:'0 3px 10px rgba(30,45,20,0.35)', transition:'transform 0.35s cubic-bezier(.65,0,.35,1)', transform:`translateX(${activeIndex*100}%)` }}/>
+          {TABS.map(t => {
+            const Icon = TAB_ICONS[t];
+            const active = onglet === t;
+            return (
+              <button key={t} onClick={() => { setOnglet(t); setRecherche(''); }}
+                style={{ position:'relative', zIndex:2, flex:1, border:'none', background:'none', padding:'0.55rem 0.1rem', display:'flex', flexDirection:'column', alignItems:'center', gap:3, cursor:'pointer' }}>
+                <div style={{ width:19, height:19, opacity: active ? 1 : 0.55, filter: active ? 'none' : 'grayscale(0.4)' }}><Icon size={19} /></div>
+                <span style={{ fontWeight:700, fontSize:'0.58rem', color: active ? OR : 'rgba(30,45,20,0.5)' }}>{TAB_LABELS[t]}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div style={{ padding:'1rem', paddingBottom:'5rem', background:CREME, minHeight:'60vh' }}>
+        {onglet === 'priere'     && <OngletPrieres autoOpen={officeParam === 'auto'} />}
+        {onglet === 'devotions'  && <OngletDevotions recherche={recherche} onOpenReader={setReader} />}
+        {onglet === 'catechisme' && <OngletCatechisme recherche={recherche} onOpenReader={setReader} onOpenQuiz={() => setShowQuiz(true)} />}
+        {onglet === 'bible'      && <OngletBible recherche={recherche} onOpenReader={setReader} />}
+      </div>
+
+      {showQuiz && <QuizModal onClose={() => setShowQuiz(false)}/>}
+
+      {reader && (
+        <ContentReader
+          open={!!reader}
+          onClose={() => setReader(null)}
+          variant={reader.variant}
+          title={reader.title}
+          subtitle={reader.subtitle}
+          badge={reader.badge}
+          bodyText={reader.bodyText}
+          verseText={reader.verseText}
+          verseBook={reader.verseBook}
+          boxLabel={reader.boxLabel}
+          boxText={reader.boxText}
+        />
+      )}
+    </AppShell>
+  );
+}
 
