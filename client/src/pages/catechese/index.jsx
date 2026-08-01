@@ -661,3 +661,637 @@ function getStatut(h, prieresFaites) {
   if (heure >= h.fin) return "manquee";
   return "future";
 }
+// ══════════════════════════════════════════════════════════════
+// COMPOSANT OFFICE DETAIL (inchangé)
+// ══════════════════════════════════════════════════════════════
+function OfficePage({ heure, onBack, onTerminer }) {
+  const [secIdx, setSecIdx] = React.useState(0);
+  const [lecture, setLecture] = React.useState(false);
+  const [lectureSecIdx, setLectureSecIdx] = React.useState(0);
+  const flameRef = React.useRef(null);
+  const lectureRef = React.useRef(false);
+  const timeoutRef = React.useRef(null);
+
+  React.useEffect(() => {
+    document.body.classList.add('office-open');
+    return () => {
+      document.body.classList.remove('office-open');
+    };
+  }, []);
+
+  React.useEffect(() => {
+    return () => {
+      window.speechSynthesis && window.speechSynthesis.cancel();
+      clearTimeout(timeoutRef.current);
+      lectureRef.current = false;
+    };
+  }, []);
+
+  React.useEffect(() => {
+    let t = 0;
+    const id = setInterval(() => {
+      t += 0.06;
+      if (flameRef.current) flameRef.current.style.transform = 'scaleX(' + (1 + Math.sin(t * 1.4) * 0.07) + ') scaleY(' + (1 + Math.cos(t * 0.9) * 0.05) + ')';
+    }, 50);
+    return () => clearInterval(id);
+  }, []);
+
+  function preparerTexte(sec) {
+    let texte = sec.titre + '. ';
+    if (sec.antienne) texte += 'Antienne : ' + sec.antienne + '. ';
+    let contenu = (sec.contenu || '')
+      .replace(/☧/g, 'Verset.').replace(/℟/g, 'Repons.')
+      .replace(/℣/g, 'Verset.').replace(/℟/g, 'Repons.')
+      .replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹]+/g, '').replace(/\n\n+/g, '. ').replace(/\n/g, '. ');
+    return texte + contenu;
+  }
+
+  function lireSectionDepuis(idx) {
+    if (!lectureRef.current || idx >= heure.sections.length) {
+      setLecture(false); setLectureSecIdx(0); lectureRef.current = false; return;
+    }
+    setSecIdx(idx); setLectureSecIdx(idx);
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(preparerTexte(heure.sections[idx]));
+    u.lang = 'fr-FR'; u.rate = 0.82;
+    u.onend = () => { if (lectureRef.current) timeoutRef.current = setTimeout(() => lireSectionDepuis(idx + 1), 2500); };
+    u.onerror = () => { setLecture(false); lectureRef.current = false; };
+    const lancer = () => window.speechSynthesis.speak(u);
+    const voix = window.speechSynthesis.getVoices();
+    if (!voix.length) { window.speechSynthesis.onvoiceschanged = lancer; window.speechSynthesis.getVoices(); }
+    else setTimeout(lancer, 100);
+  }
+
+  function demarrerLecture() { lectureRef.current = true; setLecture(true); lireSectionDepuis(secIdx); }
+  function arreterLecture() { lectureRef.current = false; setLecture(false); window.speechSynthesis && window.speechSynthesis.cancel(); clearTimeout(timeoutRef.current); }
+
+  const sec = heure.sections[secIdx];
+  const OR2 = '#C8A84B';
+  const total = heure.sections.length;
+  const heureCourante = new Date().getHours();
+  const enCours = heureCourante >= heure.debut && heureCourante < heure.fin;
+
+  return (
+    <div style={{ position:'fixed',inset:0,zIndex:400,background:DARK,backgroundImage:DBOG,display:'flex',flexDirection:'column',maxWidth:430,margin:'0 auto' }}>
+      <div style={{ padding:'44px 16px 0',position:'relative' }}>
+        <div style={{ position:'absolute',top:0,left:'50%',transform:'translateX(-50%)',width:200,height:100,background:'radial-gradient(ellipse,rgba(200,168,75,0.07),transparent 70%)',pointerEvents:'none' }}/>
+        <div style={{ display:'flex',alignItems:'center',gap:10,marginBottom:12,position:'relative',zIndex:2 }}>
+          <button onClick={onBack} style={{ width:32,height:32,borderRadius:'50%',background:'rgba(200,168,75,0.1)',border:'1px solid rgba(200,168,75,0.2)',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',color:OR2,fontSize:14,flexShrink:0 }}>←</button>
+          <div style={{ flex:1 }}>
+            <div style={{ display:'flex',alignItems:'center',gap:7,marginBottom:2 }}>
+              <span style={{ fontSize:17 }}>{heure.icon}</span>
+              <span style={{ fontFamily:'Georgia,serif',fontSize:17,fontWeight:700,color:IVOIRE }}>{heure.label}</span>
+              {enCours && <span style={{ fontSize:9,background:OR2,color:VERT,borderRadius:6,padding:'2px 7px',fontWeight:700 }}>EN COURS</span>}
+            </div>
+            <div style={{ fontSize:10,color:'rgba(200,168,75,0.55)' }}>{String(heure.debut).padStart(2,'0')}h00 — {heure.fin===24?'00':String(heure.fin).padStart(2,'0')}h00 · {heure.duree} min · {heure.desc}</div>
+          </div>
+          <button onClick={() => lecture ? arreterLecture() : demarrerLecture()} style={{ background:lecture?'linear-gradient(135deg,rgba(200,168,75,0.3),rgba(200,168,75,0.15))':'linear-gradient(135deg,rgba(200,168,75,0.18),rgba(200,168,75,0.08))',border:'1px solid rgba(200,168,75,0.35)',borderRadius:20,padding:'7px 13px',display:'flex',alignItems:'center',gap:6,cursor:'pointer',flexShrink:0 }}>
+            <span style={{ fontSize:13 }}>{lecture ? '⏸' : '▶'}</span>
+            <span style={{ fontSize:10,color:OR2,fontWeight:700,fontFamily:'Georgia,serif' }}>{lecture ? 'Pause' : 'Écouter'}</span>
+          </button>
+          <div style={{ display:'flex',flexDirection:'column',alignItems:'center',flexShrink:0 }}>
+            <div ref={flameRef} style={{ width:7,height:12,background:'radial-gradient(ellipse 50% 25% at 50% 90%,rgba(255,255,255,0.9),transparent 50%),radial-gradient(ellipse 80% 100% at 50% 100%,#F5A020,transparent 65%),radial-gradient(ellipse 60% 80% at 50% 60%,#E86820,transparent)',borderRadius:'50% 50% 30% 30%',filter:'blur(0.3px)',transformOrigin:'center bottom' }}/>
+            <div style={{ width:1.5,height:3,background:'#2A1A0A' }}/>
+            <div style={{ width:9,height:26,background:'linear-gradient(to right,#C8B890,#F8F0DC,#EDE0C0,#B8A878)',borderRadius:'2px 2px 0 0' }}/>
+          </div>
+        </div>
+        <div style={{ display:'flex',alignItems:'center',gap:0,marginBottom:0,position:'relative',zIndex:2 }}>
+          {heure.sections.map((s, i) => (
+            <React.Fragment key={i}>
+              {i > 0 && <div style={{ flex:1,height:2,background:i<=secIdx?OR2:'rgba(200,168,75,0.12)',borderRadius:2 }}/>}
+              <div onClick={() => setSecIdx(i)} style={{ width:i===secIdx?11:7,height:i===secIdx?11:7,borderRadius:'50%',background:i<secIdx?OR2:i===secIdx?OR2:'rgba(200,168,75,0.15)',border:i===secIdx?'none':i<secIdx?'none':'1px solid rgba(200,168,75,0.25)',boxShadow:i===secIdx?'0 0 0 3px rgba(200,168,75,0.2)':'none',cursor:'pointer',flexShrink:0,transition:'all 0.3s' }}/>
+            </React.Fragment>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ padding:'10px 16px 0',display:'flex',gap:5,overflowX:'auto',scrollbarWidth:'none' }}>
+        {heure.sections.map((s, i) => (
+          <button key={i} onClick={() => setSecIdx(i)} style={{ padding:'5px 12px',borderRadius:20,border:i===secIdx?'1px solid '+OR2:'1px solid rgba(200,168,75,0.18)',background:i===secIdx?'rgba(200,168,75,0.15)':'rgba(200,168,75,0.04)',color:i===secIdx?OR2:'rgba(200,168,75,0.45)',fontSize:10,cursor:'pointer',whiteSpace:'nowrap',flexShrink:0,fontWeight:i===secIdx?700:400,transition:'all 0.2s' }}>
+            {s.titre}
+          </button>
+        ))}
+      </div>
+
+      {lecture && (
+        <div style={{ margin:'8px 16px 0',padding:'7px 12px',background:'rgba(200,168,75,0.06)',borderRadius:10,border:'1px solid rgba(200,168,75,0.15)',display:'flex',alignItems:'center',gap:10 }}>
+          <span style={{ fontSize:12,color:OR2 }}>🔊</span>
+          <div style={{ flex:1,height:2,background:'rgba(200,168,75,0.1)',borderRadius:2,overflow:'hidden' }}>
+            <div style={{ height:'100%',background:'linear-gradient(to right,#8B6020,'+OR2+')',borderRadius:2,width:((lectureSecIdx+1)/total*100)+'%',transition:'width 0.6s' }}/>
+          </div>
+          <span style={{ fontSize:10,color:'rgba(200,168,75,0.6)',fontWeight:600 }}>{lectureSecIdx+1}/{total}</span>
+          <button onClick={arreterLecture} style={{ background:'rgba(200,50,50,0.08)',border:'1px solid rgba(200,50,50,0.18)',borderRadius:7,padding:'2px 7px',fontSize:10,color:'#c0392b',cursor:'pointer',fontWeight:700 }}>■</button>
+        </div>
+      )}
+
+      <div style={{ flex:1,overflowY:'auto',padding:'14px 18px 110px' }}>
+        {lecture && lectureSecIdx===secIdx && (
+          <div style={{ display:'flex',alignItems:'center',gap:7,marginBottom:14,padding:'8px 14px',background:'rgba(200,168,75,0.07)',borderRadius:10,borderLeft:'2px solid '+OR2 }}>
+            <span style={{ fontSize:13,color:OR2 }}>🔊</span>
+            <span style={{ fontSize:11,color:OR2,fontWeight:600,fontFamily:'Georgia,serif' }}>Lecture en cours…</span>
+          </div>
+        )}
+        <div style={{ display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:10 }}>
+          <div>
+            <div style={{ fontFamily:'Georgia,serif',fontSize:20,fontWeight:700,color:IVOIRE,marginBottom:5 }}>{sec.titre}</div>
+            {sec.antienne && <div style={{ fontFamily:'Georgia,serif',fontStyle:'italic',fontSize:12,color:OR2 }}>Antienne : {sec.antienne}</div>}
+          </div>
+          {sec.ref && <div style={{ background:'rgba(200,168,75,0.08)',border:'0.5px solid rgba(200,168,75,0.2)',borderRadius:6,padding:'4px 10px',fontSize:10,color:'rgba(200,168,75,0.6)',fontStyle:'italic',flexShrink:0,marginTop:2 }}>— {sec.ref}</div>}
+        </div>
+        <div style={{ height:1,background:'linear-gradient(to right,rgba(200,168,75,0.35),rgba(200,168,75,0.03))',marginBottom:16 }}/>
+        <div style={{ fontFamily:'Georgia,serif',fontSize:14,lineHeight:2,color:'rgba(245,239,228,0.85)' }}>
+          {(sec.contenu || '').split('\n').map((line, i) => {
+            if (!line.trim()) return <div key={i} style={{ height:8 }}/>;
+            const isLit = line.startsWith('℣') || line.startsWith('℟');
+            const isNum = /^[⁰¹²³⁴⁵⁶⁷⁸⁹]/.test(line);
+            if (isNum) {
+              const num = line.match(/^[⁰¹²³⁴⁵⁶⁷⁸⁹]+/)[0];
+              const text = line.replace(/^[⁰¹²³⁴⁵⁶⁷⁸⁹]+/, '');
+              return (
+                <div key={i} style={{ display:'flex',gap:10,marginBottom:8 }}>
+                  <span style={{ color:OR2,fontSize:10,fontWeight:700,marginTop:5,flexShrink:0 }}>{num}</span>
+                  <span>{text}</span>
+                </div>
+              );
+            }
+            return <div key={i} style={{ color:isLit?OR2:'rgba(245,239,228,0.85)',marginBottom:isLit?4:0 }}>{line}</div>;
+          })}
+        </div>
+        {sec.antienne && secIdx > 0 && (
+          <div style={{ marginTop:16,paddingTop:14,borderTop:'0.5px solid rgba(200,168,75,0.15)',fontFamily:'Georgia,serif',fontStyle:'italic',fontSize:12,color:OR2 }}>
+            Antienne : {sec.antienne}
+          </div>
+        )}
+      </div>
+
+      <div style={{ position:'fixed',bottom:0,left:'50%',transform:'translateX(-50%)',width:'100%',maxWidth:430,padding:'12px 16px 16px',boxSizing:'border-box',background:'#0C0A06',borderTop:'0.5px solid rgba(200,168,75,0.15)' }}>
+        <div style={{ display:'flex',gap:8 }}>
+          {secIdx > 0 && (
+            <button onClick={() => setSecIdx(i => i-1)} style={{ flex:1,height:42,background:'rgba(200,168,75,0.06)',border:'1px solid rgba(200,168,75,0.15)',borderRadius:21,color:'rgba(200,168,75,0.6)',fontSize:12,cursor:'pointer',fontFamily:'Georgia,serif',display:'flex',alignItems:'center',justifyContent:'center',gap:5 }}>
+              <span>←</span> Précédent
+            </button>
+          )}
+          {secIdx < total - 1
+            ? <button onClick={() => setSecIdx(i => i+1)} style={{ flex:2,height:42,background:'linear-gradient(135deg,#C8A84B,#8B6020)',border:'none',borderRadius:21,color:VERT,fontSize:13,fontWeight:700,cursor:'pointer',fontFamily:'Georgia,serif',display:'flex',alignItems:'center',justifyContent:'center',gap:5 }}>
+                Suivant <span>→</span>
+              </button>
+            : <button onClick={onTerminer} style={{ flex:2,height:42,background:'linear-gradient(135deg,#C8A84B,#8B6020)',border:'none',borderRadius:21,color:VERT,fontSize:13,fontWeight:700,cursor:'pointer',fontFamily:'Georgia,serif' }}>
+                Amen — Prière accomplie ✦
+              </button>
+          }
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════
+// ONGLET PRIÈRES = 7 HEURES (inchangé)
+// ══════════════════════════════════════════════════════════════
+function OngletPrieres({ autoOpen }) {
+  const heureAutoOuverte = useMemo(() => {
+    if (!autoOpen) return null;
+    const hc = new Date().getHours();
+    const h = HEURES.find(x => hc >= x.debut && hc < x.fin);
+    return h ? h.id : null;
+  }, [autoOpen]);
+  const [officeOuvert, setOfficeOuvert] = useState(heureAutoOuverte);
+  const [prieresFaites, setPrieresFaites] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('jb_offices_' + new Date().toDateString()) || '[]'); } catch { return []; }
+  });
+  const flameRef = useRef(null);
+  const glowRef  = useRef(null);
+
+  useEffect(() => {
+    let t = 0;
+    const id = setInterval(() => {
+      t += 0.06;
+      if (flameRef.current) flameRef.current.style.transform = `scaleX(${1+Math.sin(t*1.4)*0.07}) scaleY(${1+Math.cos(t*0.9)*0.05})`;
+      if (glowRef.current)  glowRef.current.style.opacity = String(0.5+Math.sin(t)*0.22);
+    }, 50);
+    return () => clearInterval(id);
+  }, []);
+
+  function terminer(id) {
+    const n = [...new Set([...prieresFaites, id])];
+    setPrieresFaites(n);
+    try { localStorage.setItem('jb_offices_' + new Date().toDateString(), JSON.stringify(n)); } catch {}
+    setOfficeOuvert(null);
+  }
+
+  const heureCourante = new Date().getHours();
+  const nb = prieresFaites.length;
+  const intensite = Math.min(nb / 7, 1);
+  const niveauFlamme = intensite < 0.15 ? 'Étincelle' : intensite < 0.35 ? 'Petite flamme' : intensite < 0.55 ? 'Flamme vive' : intensite < 0.75 ? 'Flamme ardente' : 'Flamme rayonnante';
+  const heureEnCours = HEURES.find(h => heureCourante >= h.debut && heureCourante < h.fin) || HEURES[6];
+
+  if (officeOuvert) {
+    const h = HEURES.find(x => x.id === officeOuvert);
+    return <OfficePage heure={h} onBack={() => setOfficeOuvert(null)} onTerminer={() => terminer(officeOuvert)} />;
+  }
+
+  return (
+    <div>
+      <div style={{ background:DARK,backgroundImage:DBOG,borderRadius:16,padding:'14px',marginBottom:10,position:'relative',overflow:'hidden' }}>
+        <svg style={{ position:'absolute',top:0,left:'50%',transform:'translateX(-50%)',width:'100%',height:'100%',pointerEvents:'none',opacity:0.12 }} viewBox="0 0 430 160">
+          <defs><radialGradient id="rgo" cx="50%" cy="5%" r="95%"><stop offset="0%" stopColor="#C8A84B" stopOpacity="1"/><stop offset="100%" stopColor="#C8A84B" stopOpacity="0"/></radialGradient></defs>
+          {[-100,-40,20,80,140,200,260,320,380].map((x,i) => <polygon key={i} points={`215,12 ${x},160 ${x+55},160`} fill="url(#rgo)"/>)}
+        </svg>
+        <div style={{ display:'flex',alignItems:'center',gap:14,position:'relative',zIndex:2 }}>
+          <div style={{ display:'flex',flexDirection:'column',alignItems:'center',flexShrink:0 }}>
+            <div style={{ position:'relative' }}>
+              <div ref={glowRef} style={{ position:'absolute',top:-6,left:'50%',transform:'translateX(-50%)',width:32,height:32,borderRadius:'50%',background:'radial-gradient(circle,rgba(200,168,75,0.35),transparent 70%)',pointerEvents:'none' }}/>
+              <div ref={flameRef} style={{ width:11,height:(14+Math.round(intensite*12))+'px',background:'radial-gradient(ellipse 50% 25% at 50% 90%,rgba(255,255,255,0.9),transparent 50%),radial-gradient(ellipse 80% 100% at 50% 100%,#F5A020,transparent 65%),radial-gradient(ellipse 60% 80% at 50% 60%,#E86820,transparent)',borderRadius:'50% 50% 30% 30%',filter:'blur(0.3px)',transformOrigin:'center bottom',position:'relative',zIndex:2 }}/>
+            </div>
+            <div style={{ width:1.5,height:5,background:'#2A1A0A' }}/>
+            <div style={{ width:13,height:44,background:'linear-gradient(to right,#C8B890,#F8F0DC,#EDE0C0,#B8A878)',borderRadius:'3px 3px 0 0',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:1 }}>
+              <span style={{ fontFamily:'Georgia,serif',fontSize:5,fontWeight:700,color:'rgba(120,80,20,0.55)' }}>M</span>
+              <span style={{ fontFamily:'Georgia,serif',fontSize:5,fontWeight:700,color:'rgba(120,80,20,0.55)' }}>D</span>
+            </div>
+            <div style={{ width:17,height:4,background:'rgba(200,168,75,0.2)',borderRadius:'0 0 4px 4px' }}/>
+          </div>
+          <div style={{ flex:1 }}>
+            <div style={{ fontFamily:'Georgia,serif',fontSize:15,fontWeight:700,color:IVOIRE,marginBottom:3 }}>Offices liturgiques</div>
+            <div style={{ fontSize:11,color:OR,fontWeight:600,marginBottom:8 }}>{niveauFlamme} — {nb}/7 offices accomplis</div>
+            <div style={{ height:4,background:'rgba(200,168,75,0.1)',borderRadius:10,overflow:'hidden',marginBottom:4 }}>
+              <div style={{ height:'100%',width:`${Math.round(intensite*100)}%`,background:'linear-gradient(to right,#8B6020,'+OR+')',borderRadius:10,transition:'width 0.8s' }}/>
+            </div>
+            <div style={{ fontSize:10,color:'rgba(245,239,228,0.38)' }}>{Math.round(intensite*100)}% de lumière spirituelle</div>
+          </div>
+        </div>
+      </div>
+
+      {(() => {
+        const h = heureEnCours;
+        const faite = prieresFaites.includes(h.id);
+        return (
+          <div style={{ background:faite?'rgba(30,45,20,0.04)':DARK,backgroundImage:faite?'none':DBOG,borderRadius:14,padding:'13px 14px',border:`1.5px solid ${faite?'rgba(30,45,20,0.12)':'rgba(200,168,75,0.4)'}`,marginBottom:10 }}>
+            <div style={{ display:'flex',alignItems:'center',gap:4,marginBottom:8 }}>
+              <div style={{ width:6,height:6,borderRadius:'50%',background:faite?'#2d7a2d':OR }}/>
+              <span style={{ fontSize:10,color:faite?'#2d7a2d':OR,fontWeight:700,letterSpacing:'0.08em',textTransform:'uppercase',marginLeft:4 }}>{faite?'Accomplie':'En cours maintenant'}</span>
+            </div>
+            <div style={{ display:'flex',alignItems:'center',gap:12 }}>
+              <div style={{ fontSize:26 }}>{h.icon}</div>
+              <div style={{ flex:1 }}>
+                <div style={{ fontFamily:'Georgia,serif',fontSize:15,fontWeight:700,color:faite?VERT:IVOIRE,marginBottom:3 }}>{h.label}</div>
+                <div style={{ fontSize:10,color:faite?'rgba(30,45,20,0.5)':'rgba(245,239,228,0.5)',marginBottom:6 }}>{h.desc}</div>
+                <div style={{ display:'flex',gap:6 }}>
+                  <span style={{ background:'rgba(200,168,75,0.12)',border:'1px solid rgba(200,168,75,0.25)',borderRadius:20,padding:'2px 9px',fontSize:10,color:OR,fontWeight:600 }}>🕘 {String(h.debut).padStart(2,'0')}h00 → {h.fin===24?'00':String(h.fin).padStart(2,'0')}h00</span>
+                  <span style={{ background:'rgba(200,168,75,0.08)',border:'1px solid rgba(200,168,75,0.18)',borderRadius:20,padding:'2px 9px',fontSize:10,color:'rgba(200,168,75,0.7)' }}>⏱ {h.duree} min</span>
+                </div>
+              </div>
+              {!faite && <button onClick={() => setOfficeOuvert(h.id)} style={{ background:'linear-gradient(135deg,'+OR+',#8B6020)',color:VERT,border:'none',borderRadius:20,padding:'10px 14px',fontFamily:'Georgia,serif',fontSize:12,fontWeight:700,cursor:'pointer' }}>Prier ✦</button>}
+            </div>
+          </div>
+        );
+      })()}
+
+      <div style={{ fontSize:10,color:'rgba(30,45,20,0.4)',fontWeight:600,letterSpacing:'0.1em',textTransform:'uppercase',marginBottom:8 }}>Les 7 Heures Liturgiques</div>
+      <div style={{ display:'flex',flexDirection:'column',gap:6 }}>
+        {HEURES.map(h => {
+          const statut = getStatut(h, prieresFaites);
+          const bgMap    = { accomplie:'rgba(30,150,30,0.04)',  encours:'rgba(200,168,75,0.06)', manquee:'rgba(200,50,50,0.04)', future:'white' };
+          const brdMap   = { accomplie:'rgba(30,150,30,0.15)',  encours:'rgba(200,168,75,0.35)', manquee:'rgba(200,50,50,0.15)', future:'rgba(30,45,20,0.07)' };
+          const opacMap  = { accomplie:0.75, encours:1, manquee:0.8, future:0.5 };
+          const badgeMap = {
+            accomplie: <span style={{ fontSize:9,background:'rgba(30,150,30,0.1)',color:'#2d7a2d',border:'1px solid rgba(30,150,30,0.2)',borderRadius:10,padding:'1px 7px',fontWeight:700 }}>✓ Accomplie</span>,
+            encours:   <span style={{ fontSize:9,background:OR,color:VERT,borderRadius:10,padding:'1px 7px',fontWeight:700 }}>▶ En cours</span>,
+            manquee:   <span style={{ fontSize:9,background:'rgba(200,50,50,0.08)',color:'#c0392b',border:'1px solid rgba(200,50,50,0.2)',borderRadius:10,padding:'1px 7px',fontWeight:700 }}>⚠ Manquée</span>,
+            future:    <span style={{ fontSize:9,background:'rgba(30,45,20,0.05)',color:'rgba(30,45,20,0.35)',border:'1px solid rgba(30,45,20,0.1)',borderRadius:10,padding:'1px 7px',fontWeight:600 }}>🔒 {String(h.debut).padStart(2,'0')}h00</span>,
+          };
+          const actionMap = {
+            accomplie: <div style={{ width:28,height:28,borderRadius:'50%',background:'rgba(30,150,30,0.12)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:14,color:'#2d7a2d' }}>✓</div>,
+            encours:   <button onClick={() => setOfficeOuvert(h.id)} style={{ background:'linear-gradient(135deg,'+OR+',#8B6020)',color:VERT,border:'none',borderRadius:14,padding:'7px 13px',fontSize:11,fontWeight:700,cursor:'pointer',fontFamily:'Georgia,serif' }}>Prier ✦</button>,
+            manquee:   <button onClick={() => setOfficeOuvert(h.id)} style={{ background:'rgba(200,50,50,0.07)',color:'#c0392b',border:'1px solid rgba(200,50,50,0.15)',borderRadius:14,padding:'6px 11px',fontSize:10,fontWeight:700,cursor:'pointer' }}>Rattraper</button>,
+            future:    <div style={{ fontSize:18,opacity:0.3 }}>🔒</div>,
+          };
+          return (
+            <div key={h.id} style={{ background:bgMap[statut],borderRadius:12,border:`1px solid ${brdMap[statut]}`,padding:'11px 13px',display:'flex',alignItems:'center',gap:10,opacity:opacMap[statut] }}>
+              <div style={{ fontSize:20 }}>{h.icon}</div>
+              <div style={{ flex:1 }}>
+                <div style={{ display:'flex',alignItems:'center',gap:6,marginBottom:2 }}>
+                  <span style={{ fontFamily:'Georgia,serif',fontSize:13,fontWeight:700,color:statut==='future'?'#888':'#222' }}>{h.label}</span>
+                  {badgeMap[statut]}
+                </div>
+                <div style={{ fontSize:10,color:'#aaa' }}>{String(h.debut).padStart(2,'0')}h00 — {h.fin===24?'00':String(h.fin).padStart(2,'0')}h00 · {h.duree} min</div>
+              </div>
+              {actionMap[statut]}
+            </div>
+          );
+        })}
+      </div>
+
+      <div style={{ background:DARK,backgroundImage:DBOG,borderRadius:12,padding:'12px 14px',marginTop:10,borderLeft:'2px solid '+OR }}>
+        <div style={{ fontSize:11,color:OR,fontWeight:600,marginBottom:4 }}>💡 Le saviez-vous ?</div>
+        <div style={{ fontFamily:'Georgia,serif',fontStyle:'italic',fontSize:11,color:'rgba(245,239,228,0.65)',lineHeight:1.7 }}>Les heures passées peuvent être rattrapées. Dieu accueille toujours votre prière, quelle que soit l'heure.</div>
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════
+// QUIZ MODAL (inchangé)
+// ══════════════════════════════════════════════════════════════
+function QuizModal({ onClose }) {
+  const [idx,      setIdx]      = useState(0);
+  const [selected, setSelected] = useState(null);
+  const [score,    setScore]    = useState(0);
+  const [termine,  setTermine]  = useState(false);
+
+  function repondre(i) {
+    if (selected !== null) return;
+    setSelected(i);
+    if (i === QUIZ_QUESTIONS[idx].correct) setScore(s => s + 1);
+  }
+
+  function suivant() {
+    if (idx < QUIZ_QUESTIONS.length - 1) {
+      setIdx(i => i + 1);
+      setSelected(null);
+    } else {
+      setTermine(true);
+    }
+  }
+
+  const q = QUIZ_QUESTIONS[idx];
+
+  return (
+    <div style={{ position:'fixed',inset:0,zIndex:200,background:'rgba(0,0,0,0.6)',display:'flex',alignItems:'flex-end',justifyContent:'center' }} onClick={onClose}>
+      <div onClick={e=>e.stopPropagation()} style={{ width:'100%',maxWidth:440,background:'#fff',borderRadius:'20px 20px 0 0',padding:'24px 20px 40px',maxHeight:'85vh',overflowY:'auto' }}>
+        <div style={{ width:40,height:4,background:'#ddd',borderRadius:99,margin:'0 auto 20px' }}/>
+        {!termine ? (
+          <>
+            <div style={{ display:'flex',justifyContent:'space-between',marginBottom:16 }}>
+              <span style={{ fontSize:13,fontWeight:700,color:VERT }}>Question {idx+1}/{QUIZ_QUESTIONS.length}</span>
+              <span style={{ fontSize:13,fontWeight:700,color:OR }}>Score : {score}</span>
+            </div>
+            <div style={{ height:6,background:'#f0ece4',borderRadius:99,marginBottom:20 }}>
+              <div style={{ height:'100%',background:OR,borderRadius:99,width:`${((idx+1)/QUIZ_QUESTIONS.length)*100}%`,transition:'width 0.3s' }}/>
+            </div>
+            <p style={{ fontSize:15,fontWeight:700,color:VERT,marginBottom:16,lineHeight:1.4 }}>{q.question}</p>
+            <div style={{ display:'flex',flexDirection:'column',gap:10,marginBottom:20 }}>
+              {q.options.map((opt,i) => {
+                let bg = '#f9f7f2', border = '#e4e4e7', color = VERT;
+                if (selected !== null) {
+                  if (i === q.correct)        { bg='#e8f5e9'; border='#2e7d32'; color='#2e7d32'; }
+                  else if (i === selected)    { bg='#ffebee'; border='#c62828'; color='#c62828'; }
+                }
+                return (
+                  <button key={i} onClick={()=>repondre(i)} style={{ padding:'12px 16px',borderRadius:12,border:`2px solid ${border}`,background:bg,color,fontWeight:600,fontSize:14,textAlign:'left',cursor:selected!==null?'default':'pointer',transition:'all 0.2s' }}>
+                    {selected!==null && i===q.correct ? '✓ ' : selected===i && i!==q.correct ? '✗ ' : ''}{opt}
+                  </button>
+                );
+              })}
+            </div>
+            {selected !== null && (
+              <button onClick={suivant} style={{ width:'100%',padding:14,background:VERT,border:'none',borderRadius:12,color:OR,fontWeight:800,fontSize:14,cursor:'pointer' }}>
+                {idx<QUIZ_QUESTIONS.length-1 ? 'Question suivante →' : 'Voir les résultats'}
+              </button>
+            )}
+          </>
+        ) : (
+          <div style={{ textAlign:'center' }}>
+            <div style={{ fontSize:56,marginBottom:12 }}>{score>=4?'🏆':score>=2?'👍':'📖'}</div>
+            <h2 style={{ fontSize:20,fontWeight:800,color:VERT,margin:'0 0 8px' }}>{score}/{QUIZ_QUESTIONS.length}</h2>
+            <p style={{ fontSize:14,color:'#71717A',marginBottom:20 }}>
+              {score===5?'Excellent ! Vous maîtrisez bien la foi catholique 🎉':score>=3?'Bien ! Continuez à approfondir votre foi.':'Continuez à lire le catéchisme pour progresser.'}
+            </p>
+            <button onClick={onClose} style={{ width:'100%',padding:14,background:VERT,border:'none',borderRadius:12,color:OR,fontWeight:800,fontSize:14,cursor:'pointer' }}>Fermer</button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════
+// NOUVEAU — ICÔNES EMBLÈMES (Prières / Dévotions / Catéchisme / Bible)
+// ══════════════════════════════════════════════════════════════
+function IconDefs() {
+  return (
+    <svg width="0" height="0" style={{ position:'absolute' }}>
+      <defs>
+        <radialGradient id="jb-goldbg" cx="35%" cy="30%" r="75%">
+          <stop offset="0%" stopColor="#f0dfa8"/><stop offset="55%" stopColor="#c8a84b"/><stop offset="100%" stopColor="#8B6020"/>
+        </radialGradient>
+        <linearGradient id="jb-vertfill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#2c4420"/><stop offset="100%" stopColor="#141f0d"/>
+        </linearGradient>
+        <linearGradient id="jb-coverfill" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#2c4420"/><stop offset="60%" stopColor="#1e2d14"/><stop offset="100%" stopColor="#101a0a"/>
+        </linearGradient>
+      </defs>
+    </svg>
+  );
+}
+
+function LaurierRing() {
+  return (
+    <>
+      <circle cx="50" cy="50" r="46" fill="url(#jb-goldbg)" />
+      <circle cx="50" cy="50" r="46" fill="none" stroke="#fff" strokeOpacity="0.35" strokeWidth="1.2" />
+      <circle cx="50" cy="50" r="40" fill="none" stroke="#6b4816" strokeOpacity="0.4" strokeWidth="1" />
+      <g stroke="#6b4816" strokeOpacity="0.55" strokeWidth="1.3" fill="none">
+        <path d="M20 68c4 8 10 13 18 15" />
+        <path d="M80 68c-4 8-10 13-18 15" />
+      </g>
+    </>
+  );
+}
+
+// Prière — flamme du cœur
+function IconPriere({ size = 24 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 100 100">
+      <LaurierRing />
+      <path d="M50 26c5.5 6 8 11 8 15.5 0 5-3.5 9-8 9s-8-4-8-9c0-.9.1-1.8.4-2.7.3 1.7 1.2 2.8 2.6 3.3.4-3.4 1.8-5.5 5-9 0-2.3-.4-4.7 0-7.1Z" fill="url(#jb-vertfill)" />
+      <path d="M38 58c1.5-3 4.5-4.6 8-3.4 1.6.5 2.9 1.5 4 2.9 1.1-1.4 2.4-2.4 4-2.9 3.5-1.2 6.5.4 8 3.4 2 4-.5 8-6 12l-6 4.5-6-4.5c-5.5-4-8-8-6-12Z" fill="none" stroke="#4a3312" strokeWidth="1.3" opacity="0.7" />
+    </svg>
+  );
+}
+
+// Dévotions — chapelet
+function IconDevotions({ size = 24 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 100 100">
+      <LaurierRing />
+      <g fill="url(#jb-vertfill)">
+        <circle cx="50" cy="24" r="3.1" /><circle cx="63" cy="28" r="3.1" /><circle cx="71" cy="39" r="3.1" />
+        <circle cx="71" cy="53" r="3.1" /><circle cx="63" cy="64" r="3.1" /><circle cx="37" cy="28" r="3.1" />
+        <circle cx="29" cy="39" r="3.1" /><circle cx="29" cy="53" r="3.1" /><circle cx="37" cy="64" r="3.1" />
+      </g>
+      <path d="M50 67v14M45.5 76h9" stroke="url(#jb-vertfill)" strokeWidth="4" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+// Catéchisme — livre ouvert + croix
+function IconCatechisme({ size = 24 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 100 100">
+      <LaurierRing />
+      <path d="M50 33c-4.5-3.3-10-5-16-5-2.6 0-5 .3-7.4 1v34c2.4-.7 4.8-1 7.4-1 6 0 11.5 1.7 16 5 4.5-3.3 10-5 16-5 2.6 0 5 .3 7.4 1V29c-2.4-.7-4.8-1-7.4-1-6 0-11.5 1.7-16 5Z" fill="url(#jb-vertfill)" />
+      <path d="M50 33v34" stroke="#e8cf8f" strokeWidth="1" opacity="0.6" />
+      <path d="M50 16v10M45.5 20h9" stroke="url(#jb-vertfill)" strokeWidth="3.2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+// Bible — couverture fermée + croix fine
+function IconBible({ size = 24 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 100 100">
+      <LaurierRing />
+      <g stroke="#f0dfa8" strokeWidth="0.8" opacity="0.85">
+        <path d="M67 22.5v45M68.3 23.2v43.6M69.6 24v42.2" />
+      </g>
+      <path d="M25 20.5c0-1.4 1.1-2.5 2.5-2.5h37c1.4 0 2.5 1.1 2.5 2.5v46.5c0 1.7-1.2 3.1-2.8 3.4l-33.9 6.4c-1.5.3-2.8-.9-2.8-2.4V20.5Z" fill="url(#jb-coverfill)" />
+      <path d="M25 20.5c0-1.4 1.1-2.5 2.5-2.5h3.2v58.4l-3.2.6c-1.5.3-2.5-.9-2.5-2.4Z" fill="#0c1307" />
+      <rect x="30.5" y="20.8" width="34.3" height="47.6" rx="1.5" fill="none" stroke="#c8a84b" strokeWidth="0.7" opacity="0.55" />
+      <g stroke="#e8cf8f" strokeWidth="1.6" strokeLinecap="round">
+        <path d="M48 30v26" /><path d="M41 39h14" />
+      </g>
+    </svg>
+  );
+}
+
+// petite version plate pour la barre d'onglets (plus légère visuellement)
+const TAB_ICONS = { priere: IconPriere, devotions: IconDevotions, catechisme: IconCatechisme, bible: IconBible };
+
+// ══════════════════════════════════════════════════════════════
+// NOUVEAU — Extraction d'une citation déjà présente dans un texte CEC
+// ══════════════════════════════════════════════════════════════
+function extraireCitation(contenu) {
+  const matches = [...contenu.matchAll(/«\s*([^»]+)\s*»\s*\(([^)]+)\)/g)];
+  if (!matches.length) return null;
+  const last = matches[matches.length - 1];
+  return { texte: last[1].trim(), ref: last[2].trim() };
+}
+
+// ══════════════════════════════════════════════════════════════
+// NOUVEAU — LECTEUR IMMERSIF RÉUTILISABLE (Dévotions / Catéchisme / Bible)
+// ══════════════════════════════════════════════════════════════
+const LANGUES_PRIERE = [
+  { code:"fr", nom:"Français",  flag:"🇫🇷" },
+  { code:"en", nom:"Anglais",   flag:"🇬🇧" },
+  { code:"es", nom:"Espagnol",  flag:"🇪🇸" },
+  { code:"pt", nom:"Portugais", flag:"🇵🇹" },
+  { code:"wo", nom:"Wolof",     flag:"🇸🇳" },
+  { code:"sw", nom:"Swahili",   flag:"🇰🇪" },
+  { code:"ha", nom:"Haoussa",   flag:"🇳🇬" },
+  { code:"yo", nom:"Yoruba",    flag:"🇳🇬" },
+  { code:"am", nom:"Amharique", flag:"🇪🇹" },
+  { code:"ln", nom:"Lingala",   flag:"🇨🇩" },
+  { code:"zu", nom:"Zulu",      flag:"🇿🇦" },
+  { code:"it", nom:"Italien",   flag:"🇮🇹" },
+  { code:"ar", nom:"Arabe",     flag:"🇲🇦" },
+];
+
+function ContentReader({ open, onClose, variant, title, subtitle, badge, bodyText, verseText, verseBook, boxLabel, boxText }) {
+  const [lectureId, setLectureId] = useState(null);
+  const [languePriere, setLanguePriere] = useState("fr");
+  const [traduction, setTraduction] = useState(null);
+  const [loadingTrad, setLoadingTrad] = useState(false);
+
+  useEffect(() => {
+    // reset traduction/audio a chaque nouveau contenu ouvert
+    setTraduction(null); setLanguePriere("fr"); setLectureId(null);
+    window.speechSynthesis && window.speechSynthesis.cancel();
+  }, [title, bodyText, verseText]);
+
+  async function traduire(code) {
+    if (code === "fr") { setTraduction(null); setLanguePriere("fr"); return; }
+    setLoadingTrad(true);
+    try {
+      const res  = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=fr&tl=${code}&dt=t&q=${encodeURIComponent(bodyText)}`);
+      const data = await res.json();
+      const trad = data[0].map(x => x[0]).join("");
+      setTraduction(trad);
+    } catch(e) { console.error(e); }
+    setLoadingTrad(false);
+    setLanguePriere(code);
+  }
+
+  function parler() {
+    if (lectureId) { window.speechSynthesis.cancel(); setLectureId(null); return; }
+    window.speechSynthesis.cancel();
+    setLectureId(title);
+    const u = new SpeechSynthesisUtterance(bodyText);
+    u.lang = "fr-FR"; u.rate = 0.85;
+    u.onend = () => setLectureId(null);
+    const lancer = () => window.speechSynthesis.speak(u);
+    const voix = window.speechSynthesis.getVoices();
+    if (voix.length === 0) { window.speechSynthesis.onvoiceschanged = lancer; window.speechSynthesis.getVoices(); }
+    else setTimeout(lancer, 100);
+  }
+
+  function copier() {
+    navigator.clipboard?.writeText(verseText ? `« ${verseText} » — ${title}` : bodyText);
+  }
+  function partager() {
+    navigator.share?.({ title, text: verseText ? `« ${verseText} » — ${title}` : bodyText });
+  }
+
+  if (!open) return null;
+
+  return (
+    <div style={{ position:'fixed', inset:0, zIndex:500, background:DARK, backgroundImage:DBOG, color:IVOIRE, overflowY:'auto', maxWidth:430, margin:'0 auto' }}>
+      <div style={{ padding:'44px 18px 0', position:'relative' }}>
+        <div style={{ position:'absolute',top:0,left:'50%',transform:'translateX(-50%)',width:200,height:100,background:'radial-gradient(ellipse,rgba(200,168,75,0.08),transparent 70%)',pointerEvents:'none' }}/>
+        <div style={{ display:'flex',alignItems:'center',gap:10,position:'relative',zIndex:2,marginBottom:16 }}>
+          <div onClick={onClose} style={{ width:32,height:32,borderRadius:'50%',background:'rgba(200,168,75,0.1)',border:'1px solid rgba(200,168,75,0.25)',display:'flex',alignItems:'center',justifyContent:'center',color:OR,cursor:'pointer',flexShrink:0 }}>←</div>
+          <div style={{ flex:1 }}>
+            <div style={{ fontFamily:'Georgia,serif',fontSize:variant==='verset'?15:17,fontWeight:700,color:IVOIRE }}>{variant==='verset' ? null : title}</div>
+            {subtitle && <div style={{ fontSize:11,color:'rgba(200,168,75,0.5)',marginTop:1 }}>{subtitle}</div>}
+          </div>
+          {badge && <div style={{ background:'rgba(200,168,75,0.14)',border:'1px solid rgba(200,168,75,0.35)',color:OR,borderRadius:20,padding:'5px 12px',fontSize:11,fontWeight:800,flexShrink:0 }}>{badge}</div>}
+        </div>
+      </div>
+
+      {variant === 'verset' ? (
+        <div style={{ padding:'10px 24px 10px', textAlign:'center' }}>
+          <div style={{ fontFamily:'Georgia,serif', fontSize:'3.2rem', color:'rgba(200,168,75,0.35)', lineHeight:0.5, marginBottom:14 }}>"</div>
+          <div style={{ fontFamily:'Georgia,serif', fontStyle:'italic', fontSize:'1.25rem', lineHeight:1.75, color:IVOIRE }}>« {verseText} »</div>
+          <div style={{ marginTop:18, fontSize:12, color:'rgba(200,168,75,0.6)' }}>{verseBook}</div>
+        </div>
+      ) : (
+        <div style={{ padding:'4px 20px 10px', fontFamily:'Georgia,serif', fontSize:15, lineHeight:2, color:'rgba(245,239,228,0.85)', whiteSpace:'pre-line' }}>
+          {traduction || bodyText}
+        </div>
+      )}
+
+      {variant === 'priere' && (
+        <div style={{ padding:'0 20px' }}>
+          <div style={{ display:'flex', gap:6, flexWrap:'wrap', marginBottom:8 }}>
+            {LANGUES_PRIERE.map(l => (
+              <button key={l.code} onClick={() => traduire(l.code)}
+                style={{ padding:'4px 10px', borderRadius:20, border:'1px solid '+OR, background:languePriere===l.code?OR:'transparent', color:languePriere===l.code?VERT:OR, fontWeight:700, fontSize:11, cursor:'pointer' }}>
+                {l.flag} {l.nom}
+              </button>
+            ))}
+          </div>
+          {loadingTrad && <div style={{ fontSize:11, color:OR, marginBottom:10 }}>Traduction en cours…</div>}
+        </div>
+      )}
+
+      {boxLabel && boxText && (
+        <div style={{ margin: variant==='verset' ? '4px 20px 20px' : '4px 20px 20px', paddingTop:14, borderTop:'1px dashed rgba(200,168,75,0.35)' }}>
+          <div style={{ fontSize:10, color:OR, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', marginBottom:6 }}>{boxLabel}</div>
+          <p style={{ fontSize:'0.8rem', lineHeight:1.7, color:'rgba(245,239,228,0.6)', margin:0, fontStyle: variant==='article' ? 'italic' : 'normal' }}>{boxText}</p>
+        </div>
+      )}
+
+      <div style={{ height:90 }} />
+      <div style={{ position:'fixed', bottom:0, left:'50%', transform:'translateX(-50%)', width:'100%', maxWidth:430, padding:'12px 18px 16px', background:'#0C0A06', borderTop:'1px solid rgba(200,168,75,0.15)', display:'flex', gap:8 }}>
+        {variant === 'priere' && (
+          <button onClick={parler} style={{ flex:1.4, height:42, borderRadius:21, border:'none', fontFamily:'Georgia,serif', fontSize:13, fontWeight:700, cursor:'pointer', background:'linear-gradient(135deg,#C8A84B,#8B6020)', color:VERT }}>
+            {lectureId ? '⏹ Stop' : '▶ Écouter'}
+          </button>
+        )}
+        <button onClick={copier} style={{ flex:1, height:42, borderRadius:21, border:'1px solid rgba(200,168,75,0.25)', background:'rgba(200,168,75,0.08)', color:OR, fontFamily:'Georgia,serif', fontSize:13, fontWeight:700, cursor:'pointer' }}>📋 Copier</button>
+        <button onClick={partager} style={{ flex:1, height:42, borderRadius:21, background: variant==='priere' ? 'rgba(200,168,75,0.08)' : 'linear-gradient(135deg,#C8A84B,#8B6020)', color: variant==='priere' ? OR : VERT, fontFamily:'Georgia,serif', fontSize:13, fontWeight:700, cursor:'pointer', border: variant==='priere' ? '1px solid rgba(200,168,75,0.25)' : 'none' }}>↗ Partager</button>
+      </div>
+    </div>
+  );
+}
+
