@@ -38,7 +38,7 @@ const CATEGORIES_PRIERES = [
 ]
 },
 {
-id: 'litanies', titre: 'Litanies', icon: '📜', count: 3,
+id: 'litanies', titre: 'Litanies', icon: '📜', count: 6,
 prieres: [
 {
   id: 'litanies-lorette',
