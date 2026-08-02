@@ -427,11 +427,11 @@ export default function AdminLive() {
         setMessagesChat(function(prev) { return prev.slice(-30).concat([{ id: 'r-' + Date.now() + Math.random(), type: 'reaction', nom: data.nom, reactionType: data.type }]); });
       }
     });
-    socket.on('live:gift:admin', function(data) {
-      if (data.liveId === sessionId) {
-        setMessagesChat(function(prev) { return prev.slice(-30).concat([{ id: 'g-' + Date.now() + Math.random(), type: 'gift', nom: data.expediteur, cadeau: data.cadeau, emoji: data.emoji }]); });
-      }
-    });
+  socket.on('live:gift:admin', function(data) {
+  if (data.liveId === sessionId) {
+    setMessagesChat(function(prev) { return prev.slice(-30).concat([{ id: 'g-' + Date.now() + Math.random(), type: 'gift', nom: data.expediteur, cadeau: data.cadeau, emoji: data.emoji, montant: data.montant }]); });
+  }
+});
     socket.on('live:roster', function(data) {
       if (data.liveId === sessionId) setRosterListe(data.roster || []);
     });
