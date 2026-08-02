@@ -1155,12 +1155,8 @@ function IconBible({ size = 24 }) {
   );
 }
 
-// petite version plate pour la barre d'onglets (plus légère visuellement)
 const TAB_ICONS = { priere: IconPriere, devotions: IconDevotions, catechisme: IconCatechisme, bible: IconBible };
 
-// ══════════════════════════════════════════════════════════════
-// NOUVEAU — Extraction d'une citation déjà présente dans un texte CEC
-// ══════════════════════════════════════════════════════════════
 function extraireCitation(contenu) {
   const matches = [...contenu.matchAll(/«\s*([^»]+)\s*»\s*\(([^)]+)\)/g)];
   if (!matches.length) return null;
@@ -1168,9 +1164,6 @@ function extraireCitation(contenu) {
   return { texte: last[1].trim(), ref: last[2].trim() };
 }
 
-// ══════════════════════════════════════════════════════════════
-// NOUVEAU — LECTEUR IMMERSIF RÉUTILISABLE (Dévotions / Catéchisme / Bible)
-// ══════════════════════════════════════════════════════════════
 const LANGUES_PRIERE = [
   { code:"fr", nom:"Français",  flag:"🇫🇷" },
   { code:"en", nom:"Anglais",   flag:"🇬🇧" },
@@ -1194,7 +1187,6 @@ function ContentReader({ open, onClose, variant, title, subtitle, badge, bodyTex
   const [loadingTrad, setLoadingTrad] = useState(false);
 
   useEffect(() => {
-    // reset traduction/audio a chaque nouveau contenu ouvert
     setTraduction(null); setLanguePriere("fr"); setLectureId(null);
     window.speechSynthesis && window.speechSynthesis.cancel();
   }, [title, bodyText, verseText]);
@@ -1294,9 +1286,7 @@ function ContentReader({ open, onClose, variant, title, subtitle, badge, bodyTex
     </div>
   );
 }
-// ══════════════════════════════════════════════════════════════
-// NOUVEAU — ONGLET DÉVOTIONS (accueil médaillons → catégorie → lecteur)
-// ══════════════════════════════════════════════════════════════
+
 function OngletDevotions({ recherche, onOpenReader }) {
   const [categorieOuverte, setCategorieOuverte] = useState(null);
 
@@ -1364,9 +1354,6 @@ function OngletDevotions({ recherche, onOpenReader }) {
   );
 }
 
-// ══════════════════════════════════════════════════════════════
-// NOUVEAU — ONGLET CATÉCHISME (accueil médaillons → catégorie → lecteur)
-// ══════════════════════════════════════════════════════════════
 function OngletCatechisme({ recherche, onOpenReader, onOpenQuiz }) {
   const [categorieOuverte, setCategorieOuverte] = useState(null);
 
@@ -1444,9 +1431,6 @@ function OngletCatechisme({ recherche, onOpenReader, onOpenQuiz }) {
   );
 }
 
-// ══════════════════════════════════════════════════════════════
-// NOUVEAU — ONGLET BIBLE (hero + testaments + versets → lecteur)
-// ══════════════════════════════════════════════════════════════
 function OngletBible({ recherche, onOpenReader }) {
   const navigate = useNavigate();
   const versetsFiltres = VERSETS_CLES.filter(v => v.ref.toLowerCase().includes(recherche.toLowerCase()) || v.texte.toLowerCase().includes(recherche.toLowerCase()));
@@ -1464,7 +1448,7 @@ function OngletBible({ recherche, onOpenReader }) {
             <div style={{ fontSize:9, color:'rgba(200,168,75,0.6)' }}>LIVRES</div>
           </div>
           <div style={{ background:'rgba(255,255,255,0.06)', border:'1px solid rgba(200,168,75,0.25)', borderRadius:12, padding:'7px 15px' }}>
-            <div style={{ fontFamily:'Georgia,serif', fontSize:'1rem', color:IVOIRE, fontWeight:700 }}>1189</div>
+            <div style={{ fontFamily:'Georgia,serif', fontSize:'1rem', color:IVOIRE, fontWeight:700 }}>1334</div>
             <div style={{ fontSize:9, color:'rgba(200,168,75,0.6)' }}>CHAPITRES</div>
           </div>
         </div>
@@ -1510,7 +1494,7 @@ export default function CatechesePage() {
   const [onglet, setOnglet] = useState(initialTab);
   const [recherche, setRecherche] = useState('');
   const [showQuiz, setShowQuiz] = useState(false);
-  const [reader, setReader] = useState(null); // { variant, title, subtitle, badge, bodyText, verseText, verseBook, boxLabel, boxText }
+  const [reader, setReader] = useState(null);
 
   const TAB_LABELS = { priere: 'Prières', devotions: 'Dévotions', catechisme: 'Catéchisme', bible: 'Bible' };
   const activeIndex = TABS.indexOf(onglet);
@@ -1540,7 +1524,7 @@ export default function CatechesePage() {
             const Icon = TAB_ICONS[t];
             const active = onglet === t;
             return (
-            <button key={t} onClick={() => { setOnglet(t); setRecherche(''); setSearchParams({ tab: t }, { replace: true }); }}
+              <button key={t} onClick={() => { setOnglet(t); setRecherche(''); setSearchParams({ tab: t }, { replace: true }); }}
                 style={{ position:'relative', zIndex:2, flex:1, border:'none', background:'none', padding:'0.55rem 0.1rem', display:'flex', flexDirection:'column', alignItems:'center', gap:3, cursor:'pointer' }}>
                 <div style={{ width:19, height:19, opacity: active ? 1 : 0.55, filter: active ? 'none' : 'grayscale(0.4)' }}><Icon size={19} /></div>
                 <span style={{ fontWeight:700, fontSize:'0.58rem', color: active ? OR : 'rgba(30,45,20,0.5)' }}>{TAB_LABELS[t]}</span>
@@ -1577,4 +1561,3 @@ export default function CatechesePage() {
     </AppShell>
   );
 }
-
