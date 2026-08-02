@@ -21,6 +21,7 @@ const ParishApplication = require('./ParishApplication');
 const ParishEvent = require('./ParishEvent');
 const EventRegistration = require('./EventRegistration');
 const Demande = require('./Demande');
+const Gift = require('./Gift');
 
 module.exports = {
   User,
@@ -28,6 +29,7 @@ module.exports = {
   Parish,
   Donation,
   Live,
+  Gift,
   AuditLog,
   RefreshToken,
   Post,
