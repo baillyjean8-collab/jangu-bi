@@ -41,10 +41,11 @@ const liveSchemas = {
 };
 
 // ── Repository ─────────────────────────────────────────────────────────────────
-const { Live, Parish } = require('../../models');
+const { Live, Parish, User, Gift } = require('../../models');
 const { AccessToken } = require('livekit-server-sdk');
 const config = require('../../config/env');
 const guestRegistry = require('../../realtime/guestRegistry');
+const { findGiftByCode, splitGiftAmount } = require('./giftCatalog');
 
 const liveRepo = {
   async create(data) {
@@ -131,6 +132,7 @@ const {
   AuthorizationError,
   ConflictError,
   AppError,
+  PaymentError,
 } = require('../../shared/errors');
 
 const liveService = {
@@ -326,6 +328,87 @@ const liveService = {
   },
 };
 
+// ── Gift Service ───────────────────────────────────────────────────────────────
+// Envoi d'un cadeau pendant un live : debit du solde de l'expediteur, credit
+// de la part paroisse (60%), persistance du cadeau, incrementation des
+// compteurs agreges du live. La part plateforme (40%) n'est pas creditee a
+// un compte specifique — elle se retrouve dans Gift.platformShare et peut
+// etre sommee via agregation pour la comptabilite Jangu Bi.
+const giftService = {
+  async sendGift({ liveId, parishId, senderId, giftCode }) {
+    const gift = findGiftByCode(giftCode);
+    if (!gift) throw new AppError('Cadeau inconnu', 400, 'INVALID_GIFT');
+
+    const session = await liveRepo.findById(liveId);
+    if (!session || !session.isActive) {
+      throw new AppError('Ce direct n est plus actif', 400, 'SESSION_ENDED');
+    }
+    if (String(session.parishId) !== String(parishId)) {
+      throw new AppError('Paroisse invalide pour ce direct', 400, 'PARISH_MISMATCH');
+    }
+
+    const sender = await User.findById(senderId).lean();
+    if (!sender) throw new NotFoundError('User');
+
+    // 1) Debit atomique — echoue proprement si solde insuffisant
+    const updatedSender = await User.debitWallet(senderId, gift.prix);
+    if (!updatedSender) {
+      throw new PaymentError('Solde insuffisant. Rechargez votre compte.', 'WALLET_INSUFFICIENT');
+    }
+
+    const { parishShare, platformShare } = splitGiftAmount(gift.prix);
+
+    try {
+      // 2) Credit de la part paroisse
+      await Parish.creditGiftRevenue(parishId, parishShare);
+
+      // 3) Persistance du cadeau (source de verite du recap apres-live)
+      const senderName = `${sender.firstName || 'Fidele'} ${sender.lastName ? sender.lastName[0].toUpperCase() + '.' : ''}`.trim();
+      const giftDoc = await Gift.create({
+        liveId, parishId, senderId,
+        senderNameSnapshot: senderName,
+        giftCode: gift.code,
+        giftName: gift.nom,
+        emoji: gift.emoji,
+        amount: gift.prix,
+        parishShare,
+        platformShare,
+      });
+
+      // 4) Compteurs agreges du live (pour le recap rapide)
+      await Live.incrementGiftStats(liveId, gift.prix);
+
+      return { gift: giftDoc, newBalance: updatedSender.walletBalance, senderName };
+    } catch (err) {
+      // Le solde a deja ete debite — on ne peut pas annuler silencieusement
+      // une operation financiere. On remet le solde et on relance l'erreur
+      // pour que l'appelant sache que l'envoi a echoue (le fidele ne perd rien).
+      await User.creditWallet(senderId, gift.prix);
+      throw err;
+    }
+  },
+
+  async getSummary(liveId, requesterId, requesterRole) {
+    const session = await liveRepo.findById(liveId);
+    if (!session) throw new NotFoundError('Live session');
+    if (requesterRole !== 'super_admin' && String(session.startedBy) !== String(requesterId)) {
+      throw new AuthorizationError('Seul l administrateur qui a anime ce direct peut voir ce recap');
+    }
+
+    const gifts = await Gift.find({ liveId })
+      .sort({ amount: -1, createdAt: 1 })
+      .select('senderId senderNameSnapshot giftName emoji amount createdAt')
+      .lean();
+
+    return {
+      totalAmount: session.totalGiftsAmount,
+      giftsCount: session.giftsCount,
+      donorsCount: new Set(gifts.map((g) => String(g.senderId))).size,
+      gifts: gifts.map(({ senderId, ...rest }) => rest), // ne pas exposer l'ID brut cote client
+    };
+  },
+};
+
 // ── Controller ─────────────────────────────────────────────────────────────────
 const { sendSuccess, sendCreated, sendPaginated } = require('../../shared/utils/response');
 
@@ -399,6 +482,11 @@ const liveController = {
     const { data, total } = await liveService.getHistory(req.query);
     return sendPaginated(res, data, { ...req.query, total });
   },
+
+  async getGiftsSummary(req, res) {
+    const summary = await giftService.getSummary(req.params.id, req.user.userId, req.user.role);
+    return sendSuccess(res, summary);
+  },
 };
 
 // ── Routes ──────────────────────────────────────────────────────────────────────
@@ -470,4 +558,12 @@ router.post('/:id/end',
   asyncHandler(liveController.end)
 );
 
-module.exports = { router, liveService, liveRepo };
+// Resume des cadeaux — expose les vrais noms des donateurs, reserve a
+// l'admin qui a anime le direct (ou super_admin).
+router.get('/:id/gifts-summary',
+  authenticate, requireVerified,
+  authorize('parish_admin', 'super_admin'),
+  asyncHandler(liveController.getGiftsSummary)
+);
+
+module.exports = { router, liveService, giftService, liveRepo };
