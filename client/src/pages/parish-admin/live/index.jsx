@@ -41,6 +41,7 @@ export default function AdminLive() {
   const [parishLogoUrl, setParishLogoUrl] = useState(null);
   const [adminPrenom, setAdminPrenom] = useState('');
   const [adminNom, setAdminNom] = useState('');
+  const [adminAvatarUrl, setAdminAvatarUrl] = useState(null);
   const [fondActif, setFondActif] = useState('aucun');
   const [segmentationPrete, setSegmentationPrete] = useState(false);
   const [chargementSegmentation, setChargementSegmentation] = useState(false);
