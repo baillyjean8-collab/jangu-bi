@@ -307,6 +307,7 @@ export default function AdminLive() {
       if (u) {
         setAdminPrenom(u.firstName || '');
         setAdminNom(u.lastName || '');
+        setAdminAvatarUrl(u.avatarUrl || null);
       }
       const parishId = u && u.parishId && (u.parishId._id || u.parishId);
       if (!parishId) return;
@@ -1121,12 +1122,14 @@ export default function AdminLive() {
 
           <div style={{ padding: '22px 24px 18px', textAlign: 'center', borderBottom: '1px solid rgba(200,168,75,0.15)' }}>
             <div style={{ width: 60, height: 60, margin: '0 auto 10px', borderRadius: '50%', border: '1.5px solid ' + OR, padding: 3 }}>
-              <div style={{ width: '100%', height: '100%', borderRadius: '50%', background: 'linear-gradient(155deg,#3d5a29,#1e2d14)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <span style={{ fontSize: 18, color: OR }}>
-                  {(adminPrenom[0] || '') + (adminNom[0] || '')}
-                </span>
-              </div>
-            </div>
+  <div style={{ width: '100%', height: '100%', borderRadius: '50%', background: 'linear-gradient(155deg,#3d5a29,#1e2d14)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+    {adminAvatarUrl ? (
+      <img src={adminAvatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+    ) : (
+      <span style={{ fontSize: 18, color: OR }}>{(adminPrenom[0] || '') + (adminNom[0] || '')}</span>
+    )}
+  </div>
+</div>
             <div style={{ fontSize: 13, color: '#F5F0E8' }}>{adminPrenom} {adminNom}</div>
             <div style={{ fontSize: 10, color: 'rgba(245,240,232,0.55)', fontStyle: 'italic', marginBottom: 12 }}>Officiant du direct</div>
             <div style={{ fontSize: 10, letterSpacing: 2.5, textTransform: 'uppercase', color: OR, marginBottom: 8 }}>Direct termine</div>
