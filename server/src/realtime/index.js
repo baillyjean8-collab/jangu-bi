@@ -13,7 +13,7 @@
  */
 
 const { verifyAccessToken } = require('../shared/utils/jwt');
-const { liveService, liveRepo } = require('../domains/live');
+const { liveService, liveRepo, giftService } = require('../domains/live');
 const guestRegistry = require('./guestRegistry');
 const { User } = require('../models');
 const { attachHealthMonitors, enforceRoomLimit } = require('./health');
@@ -378,10 +378,14 @@ function handleConnection(io, socket) {
     }
   });
 
-  // --- Cadeau (geste spirituel gratuit, requiert une authentification) ---
-  socket.on(EVENTS.SEND_GIFT, ({ parishId, liveId, emoji, nom }) => {
+  // --- Cadeau (debite le portefeuille du fidele, credite 60% a la paroisse) ---
+  // Le client n'envoie plus emoji/nom/prix (spoofables) — seulement giftCode.
+  // Le prix est toujours relu depuis le catalogue serveur (giftCatalog.js).
+  socket.on(EVENTS.SEND_GIFT, async ({ parishId, liveId, giftCode }) => {
     try {
-      if (!socket.isAuthenticated) return;
+      if (!socket.isAuthenticated) {
+        return socket.emit(EVENTS.ERROR, { code: 'AUTH_REQUIRED', message: 'Connectez-vous pour envoyer un cadeau' });
+      }
       if (!parishId || !/^[a-f0-9]{24}$/i.test(String(parishId))) return;
       if (!liveId || !/^[a-f0-9]{24}$/i.test(String(liveId))) return;
       if (!joinedSessions.has(parishId)) return;
@@ -390,28 +394,38 @@ function handleConnection(io, socket) {
         return socket.emit(EVENTS.ERROR, { code: 'RATE_LIMITED', message: 'Trop de cadeaux envoyes, patientez.' });
       }
 
-      const room = parishRoom(parishId);
-      const nomCadeau = (nom || 'Cadeau').toString().slice(0, 40);
-      const emojiSur = (emoji || '').toString().slice(0, 8);
-
-      io.to(room).emit(EVENTS.LIVE_GIFT, {
-        liveId,
-        emoji: emojiSur,
-        nom: nomCadeau,
+      const { gift, newBalance, senderName } = await giftService.sendGift({
+        liveId, parishId, senderId: socket.user.userId, giftCode,
       });
 
-      if (socket.user) {
-        const prenomReel = socket.user.firstName || 'Fidele';
-        const initialeReelle = socket.user.lastName ? (socket.user.lastName[0].toUpperCase() + '.') : '';
-        io.to('admin:' + liveId).emit(EVENTS.LIVE_GIFT_ADMIN, {
-          liveId,
-          emoji: emojiSur,
-          cadeau: nomCadeau,
-          expediteur: (prenomReel + ' ' + initialeReelle).trim(),
-        });
-      }
+      const room = parishRoom(parishId);
+
+      // Les autres fideles voient un envoyeur anonyme (comme avant)
+      io.to(room).emit(EVENTS.LIVE_GIFT, {
+        liveId,
+        emoji: gift.emoji,
+        nom: gift.giftName,
+      });
+
+      // Seul l'admin (diffuseur) voit l'identite reelle + le montant
+      io.to('admin:' + liveId).emit(EVENTS.LIVE_GIFT_ADMIN, {
+        liveId,
+        emoji: gift.emoji,
+        cadeau: gift.giftName,
+        expediteur: senderName,
+        montant: gift.amount,
+      });
+
+      // Confirmation du nouveau solde, uniquement pour l'expediteur
+      socket.emit('wallet:balance', { balance: newBalance });
     } catch (err) {
-      console.error('[Socket] gift error:', err.message);
+      if (err.code === 'WALLET_INSUFFICIENT') {
+        socket.emit(EVENTS.ERROR, { code: 'WALLET_INSUFFICIENT', message: err.message });
+      } else if (err.code === 'INVALID_GIFT' || err.code === 'SESSION_ENDED' || err.code === 'PARISH_MISMATCH') {
+        socket.emit(EVENTS.ERROR, { code: err.code, message: err.message });
+      } else {
+        console.error('[Socket] gift error:', err.message);
+      }
     }
   });
 
