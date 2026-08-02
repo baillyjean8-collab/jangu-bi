@@ -39,6 +39,8 @@ export default function AdminLive() {
   const [programmeExistant, setProgrammeExistant] = useState(null);
   const [programmationEnCours, setProgrammationEnCours] = useState(false);
   const [parishLogoUrl, setParishLogoUrl] = useState(null);
+  const [adminPrenom, setAdminPrenom] = useState('');
+  const [adminNom, setAdminNom] = useState('');
   const [fondActif, setFondActif] = useState('aucun');
   const [segmentationPrete, setSegmentationPrete] = useState(false);
   const [chargementSegmentation, setChargementSegmentation] = useState(false);
@@ -299,7 +301,14 @@ export default function AdminLive() {
 
   async function chargerLogoParoisse() {
     try {
-      const parishId = await recupererParishId();
+      const resMe = await fetch(BASE + '/users/me', { headers: { Authorization: 'Bearer ' + token } });
+      const dataMe = await resMe.json();
+      const u = dataMe && dataMe.data && (dataMe.data.user || dataMe.data);
+      if (u) {
+        setAdminPrenom(u.firstName || '');
+        setAdminNom(u.lastName || '');
+      }
+      const parishId = u && u.parishId && (u.parishId._id || u.parishId);
       if (!parishId) return;
       const res = await fetch(BASE + '/parishes/' + parishId);
       const data = await res.json();
@@ -1107,57 +1116,92 @@ export default function AdminLive() {
         </div>
       )}
 
-      {resume && (
-        <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 20, padding: 24 }}>
-          <div style={{ background: IVOIRE, borderRadius: 20, padding: 24, width: '100%', maxWidth: 320 }}>
-            <div style={{ textAlign: 'center', marginBottom: 16 }}>
-              <i className="ti ti-confetti" style={{ fontSize: 30, color: OR }} />
-              <div style={{ fontFamily: 'Georgia,serif', fontSize: 17, fontWeight: 700, color: VERT, marginTop: 6 }}>Direct termine</div>
-              <div style={{ fontSize: 11, color: '#7A6E5E', marginTop: 2 }}>"{resume.title}"</div>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 16 }}>
-              <div style={{ background: 'white', borderRadius: 12, padding: '10px 6px', textAlign: 'center', border: '1px solid rgba(0,0,0,0.06)' }}>
-                <div style={{ fontSize: 16, fontWeight: 700, color: VERT }}>{resume.peakViewers || 0}</div>
-                <div style={{ fontSize: 8, color: '#7A6E5E' }}>Pic spectateurs</div>
-              </div>
-              <div style={{ background: 'white', borderRadius: 12, padding: '10px 6px', textAlign: 'center', border: '1px solid rgba(0,0,0,0.06)' }}>
-                <div style={{ fontSize: 16, fontWeight: 700, color: '#e53935' }}>
-                  {resume.reactionCounts ? Object.values(resume.reactionCounts).reduce(function(a, b) { return a + b; }, 0) : 0}
-                </div>
-                <div style={{ fontSize: 8, color: '#7A6E5E' }}>Reactions</div>
-              </div>
-              <div style={{ background: 'white', borderRadius: 12, padding: '10px 6px', textAlign: 'center', border: '1px solid rgba(0,0,0,0.06)' }}>
-                <div style={{ fontSize: 16, fontWeight: 700, color: OR }}>
-                  {resume.durationSeconds ? Math.floor(resume.durationSeconds / 60) + ' min' : '-'}
-                </div>
-                <div style={{ fontSize: 8, color: '#7A6E5E' }}>Duree</div>
+            {resume && (
+        <div style={{ position: 'absolute', inset: 0, background: '#0C0A06', backgroundImage: BOGOLAN_DARK, zIndex: 20, overflowY: 'auto', fontFamily: 'Georgia,serif' }}>
+
+          <div style={{ padding: '22px 24px 18px', textAlign: 'center', borderBottom: '1px solid rgba(200,168,75,0.15)' }}>
+            <div style={{ width: 60, height: 60, margin: '0 auto 10px', borderRadius: '50%', border: '1.5px solid ' + OR, padding: 3 }}>
+              <div style={{ width: '100%', height: '100%', borderRadius: '50%', background: 'linear-gradient(155deg,#3d5a29,#1e2d14)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <span style={{ fontSize: 18, color: OR }}>
+                  {(adminPrenom[0] || '') + (adminNom[0] || '')}
+                </span>
               </div>
             </div>
+            <div style={{ fontSize: 13, color: '#F5F0E8' }}>{adminPrenom} {adminNom}</div>
+            <div style={{ fontSize: 10, color: 'rgba(245,240,232,0.55)', fontStyle: 'italic', marginBottom: 12 }}>Officiant du direct</div>
+            <div style={{ fontSize: 10, letterSpacing: 2.5, textTransform: 'uppercase', color: OR, marginBottom: 8 }}>Direct termine</div>
+            <div style={{ fontSize: 26, color: '#F5F0E8' }}>"{resume.title}"</div>
+          </div>
 
-            {resume.giftsSummary && resume.giftsSummary.giftsCount > 0 && (
-  <div style={{ background: 'white', borderRadius: 12, padding: 12, border: '1px solid rgba(0,0,0,0.06)', marginBottom: 16, maxHeight: 160, overflowY: 'auto' }}>
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
-      <div style={{ fontSize: 10, fontWeight: 700, color: VERT }}>Cadeaux recus</div>
-      <div style={{ fontSize: 12, fontWeight: 700, color: OR }}>{resume.giftsSummary.totalAmount} F</div>
-    </div>
-    <div style={{ fontSize: 9, color: '#7A6E5E', marginBottom: 8 }}>
-      {resume.giftsSummary.donorsCount} fidele{resume.giftsSummary.donorsCount > 1 ? 's' : ''} ont offert un cadeau
-    </div>
-    {resume.giftsSummary.gifts.map(function(d, i) {
-      return (
-        <div key={i} style={{ fontSize: 11, color: VERT, marginBottom: 5, display: 'flex', justifyContent: 'space-between' }}>
-          <span>{d.emoji} <span style={{ fontWeight: 700, color: OR }}>{d.senderNameSnapshot}</span> a envoye {d.giftName}</span>
-          <span style={{ color: OR, fontWeight: 700 }}>{d.amount} F</span>
-        </div>
-      );
-    })}
-  </div>
-)}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1, background: 'rgba(200,168,75,0.15)', margin: '18px 20px 0', border: '1px solid rgba(200,168,75,0.15)', borderRadius: 14, overflow: 'hidden' }}>
+            <div style={{ background: '#0C0A06', padding: '14px 4px', textAlign: 'center' }}>
+              <div style={{ fontSize: 17, color: OR }}>{resume.totalUniqueViewers || 0}</div>
+              <div style={{ fontSize: 8, color: 'rgba(245,240,232,0.55)', textTransform: 'uppercase' }}>Spectateurs<br />uniques</div>
+            </div>
+            <div style={{ background: '#0C0A06', padding: '14px 4px', textAlign: 'center' }}>
+              <div style={{ fontSize: 17, color: OR }}>{resume.peakViewers || 0}</div>
+              <div style={{ fontSize: 8, color: 'rgba(245,240,232,0.55)', textTransform: 'uppercase' }}>Pic<br />simultane</div>
+            </div>
+            <div style={{ background: '#0C0A06', padding: '14px 4px', textAlign: 'center' }}>
+              <div style={{ fontSize: 17, color: OR }}>{resume.sharesCount || 0}</div>
+              <div style={{ fontSize: 8, color: 'rgba(245,240,232,0.55)', textTransform: 'uppercase' }}>Partages</div>
+            </div>
+            <div style={{ background: '#0C0A06', padding: '14px 4px', textAlign: 'center' }}>
+              <div style={{ fontSize: 17, color: OR }}>
+                {resume.reactionCounts ? Object.values(resume.reactionCounts).reduce(function(a, b) { return a + b; }, 0) : 0}
+              </div>
+              <div style={{ fontSize: 8, color: 'rgba(245,240,232,0.55)', textTransform: 'uppercase' }}>Reactions</div>
+            </div>
+            <div style={{ background: '#0C0A06', padding: '14px 4px', textAlign: 'center' }}>
+              <div style={{ fontSize: 17, color: OR }}>
+                {resume.durationSeconds ? Math.floor(resume.durationSeconds / 60) + ' min' : '-'}
+              </div>
+              <div style={{ fontSize: 8, color: 'rgba(245,240,232,0.55)', textTransform: 'uppercase' }}>Duree</div>
+            </div>
+          </div>
 
-            <button onClick={function() { setResume(null); }} style={{ width: '100%', padding: 12, background: 'linear-gradient(135deg,#1e2d14,#0a140a)', border: 'none', borderRadius: 12, color: OR, fontWeight: 700, fontSize: 13, fontFamily: 'Georgia,serif', cursor: 'pointer' }}>
+          <div style={{ padding: '26px 20px 4px' }}>
+            <div style={{ fontSize: 12, letterSpacing: 2, textTransform: 'uppercase', color: 'rgba(200,168,75,0.65)', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ color: OR, fontSize: 10 }}>✦</span> Cadeaux recus
+              <span style={{ flex: 1, height: 1, background: 'rgba(200,168,75,0.2)' }} />
+            </div>
+
+            {resume.giftsSummary && resume.giftsSummary.giftsCount > 0 ? (
+              <>
+                <div style={{ textAlign: 'center', padding: '4px 0 18px' }}>
+                  <div style={{ fontSize: 32, color: OR }}>{resume.giftsSummary.totalAmount} F</div>
+                  <div style={{ fontSize: 11, color: 'rgba(245,240,232,0.55)' }}>
+                    {resume.giftsSummary.donorsCount} fidele{resume.giftsSummary.donorsCount > 1 ? 's' : ''} ont offert un cadeau
+                  </div>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {resume.giftsSummary.gifts.map(function(d, i) {
+                    return (
+                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(30,45,20,0.5)', border: '1px solid rgba(200,168,75,0.12)', borderRadius: 12, padding: '10px 12px' }}>
+                        <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#2a3d1c', border: '1px solid rgba(200,168,75,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, flexShrink: 0 }}>{d.emoji}</div>
+                        <div style={{ flex: 1, fontSize: 13, color: '#F5F0E8' }}>
+                          {d.senderNameSnapshot}
+                          <span style={{ display: 'block', fontSize: 10, color: 'rgba(245,240,232,0.55)', fontStyle: 'italic' }}>a envoye {d.giftName}</span>
+                        </div>
+                        <div style={{ fontSize: 12, color: OR }}>{d.amount} F</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            ) : (
+              <div style={{ textAlign: 'center', fontSize: 12, color: 'rgba(245,240,232,0.4)', padding: '10px 0 20px', fontStyle: 'italic' }}>
+                Aucun cadeau recu pendant ce direct
+              </div>
+            )}
+          </div>
+
+          <div style={{ padding: '24px 20px 40px' }}>
+            <button onClick={function() { setResume(null); }} style={{ width: '100%', padding: 15, background: OR, color: VERT, border: 'none', borderRadius: 14, fontWeight: 700, fontSize: 14, fontFamily: 'Georgia,serif', cursor: 'pointer' }}>
               Fermer
             </button>
           </div>
+
         </div>
       )}
     </div>
