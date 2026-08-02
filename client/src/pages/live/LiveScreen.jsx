@@ -140,6 +140,30 @@ export default function LiveScreen() {
   const roomRef = useRef(null);
   const socketRef = useRef(null);
 
+  // ── Portefeuille (solde pour envoyer des cadeaux) ──────────────────────────
+  const [walletSolde, setWalletSolde] = useState(0);
+
+  useEffect(function() {
+    let annule = false;
+    async function chargerSolde() {
+      try {
+        const { default: apiClient } = await import('../../api/client');
+        // Fallback si api/client n'expose pas de client generique : on utilise fetch direct
+      } catch (e) { /* ignore, fallback ci-dessous */ }
+      try {
+        const apiUrl = import.meta.env.VITE_API_URL || '/api';
+        const res = await fetch(apiUrl + '/users/me', {
+          headers: { Authorization: 'Bearer ' + tokenStore.get() },
+        });
+        const data = await res.json();
+        const u = data && data.data && (data.data.user || data.data);
+        if (!annule && u && typeof u.walletBalance === 'number') setWalletSolde(u.walletBalance);
+      } catch (e) { console.log('Solde wallet:', e.message); }
+    }
+    chargerSolde();
+    return function() { annule = true; };
+  }, []);
+
   useEffect(function() {
     let annule = false;
     async function connecter() {
@@ -204,6 +228,20 @@ export default function LiveScreen() {
                 isJoin: true,
               }]);
             });
+          });
+          // Confirmation du nouveau solde apres envoi d'un cadeau reussi
+          socket.on('wallet:balance', function(data) {
+            if (typeof data.balance === 'number') setWalletSolde(data.balance);
+          });
+          // Erreurs generiques (dont solde insuffisant)
+          socket.on('error', function(data) {
+            if (data && data.code === 'WALLET_INSUFFICIENT') {
+              setAvertissement('💰 ' + (data.message || 'Solde insuffisant. Rechargez votre compte.'));
+              setTimeout(function() { setAvertissement(''); }, 5000);
+            } else if (data && data.code === 'RATE_LIMITED' && data.message) {
+              setAvertissement('⏱️ ' + data.message);
+              setTimeout(function() { setAvertissement(''); }, 4000);
+            }
           });
           socket.on('live:invite:received', function(data) {
             if (data.liveId === id) setInviteRecue(true);
@@ -406,9 +444,12 @@ export default function LiveScreen() {
     }
   }
 
-  function envoyerCadeau(emoji, nom) {
+  // Envoi d'un cadeau : on ne transmet plus emoji/nom/prix (spoofables cote
+  // client) — uniquement le code du cadeau. Le serveur relit le prix depuis
+  // son propre catalogue (giftCatalog.js) et debite le solde reel.
+  function envoyerCadeau(giftCode) {
     if (socketRef.current && sessionReelle && sessionReelle.parishId) {
-      socketRef.current.emit('gift:send', { parishId: sessionReelle.parishId._id, liveId: id, emoji: emoji, nom: nom });
+      socketRef.current.emit('gift:send', { parishId: sessionReelle.parishId._id, liveId: id, giftCode: giftCode });
     }
   }
 
@@ -763,11 +804,17 @@ export default function LiveScreen() {
             <div style={{ width: 36, height: 4, borderRadius: 2, background: 'rgba(200,168,75,0.3)', margin: '0 auto 14px' }} />
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
               <div style={{ fontSize: 12, fontWeight: 700, color: OR }}>Envoyer un cadeau</div>
-              <button onClick={closeDrawer} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.4)', fontSize: 18 }}>✕</button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'rgba(200,168,75,0.12)', border: '1px solid rgba(200,168,75,0.3)', borderRadius: 20, padding: '4px 10px' }}>
+                  <i className="ti ti-coin" style={{ fontSize: 11, color: OR }} />
+                  <span style={{ fontSize: 10, color: '#F5F0E8', fontWeight: 700 }}>{walletSolde} F</span>
+                </div>
+                <button onClick={closeDrawer} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.4)', fontSize: 18 }}>✕</button>
+              </div>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 10, maxHeight: 260, overflowY: 'auto' }}>
               {CADEAUX.map(cadeau => (
-                <div key={cadeau.id} onClick={() => { envoyerCadeau(cadeau.emoji, cadeau.nom); closeDrawer(); }} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, cursor: 'pointer', padding: '8px 4px', borderRadius: 12, background: 'rgba(200,168,75,0.06)', border: '1px solid rgba(200,168,75,0.1)' }}>
+                <div key={cadeau.id} onClick={() => { envoyerCadeau(cadeau.id); closeDrawer(); }} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, cursor: 'pointer', padding: '8px 4px', borderRadius: 12, background: 'rgba(200,168,75,0.06)', border: '1px solid rgba(200,168,75,0.1)', opacity: walletSolde < cadeau.prix ? 0.4 : 1 }}>
                   <div style={{ fontSize: 24 }}>{cadeau.emoji}</div>
                   <div style={{ fontSize: 8, color: 'rgba(245,240,232,0.7)', textAlign: 'center' }}>{cadeau.nom}</div>
                   <div style={{ fontSize: 8, color: OR, fontWeight: 700 }}>{cadeau.prix} F</div>
