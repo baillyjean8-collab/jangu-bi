@@ -101,7 +101,6 @@ const LIVRES = [
   { id: "Ap", nom: "Apocalypse", testament: "Nouveau Testament", chapitres: 22 },
 ];
 
-// ── Regroupement par section (purement d'affichage, n'affecte pas les données) ──
 const GROUPES_AT = {
   "Le Pentateuque": ["Gn","Ex","Lv","Nb","Dt"],
   "Livres historiques": ["Jos","Jg","Rt","1S","2S","1R","2R","1Ch","2Ch","Esd","Ne","Tb","Jdt","Est","1M","2M"],
@@ -132,7 +131,6 @@ function lireVerset(texte, speechLang) {
   window.speechSynthesis.speak(u);
 }
 
-// ── Petit emblème Bible (couverture fermée + croix fine), cohérent avec le reste de l'app ──
 function IconBibleEmblem({ size = 36 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 100 100">
@@ -156,7 +154,7 @@ function IconBibleEmblem({ size = 36 }) {
 }
 
 function VueLivres({ onSelectLivre, recherche, setRecherche, testamentInitial }) {
-  const [testamentActif, setTestamentActif] = useState(testamentInitial || "Ancien Testament");
+  const testamentActif = testamentInitial || "Ancien Testament";
   const testaments = ["Ancien Testament", "Nouveau Testament"];
 
   const filtres = LIVRES.filter(l =>
@@ -190,29 +188,6 @@ function VueLivres({ onSelectLivre, recherche, setRecherche, testamentInitial })
           <span onClick={() => setRecherche("")} style={{ cursor: "pointer", color: "#999", fontSize: 18 }}>×</span>
         )}
       </div>
-
-      {!recherche && (
-        <div style={{
-          position: "relative", display: "flex", background: "rgba(30,45,20,0.06)",
-          borderRadius: 999, padding: 4, marginBottom: 18,
-        }}>
-          <div style={{
-            position: "absolute", top: 4, bottom: 4, left: 4,
-            width: "calc(50% - 4px)", background: VERT, borderRadius: 999,
-            boxShadow: "0 3px 10px rgba(30,45,20,0.35)",
-            transition: "transform 0.3s cubic-bezier(.65,0,.35,1)",
-            transform: testamentActif === "Nouveau Testament" ? "translateX(100%)" : "translateX(0)",
-          }} />
-          {testaments.map(t => (
-            <button key={t} onClick={() => setTestamentActif(t)} style={{
-              position: "relative", zIndex: 2, flex: 1, border: "none", background: "none",
-              padding: "9px 4px", fontWeight: 700, fontSize: 12, cursor: "pointer",
-              fontFamily: "Georgia, serif",
-              color: testamentActif === t ? OR : "rgba(30,45,20,0.5)",
-            }}>{t}</button>
-          ))}
-        </div>
-      )}
 
       {testamentsAffiches.map(testament => {
         const livresDuTestament = filtres.filter(l => l.testament === testament);
@@ -333,7 +308,6 @@ function VueChapitres({ livre, onSelectChapitre, onRetour }) {
   );
 }
 
-// ── Table de correspondance : id court de l'app -> nom anglais utilisé dans le fichier Crampon ──
 const NOM_ANGLAIS = {
   "Gn":"Genesis","Ex":"Exodus","Lv":"Leviticus","Nb":"Numbers","Dt":"Deuteronomy",
   "Jos":"Joshua","Jg":"Judges","Rt":"Ruth","1S":"I Samuel","2S":"II Samuel",
@@ -353,7 +327,6 @@ const NOM_ANGLAIS = {
   "Ap":"Revelation of John"
 };
 
-// ── La Bible Crampon 1923 (traduction catholique, domaine public, 73 livres) ──
 let bibleCrampon = null;
 
 async function chargerBibleComplete() {
