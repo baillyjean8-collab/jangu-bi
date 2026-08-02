@@ -619,16 +619,25 @@ export default function AdminLive() {
 
   async function terminerLive() {
     let sessionFinale = null;
-    const donsRecus = messagesChatRef.current.filter(function(m) { return m.type === 'gift' && m.cadeau && m.cadeau.indexOf('rejoint') === -1 && m.cadeau.indexOf('descendu') === -1; });
+    let giftsSummary = null;
+    const idLiveTermine = liveId;
     try {
       enDirectRef.current = false;
       if (roomRef.current) { roomRef.current.disconnect(); roomRef.current = null; }
       arreterAnalyseAudio();
       clearInterval(dureeIntervalRef.current);
-      if (liveId) {
-        const res = await fetch(BASE + '/live/' + liveId + '/end', { method: 'POST', headers: { Authorization: 'Bearer ' + token } });
+      if (idLiveTermine) {
+        const res = await fetch(BASE + '/live/' + idLiveTermine + '/end', { method: 'POST', headers: { Authorization: 'Bearer ' + token } });
         const data = await res.json();
         sessionFinale = data && data.data && data.data.session;
+
+        try {
+          const resGifts = await fetch(BASE + '/live/' + idLiveTermine + '/gifts-summary', { headers: { Authorization: 'Bearer ' + token } });
+          if (resGifts.ok) {
+            const dataGifts = await resGifts.json();
+            giftsSummary = dataGifts && dataGifts.data;
+          }
+        } catch (giftsErr) { console.log('Resume cadeaux:', giftsErr.message); }
       }
     } catch (e) { console.log('Terminer live:', e.message); }
     finally {
@@ -637,7 +646,7 @@ export default function AdminLive() {
       setLiveId(null);
       liveIdRef.current = null;
       setTitre('');
-      if (sessionFinale) setResume(Object.assign({}, sessionFinale, { donsRecus: donsRecus }));
+      if (sessionFinale) setResume(Object.assign({}, sessionFinale, { giftsSummary: giftsSummary }));
     }
   }
 
@@ -986,13 +995,16 @@ export default function AdminLive() {
                 );
               }
               if (m.type === 'gift') {
-                return (
-                  <div key={m.id} style={{ background: 'rgba(0,0,0,0.45)', borderRadius: 12, padding: '4px 10px', display: 'inline-block', alignSelf: 'flex-start' }}>
-                    <span style={{ fontSize: 12, marginRight: 4 }}>{m.emoji}</span>
-                    <span style={{ fontWeight: 700, color: OR, fontSize: 9 }}>{m.nom}</span> <span style={{ color: '#fff', fontSize: 9 }}>a envoye {m.cadeau}</span>
-                  </div>
-                );
-              }
+  return (
+    <div key={m.id} style={{ background: 'rgba(0,0,0,0.45)', borderRadius: 12, padding: '4px 10px', display: 'inline-block', alignSelf: 'flex-start' }}>
+      <span style={{ fontSize: 12, marginRight: 4 }}>{m.emoji}</span>
+      <span style={{ fontWeight: 700, color: OR, fontSize: 9 }}>{m.nom}</span> <span style={{ color: '#fff', fontSize: 9 }}>a envoye {m.cadeau}</span>
+      {typeof m.montant === 'number' && (
+        <span style={{ color: OR, fontSize: 9, fontWeight: 700, marginLeft: 4 }}>({m.montant} F)</span>
+      )}
+    </div>
+  );
+}
               return (
                 <div key={m.id} style={{ background: 'rgba(0,0,0,0.4)', borderRadius: 12, padding: '4px 10px', display: 'inline-block', alignSelf: 'flex-start' }}>
                   <span style={{ fontWeight: 700, color: OR, fontSize: 9 }}>{m.nom}</span> <span style={{ color: '#fff', fontSize: 9 }}>{m.texte}</span>
@@ -1122,18 +1134,25 @@ export default function AdminLive() {
               </div>
             </div>
 
-            {resume.donsRecus && resume.donsRecus.length > 0 && (
-              <div style={{ background: 'white', borderRadius: 12, padding: 12, border: '1px solid rgba(0,0,0,0.06)', marginBottom: 16, maxHeight: 140, overflowY: 'auto' }}>
-                <div style={{ fontSize: 10, fontWeight: 700, color: VERT, marginBottom: 8 }}>Cadeaux recus</div>
-                {resume.donsRecus.map(function(d) {
-                  return (
-                    <div key={d.id} style={{ fontSize: 11, color: VERT, marginBottom: 5 }}>
-                      {d.emoji} <span style={{ fontWeight: 700, color: OR }}>{d.nom}</span> a envoye {d.cadeau}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+            {resume.giftsSummary && resume.giftsSummary.giftsCount > 0 && (
+  <div style={{ background: 'white', borderRadius: 12, padding: 12, border: '1px solid rgba(0,0,0,0.06)', marginBottom: 16, maxHeight: 160, overflowY: 'auto' }}>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
+      <div style={{ fontSize: 10, fontWeight: 700, color: VERT }}>Cadeaux recus</div>
+      <div style={{ fontSize: 12, fontWeight: 700, color: OR }}>{resume.giftsSummary.totalAmount} F</div>
+    </div>
+    <div style={{ fontSize: 9, color: '#7A6E5E', marginBottom: 8 }}>
+      {resume.giftsSummary.donorsCount} fidele{resume.giftsSummary.donorsCount > 1 ? 's' : ''} ont offert un cadeau
+    </div>
+    {resume.giftsSummary.gifts.map(function(d, i) {
+      return (
+        <div key={i} style={{ fontSize: 11, color: VERT, marginBottom: 5, display: 'flex', justifyContent: 'space-between' }}>
+          <span>{d.emoji} <span style={{ fontWeight: 700, color: OR }}>{d.senderNameSnapshot}</span> a envoye {d.giftName}</span>
+          <span style={{ color: OR, fontWeight: 700 }}>{d.amount} F</span>
+        </div>
+      );
+    })}
+  </div>
+)}
 
             <button onClick={function() { setResume(null); }} style={{ width: '100%', padding: 12, background: 'linear-gradient(135deg,#1e2d14,#0a140a)', border: 'none', borderRadius: 12, color: OR, fontWeight: 700, fontSize: 13, fontFamily: 'Georgia,serif', cursor: 'pointer' }}>
               Fermer
