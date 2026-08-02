@@ -219,6 +219,13 @@ const parishSchema = new mongoose.Schema(
       totalDonationAmount: { type: Number, default: 0, min: 0 },
       memberCount: { type: Number, default: 0, min: 0 },
     },
+    // Solde credite par la part paroisse (60%) des cadeaux recus en direct.
+    // Distinct de stats.totalDonationAmount (dons classiques). Retirable plus tard.
+    walletBalance: {
+      type: Number,
+      default: 0,
+      min: [0, 'Parish wallet balance cannot be negative'],
+    },
   },
   {
     timestamps: true,
@@ -254,7 +261,7 @@ function generateBaseSlug(name) {
   return name
     .toLowerCase()
     .trim()
-    .normalize('NFD')                    // decompose accented chars (é → e + ́)
+    .normalize('NFD')                    // decompose accented chars (é → e + )
     .replace(/[\u0300-\u036f]/g, '')     // strip accent marks
     .replace(/[^a-z0-9\s-]/g, '')       // remove non-alphanumeric except spaces/hyphens
     .replace(/\s+/g, '-')
@@ -309,7 +316,7 @@ const STATS_PROTECTION_MSG =
 
 parishSchema.pre(['updateOne', 'findOneAndUpdate'], function (next) {
   const update = this.getUpdate();
-  const forbidden = ['stats', 'stats.totalDonations', 'stats.totalDonationAmount', 'stats.memberCount'];
+  const forbidden = ['stats', 'stats.totalDonations', 'stats.totalDonationAmount', 'stats.memberCount', 'walletBalance'];
 
   for (const field of forbidden) {
     if (
@@ -345,6 +352,21 @@ parishSchema.statics.incrementMemberCount = async function (parishId, delta = 1)
   return this.findByIdAndUpdate(
     parishId,
     { $inc: { 'stats.memberCount': delta } },
+    { new: true }
+  );
+};
+
+/**
+ * Credite la part paroisse (60%) d'un cadeau recu en direct.
+ * amount est deja calcule server-side (jamais fourni par le client).
+ */
+parishSchema.statics.creditGiftRevenue = async function (parishId, amount) {
+  if (!Number.isInteger(amount) || amount <= 0) {
+    throw new Error('creditGiftRevenue: amount must be a positive integer');
+  }
+  return this.findByIdAndUpdate(
+    parishId,
+    { $inc: { walletBalance: amount } },
     { new: true }
   );
 };
