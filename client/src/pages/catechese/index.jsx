@@ -1501,7 +1501,7 @@ function OngletBible({ recherche, onOpenReader }) {
 // PAGE PRINCIPALE
 // ══════════════════════════════════════════════════════════════
 export default function CatechesePage() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get('tab');
   const officeParam = searchParams.get('office');
   const TABS = ['priere', 'devotions', 'catechisme', 'bible'];
@@ -1540,7 +1540,7 @@ export default function CatechesePage() {
             const Icon = TAB_ICONS[t];
             const active = onglet === t;
             return (
-              <button key={t} onClick={() => { setOnglet(t); setRecherche(''); }}
+            <button key={t} onClick={() => { setOnglet(t); setRecherche(''); setSearchParams({ tab: t }, { replace: true }); }}
                 style={{ position:'relative', zIndex:2, flex:1, border:'none', background:'none', padding:'0.55rem 0.1rem', display:'flex', flexDirection:'column', alignItems:'center', gap:3, cursor:'pointer' }}>
                 <div style={{ width:19, height:19, opacity: active ? 1 : 0.55, filter: active ? 'none' : 'grayscale(0.4)' }}><Icon size={19} /></div>
                 <span style={{ fontWeight:700, fontSize:'0.58rem', color: active ? OR : 'rgba(30,45,20,0.5)' }}>{TAB_LABELS[t]}</span>
