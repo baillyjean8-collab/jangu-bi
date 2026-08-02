@@ -175,6 +175,19 @@ message: 'Phone must be in E.164 format (e.g. +221771234567)',
       default: null,
       select: false,
     },
+
+    // ── Wallet (cadeaux live) ──────────────────────────────────────────────
+    // Solde en francs CFA (unite entiere). Jamais modifiable directement —
+    // uniquement via User.creditWallet() / User.debitWallet() ci-dessous.
+    walletBalance: {
+      type: Number,
+      default: 0,
+      min: [0, 'Wallet balance cannot be negative'],
+      validate: {
+        validator: Number.isInteger,
+        message: 'walletBalance must be an integer (no decimals)',
+      },
+    },
   },
   {
     timestamps: true,
@@ -231,6 +244,53 @@ userSchema.methods.resetLoginAttempts = function () {
   return User.findByIdAndUpdate(
     this._id,
     { $set: { loginAttempts: 0, lastLoginAt: new Date() }, $unset: { lockUntil: '' } },
+    { new: true }
+  );
+};
+
+// ─── Protection du solde (walletBalance) ─────────────────────────────────────
+// Meme principe que Parish.stats : le solde ne doit JAMAIS pouvoir etre pose
+// directement (ex: via un formulaire admin bugge ou une requete malveillante).
+// Seules les statics creditWallet/debitWallet ci-dessous sont autorisees.
+const WALLET_PROTECTION_MSG =
+  '[SECURITY] walletBalance cannot be set directly. Use User.creditWallet()/debitWallet() instead.';
+
+userSchema.pre(['updateOne', 'findOneAndUpdate'], function (next) {
+  const update = this.getUpdate();
+  if (update?.$set?.walletBalance !== undefined || update?.walletBalance !== undefined) {
+    return next(new Error(WALLET_PROTECTION_MSG));
+  }
+  next();
+});
+
+/**
+ * Credite le solde (recharge mobile money confirmee par webhook).
+ * amount doit etre un entier positif (francs CFA).
+ */
+userSchema.statics.creditWallet = async function (userId, amount) {
+  if (!Number.isInteger(amount) || amount <= 0) {
+    throw new Error('creditWallet: amount must be a positive integer');
+  }
+  return this.findByIdAndUpdate(
+    userId,
+    { $inc: { walletBalance: amount } },
+    { new: true }
+  );
+};
+
+/**
+ * Debite le solde de maniere ATOMIQUE — la condition walletBalance >= amount
+ * fait partie du filtre de la requete elle-meme, ce qui empeche toute
+ * course critique (deux cadeaux envoyes en meme temps) de faire passer le
+ * solde en negatif. Retourne null si le solde est insuffisant.
+ */
+userSchema.statics.debitWallet = async function (userId, amount) {
+  if (!Number.isInteger(amount) || amount <= 0) {
+    throw new Error('debitWallet: amount must be a positive integer');
+  }
+  return this.findOneAndUpdate(
+    { _id: userId, walletBalance: { $gte: amount } },
+    { $inc: { walletBalance: -amount } },
     { new: true }
   );
 };
