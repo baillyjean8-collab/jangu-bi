@@ -817,7 +817,7 @@ export default function AdminLive() {
             </div>
           </div>
 
-          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, maxHeight: '72%', overflowY: 'auto', zIndex: 5, padding: '10px 10px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, maxHeight: '72%', overflowY: 'auto', zIndex: 5, padding: '10px 10px 16px', display: 'flex', flexDirection: 'column', gap: 8, background: 'rgba(12,10,6,0.65)', backgroundImage: BOGOLAN_DARK, borderRadius: '16px 16px 0 0' }}>
 
             {programmeExistant ? (
               <>
