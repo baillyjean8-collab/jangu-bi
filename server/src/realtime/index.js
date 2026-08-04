@@ -398,19 +398,21 @@ function handleConnection(io, socket) {
         liveId, parishId, senderId: socket.user.userId, giftCode,
       });
 
-      const room = parishRoom(parishId);
+            const room = parishRoom(parishId);
 
-      // Les autres fideles voient un envoyeur anonyme (comme avant)
+      // Les autres fideles voient un envoyeur anonyme (comme avant),
+      // mais recoivent maintenant le code du cadeau pour declencher
+      // la bonne animation cote client (GiftSendAnimation).
       io.to(room).emit(EVENTS.LIVE_GIFT, {
         liveId,
-        emoji: gift.emoji,
-        nom: gift.giftName,
+        giftCode: gift.giftCode,
+        senderNameSnapshot: 'Un fidèle',
       });
 
       // Seul l'admin (diffuseur) voit l'identite reelle + le montant
       io.to('admin:' + liveId).emit(EVENTS.LIVE_GIFT_ADMIN, {
         liveId,
-        emoji: gift.emoji,
+        giftCode: gift.giftCode,
         cadeau: gift.giftName,
         expediteur: senderName,
         montant: gift.amount,
