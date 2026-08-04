@@ -4,29 +4,9 @@ import { Room, RoomEvent } from 'livekit-client';
 import { io } from 'socket.io-client';
 import { tokenStore } from '../../api/client';
 import { contientMotInterdit, sauvegarderAvertissement, compteRestreint, messageRestriction } from '../../utils/jb-filtre';
+import { GIFTS_CATALOG, findGiftByCode } from '../../data/giftsCatalog';
+import GiftSendAnimation from '../../components/live/GiftSendAnimation';
 
-const CADEAUX = [
-  { id:1,  emoji:"🌹", nom:"Rose",           prix:10   },
-  { id:2,  emoji:"🕯️", nom:"Bougie",         prix:25   },
-  { id:3,  emoji:"✝️", nom:"Croix",           prix:50   },
-  { id:4,  emoji:"📿", nom:"Chapelet",        prix:75   },
-  { id:5,  emoji:"⛪", nom:"Église",          prix:100  },
-  { id:6,  emoji:"👑", nom:"Couronne",        prix:200  },
-  { id:7,  emoji:"🙏", nom:"Amen",            prix:100  },
-  { id:8,  emoji:"✨", nom:"Alléluia",        prix:300  },
-  { id:9,  emoji:"🌟", nom:"Hosanna",         prix:400  },
-  { id:10, emoji:"☮️", nom:"Paix du Christ",  prix:250  },
-  { id:11, emoji:"🕯️", nom:"Cierge",          prix:200  },
-  { id:12, emoji:"🌸", nom:"Rosaire",         prix:600  },
-  { id:13, emoji:"🪔", nom:"Encens",          prix:750  },
-  { id:14, emoji:"😇", nom:"Ange gardien",    prix:800  },
-  { id:15, emoji:"👸", nom:"Vierge Marie",    prix:1200 },
-  { id:16, emoji:"❤️", nom:"Coeur Immaculé", prix:1500 },
-  { id:17, emoji:"📖", nom:"Bible",           prix:1500 },
-  { id:18, emoji:"🏆", nom:"Calice",          prix:2000 },
-  { id:19, emoji:"🕊️", nom:"Colombe",         prix:3000 },
-  { id:20, emoji:"⚜️", nom:"Hostie",          prix:5000 },
-];
 
 const BOGOLAN_DARK = 'repeating-linear-gradient(0deg,transparent,transparent 8px,rgba(200,168,75,0.07) 8px,rgba(200,168,75,0.07) 9px),repeating-linear-gradient(90deg,transparent,transparent 8px,rgba(200,168,75,0.07) 8px,rgba(200,168,75,0.07) 9px)';
 const OR   = '#C8A84B';
@@ -76,16 +56,6 @@ function HeartAnim({ x, y, onDone }) {
   );
 }
 
-// ── Cadeau animé ─────────────────────────────────────────────────────────────
-function GiftAnim({ emoji, x, onDone }) {
-  useEffect(() => { const t = setTimeout(onDone, 2200); return () => clearTimeout(t); }, [onDone]);
-  return (
-    <div style={{
-      position: 'absolute', bottom: 65, left: x, fontSize: 22, pointerEvents: 'none', zIndex: 14,
-      animation: 'jb-gift-float 2.2s ease-out forwards',
-    }}>{emoji}</div>
-  );
-}
 
 // ── Bulle commentaire ────────────────────────────────────────────────────────
 function CommentBubble({ profil, initiales, nom, texte, onMention, isJoin }) {
