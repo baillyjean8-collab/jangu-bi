@@ -187,18 +187,21 @@ export default function LiveScreen() {
             });
           });
           socket.on('live:gift', function(data) {
-            lancerCadeau(data.emoji, data.nom);
-            setCommentaires(function(prev) {
-              return prev.slice(-30).concat([{
-                id: 'gift-' + Date.now() + Math.random(),
-                profil: { bg: 'rgba(200,168,75,0.15)', col: OR, tc: VERT },
-                initiales: '',
-                nom: '',
-                texte: 'Un fidele a envoye ' + data.emoji + ' ' + data.nom,
-                isJoin: true,
-              }]);
-            });
-          });
+const gift = findGiftByCode(data.giftCode);
+if (gift) {
+setActiveGift({ gift: gift, senderName: data.senderNameSnapshot || 'Un fidèle' });
+setCommentaires(function(prev) {
+return prev.slice(-30).concat([{
+id: 'gift-' + Date.now() + Math.random(),
+profil: { bg: 'rgba(200,168,75,0.15)', col: OR, tc: VERT },
+initiales: '',
+nom: '',
+texte: 'Un fidele a envoye ' + gift.nom,
+isJoin: true,
+}]);
+});
+}
+});
           // Confirmation du nouveau solde apres envoi d'un cadeau reussi
           socket.on('wallet:balance', function(data) {
             if (typeof data.balance === 'number') setWalletSolde(data.balance);
@@ -317,7 +320,7 @@ export default function LiveScreen() {
   const [commentaire, setCommentaire] = useState('');
   const [commentaires, setCommentaires] = useState([]);
   const [hearts,  setHearts]  = useState([]);
-  const [cadeaux, setCadeaux] = useState([]);
+  const [activeGift, setActiveGift] = useState(null);
   const [recording, setRecording] = useState(false);
   const [showWaitlist, setShowWaitlist] = useState(false);
   const [fondEcran, setFondEcran]   = useState(null);   // null = profil, 'color' = couleur, 'image' = image
@@ -333,7 +336,6 @@ export default function LiveScreen() {
   const scrollRef  = useRef(null);
   const recRef     = useRef(null);
   const heartIdRef = useRef(0);
-  const cadeauIdRef = useRef(0);
   const autoRef    = useRef(0);
 
   // Auto-scroll commentaires
@@ -390,17 +392,6 @@ export default function LiveScreen() {
     }, 280);
   }
 
-  function lancerCadeau(emoji, envoyeur = 'Un fidèle') {
-    // Vibration courte sur mobile
-    if (navigator.vibrate) navigator.vibrate([50, 30, 50]);
-    const id = ++cadeauIdRef.current;
-    const x  = 10 + Math.random() * 55 + '%';
-    setCadeaux(prev => [...prev, { id, emoji, x }]);
-    // Bannière cadeau
-    const nomCadeau = CADEAUX.find(c => c.emoji === emoji)?.nom || 'cadeau';
-    afficherBanniere(`${emoji} Un fidèle a offert ${nomCadeau}`, 3500);
-  }
-  function removeCadeau(id) { setCadeaux(prev => prev.filter(c => c.id !== id)); }
 
   function partagerDirect() {
     const url = window.location.href;
@@ -417,11 +408,11 @@ export default function LiveScreen() {
   // Envoi d'un cadeau : on ne transmet plus emoji/nom/prix (spoofables cote
   // client) — uniquement le code du cadeau. Le serveur relit le prix depuis
   // son propre catalogue (giftCatalog.js) et debite le solde reel.
-  function envoyerCadeau(giftCode) {
-    if (socketRef.current && sessionReelle && sessionReelle.parishId) {
-      socketRef.current.emit('gift:send', { parishId: sessionReelle.parishId._id, liveId: id, giftCode: giftCode });
-    }
-  }
+  function envoyerCadeau(code) {
+if (socketRef.current && sessionReelle && sessionReelle.parishId) {
+socketRef.current.emit('gift:send', { parishId: sessionReelle.parishId._id, liveId: id, giftCode: code });
+}
+}
 
   async function accepterInvitation() {
     setInviteRecue(false);
@@ -605,7 +596,13 @@ export default function LiveScreen() {
 
       {/* Animations overlay */}
       {hearts.map(h => <HeartAnim key={h.id} x={h.x} y={h.y} onDone={() => removeHeart(h.id)} />)}
-      {cadeaux.map(cadeau => <GiftAnim key={cadeau.id} emoji={cadeau.emoji} x={cadeau.x} onDone={() => removeCadeau(cadeau.id)} />)}
+      {activeGift && (
+<GiftSendAnimation
+gift={activeGift.gift}
+senderName={activeGift.senderName}
+onComplete={() => setActiveGift(null)}
+/>
+)}
 
       {/* ── FOND VIDÉO ── */}
       <div style={{ position: 'absolute', inset: 0, background: '#000000' }} />
@@ -782,15 +779,15 @@ export default function LiveScreen() {
                 <button onClick={closeDrawer} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.4)', fontSize: 18 }}>✕</button>
               </div>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 10, maxHeight: 260, overflowY: 'auto' }}>
-              {CADEAUX.map(cadeau => (
-                <div key={cadeau.id} onClick={() => { envoyerCadeau(cadeau.id); closeDrawer(); }} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, cursor: 'pointer', padding: '8px 4px', borderRadius: 12, background: 'rgba(200,168,75,0.06)', border: '1px solid rgba(200,168,75,0.1)', opacity: walletSolde < cadeau.prix ? 0.4 : 1 }}>
-                  <div style={{ fontSize: 24 }}>{cadeau.emoji}</div>
-                  <div style={{ fontSize: 8, color: 'rgba(245,240,232,0.7)', textAlign: 'center' }}>{cadeau.nom}</div>
-                  <div style={{ fontSize: 8, color: OR, fontWeight: 700 }}>{cadeau.prix} F</div>
-                </div>
-              ))}
-            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10, maxHeight: 320, overflowY: 'auto' }}>
+{GIFTS_CATALOG.map(cadeau => (
+<div key={cadeau.code} onClick={() => { envoyerCadeau(cadeau.code); closeDrawer(); }} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, cursor: 'pointer', padding: '8px 4px', borderRadius: 12, background: 'rgba(200,168,75,0.06)', border: '1px solid rgba(200,168,75,0.1)' }}>
+<img src={cadeau.image || cadeau.letters[0]} alt={cadeau.nom} style={{ width: 32, height: 32, objectFit: 'contain' }} />
+<div style={{ fontSize: 8, color: 'rgba(245,240,232,0.7)', textAlign: 'center' }}>{cadeau.nom}</div>
+<div style={{ fontSize: 8, color: OR, fontWeight: 700 }}>{cadeau.prix} F</div>
+</div>
+))}
+</div>
           </div>
         </>
       )}
